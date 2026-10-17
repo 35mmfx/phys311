@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lab07-engine"
+version = "0.1.0"
+description = "A small 2D mechanics simulation engine for Physics 311"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[tool.setuptools]
+py-modules = ["project_paths"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lab07_engine*"]
