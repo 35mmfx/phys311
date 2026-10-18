@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lab 7 — Python Physics Engine Prototype</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .checkpoint-box { background-color: #fff0e6; border: 2px solid #ff8200; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610"; font-size: 1.15em }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Code lab 7 — Python Physics Engine Prototype</h1>
+
+<div class="concept-box">
+  <strong>📋 Lab Overview</strong><br>
+  <strong>Due:</strong> End of Week 7 (see Canvas calendar for exact date/time)<br>
+  <strong>Submit:</strong> A small Python package + notebook (<code style="font-size: 12pt;">lab07_engine/</code> and <code style="font-size: 12pt;">lab07_demo.ipynb</code>) via Canvas<br>
+  <strong>Also:</strong> Commit and push to <code style="font-size: 12pt;">labs/lab07/</code> in your <code style="font-size: 12pt;">phys311</code> repo<br>
+  <strong>Points:</strong> 100 (+ up to 10 bonus)<br>
+  <strong>Estimated time:</strong> 6–7 hours
+</div>
+
+<p>This is the capstone of Stage 1. You will refactor the physics you've written across six labs into a single, modular engine — the <code style="font-size: 12pt;">World</code> / <code style="font-size: 12pt;">Body</code> / <code style="font-size: 12pt;">Force</code> / <code style="font-size: 12pt;">Integrator</code> architecture from this week's lesson. Then you'll prove it works by having it reproduce your earlier labs, and finish with an original multi-body demo. <strong>This engine is what you carry into the browser in Block 3 and build your final project on.</strong></p>
+
+<div class="key-idea">
+  <strong>💡 The big idea this week:</strong> Good architecture turns "write a new simulation" into "assemble existing parts." When adding a force or a body takes a few lines instead of a rewrite, you've built an engine, not a script.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Labs 1–6 complete (you'll be refactoring their physics)</li>
+  <li>Week 7 Lesson: <em>Anatomy of a Physics Engine</em></li>
+  <li>Your hand-drawn class diagram from the lesson's final "Try it"</li>
+</ul>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Getting Started</h3>
+<ol>
+  <li>Create <code style="font-size: 12pt;">labs/lab07/</code> with a subfolder <code style="font-size: 12pt;">lab07_engine/</code> for your engine modules</li>
+  <li>Create <code style="font-size: 12pt;">lab07_demo.ipynb</code> that imports and exercises your engine</li>
+  <li>Decide now: one file (<code style="font-size: 12pt;">engine.py</code>) or several (<code style="font-size: 12pt;">body.py</code>, <code style="font-size: 12pt;">forces.py</code>, <code style="font-size: 12pt;">integrators.py</code>, <code style="font-size: 12pt;">world.py</code>). Either is fine; be deliberate.</li>
+</ol>
+
+<div class="physics-note">
+  <strong>🔬 This lab is graded on <em>design</em> as much as correctness.</strong> Clean interfaces, sensible names, and separation of concerns matter here in a way they didn't for the one-off labs. You're building the thing you'll live inside for the rest of the course.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A — Build the Core Engine (35 points)</h2>
+<span class="part-label part-a" style="font-size: 12pt;">GUIDED — Follow the Lesson</span>
+
+<ol>
+  <li><strong>Implement the four classes</strong> from the lesson: <code style="font-size: 12pt;">Body</code>, at least two <code style="font-size: 12pt;">Force</code> types (e.g., <code style="font-size: 12pt;">Gravity</code> and one of <code style="font-size: 12pt;">Drag</code>/<code style="font-size: 12pt;">Spring</code>/<code style="font-size: 12pt;">NewtonGravity</code>), at least one <code style="font-size: 12pt;">Integrator</code> (<code style="font-size: 12pt;">EulerCromer</code>), and <code style="font-size: 12pt;">World</code>.</li>
+  <li><strong>Include a force accumulator pattern:</strong> the world clears each body's accumulated force/torque, every force adds to it, then the integrator consumes it.</li>
+  <li><strong>Add a data-recording mechanism</strong> so the world can store the history of body positions (and energy/momentum) for plotting.</li>
+  <li><strong>Write a class diagram</strong> (image, ASCII, or a Mermaid diagram in Markdown) showing the four components and their relationships. Include it in your notebook.</li>
+</ol>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">💡 Hint: keeping forces general</summary>
+<p>Give every force an <code style="font-size: 12pt;">apply(self, world)</code> method. The world just loops <code style="font-size: 12pt;">for f in self.forces: f.apply(self)</code>. It never needs to know <em>which</em> force it's calling — that's polymorphism doing the work.</p></details>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B — Validate Against Your Old Labs (35 points)</h2>
+<span class="part-label part-b" style="font-size: 12pt;">GUIDED → INDEPENDENT</span>
+
+<p>Prove the engine is correct by reproducing <strong>at least three</strong> earlier labs using <em>only</em> engine calls (no hand-written loops).</p>
+
+<ol>
+  <li><strong>Projectile</strong> (Labs 1–2): <code style="font-size: 12pt;">Gravity</code> only; confirm the trajectory and energy behavior match your original.</li>
+  <li><strong>Oscillator</strong> (Lab 3): add a <code style="font-size: 12pt;">Spring</code> force; confirm the period and phase-space ellipse match.</li>
+  <li><strong>Choose a third:</strong> collisions (Lab 4), an orbit with a <code style="font-size: 12pt;">Verlet</code> integrator and <code style="font-size: 12pt;">NewtonGravity</code> (Lab 5), or rotation (Lab 6).</li>
+  <li><strong>For each,</strong> overlay the engine result on your original lab result (or its known answer) and show they agree. Include the relevant conservation-law check.</li>
+</ol>
+
+<div class="key-idea">
+  <strong>💡 This is regression testing.</strong> You're using labs you already trust as a test suite for your new engine. If the engine reproduces all three with correct conservation behavior, it's sound. Professional engine developers do exactly this.
+</div>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C — An Original Multi-Body Scene (30 points)</h2>
+<span class="part-label part-c" style="font-size: 12pt;">INDEPENDENT</span>
+
+<ol>
+  <li><strong>Build a scene your old scripts couldn't easily do:</strong> e.g., several balls under gravity bouncing in a box with collisions, a small "solar system" of multiple orbiting bodies, or a chain of springs.</li>
+  <li><strong>Use at least two forces and multiple bodies</strong> interacting through your engine.</li>
+  <li><strong>Track the appropriate conservation laws</strong> and confirm they behave correctly (conserved when they should be, dissipating only when physically expected).</li>
+  <li><strong>Produce a clear visualization</strong> (trajectory plot, multi-panel figure, or an animation if you're ambitious) and a short written description of the scene and what it demonstrates.</li>
+</ol>
+
+<!-- ============================ BONUS ============================ -->
+<div class="bonus-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #fff8e1 !important;">⭐ Bonus Challenge (up to 10 points)</h3>
+  <p>Choose one:</p>
+  <ul>
+    <li><strong>Add a Verlet integrator</strong> and show your engine swaps <code style="font-size: 12pt;">EulerCromer → Verlet</code> with a one-line change, then demonstrate improved orbit stability on the same scene.</li>
+    <li><strong>Add a broad-phase optimization</strong> (spatial grid) and benchmark it against all-pairs collision checking for 100+ bodies. Plot runtime vs. N for both.</li>
+    <li><strong>Create an animation</strong> with <code style="font-size: 12pt;">matplotlib.animation</code> of your Part C scene and save it as a GIF/MP4 committed to your repo.</li>
+  </ul>
+</div>
+
+<!-- ============================ CHECKPOINT ============================ -->
+<div class="checkpoint-box">
+  <h2 style="margin-top:0; border:none;">🏁 Block 2 Checkpoint — Engine Demo (separate submission)</h2>
+  <p>The Block 2 Checkpoint is a short, peer-reviewed mini-project built <em>on your Lab 7 engine</em>. It marks the end of Stage 1 (Python) before you port to JavaScript in Block 3.</p>
+  <h3>Requirements</h3>
+  <ul class="checklist">
+    <li>A multi-body scene (at least 4 interacting bodies) running entirely on your engine</li>
+    <li>At least one collision interaction and at least two distinct forces</li>
+    <li>A conservation-law validation panel (energy and/or momentum) demonstrating correctness</li>
+    <li>A short README (in <code style="font-size: 12pt;">checkpoints/</code>) explaining your architecture and how to run it</li>
+    <li>A 2–3 minute screen recording or a multi-panel figure sequence walking through the demo</li>
+  </ul>
+  <h4>Peer Review</h4>
+  <p>You'll review two classmates' engines using a provided rubric focused on: (1) architecture clarity, (2) correct conservation behavior, (3) extensibility (how easily could you add a new force?). Peer review is required and has a firm deadline.</p>
+  <h4>Why this matters</h4>
+  <p>Whatever engine you submit here is the foundation you port to the browser in Block 3 and extend into your final project. A clean, well-validated engine now saves you enormous effort later.</p>
+</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #f0f7ff !important;">📝 Lab 7 Grading Rubric (100 points)</h3>
+  <table><caption>Summary of grading criteria for core engine development, validation, scene creation, design quality, and bonus features.</caption>
+    <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Component</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Points</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What earns full marks</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Part A</strong> — core engine</td><td>35</td><td>Four clean components; force accumulator; recording; clear class diagram</td></tr>
+      <tr><td><strong>Part B</strong> — validation</td><td>35</td><td>Three labs reproduced via engine calls; results overlaid &amp; matching; conservation checks</td></tr>
+      <tr><td><strong>Part C</strong> — original scene</td><td>30</td><td>Multi-body scene; 2+ forces; correct conservation behavior; clear visualization &amp; write-up</td></tr>
+      <tr><td><strong>Design quality</strong></td><td>(within above)</td><td>Separation of concerns; readable names; extensible; ports cleanly to JS</td></tr>
+      <tr><td><strong>Bonus</strong></td><td>+10</td><td>Verlet swap, broad-phase benchmark, or animation</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="deliverable-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #e8f5e9 !important;">✅ Submission Checklist</h3>
+  <ul class="checklist">
+    <li><code style="font-size: 12pt;">lab07_engine/</code> package and <code style="font-size: 12pt;">lab07_demo.ipynb</code> submitted via Canvas</li>
+    <li>Committed and pushed to <code style="font-size: 12pt;">labs/lab07/</code></li>
+    <li>Class diagram included in the notebook</li>
+    <li><strong>Restart &amp; Run All</strong> executes cleanly top to bottom</li>
+    <li>Engine reproduces at least three earlier labs</li>
+    <li>Original multi-body scene with conservation validation</li>
+  </ul>
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ Design for the port.</strong> In Block 3 you'll rewrite this engine in JavaScript. Keep your classes simple and your dependencies on NumPy shallow (basic vector math ports easily; exotic NumPy tricks do not). Every clever shortcut you avoid now is an hour saved in Week 8.
+</div>
+
+
+
+</body></html>

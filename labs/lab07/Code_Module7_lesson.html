@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 7 Lesson — Anatomy of a Physics Engine</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .arch-diagram { background-color: #f8f9fa; border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; font-family: "SF Mono", "Consolas", monospace; font-size: 0.85em; line-height: 1.5; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 7 -- Anatomy of a Physics Engine</h1>
+
+<div class="objectives">
+  <strong>🎯 By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Explain the game loop and why a fixed timestep matters for stable physics</li>
+    <li>Separate a simulation into four clean components: <code style="font-size: 12pt;">World</code>, <code style="font-size: 12pt;">Body</code>, <code style="font-size: 12pt;">Force</code>, and <code style="font-size: 12pt;">Integrator</code></li>
+    <li>Use a force registry so any combination of forces can act on any body</li>
+    <li>Structure a collision pipeline (broad phase → narrow phase → resolution)</li>
+    <li>Refactor your Block 1–2 lab code into a reusable, extensible engine</li>
+  </ul>
+</div>
+
+<div class="key-idea">
+  <strong>💡 The pivot point of the whole course:</strong> You've spent six weeks writing one-off scripts. This week you turn them into an <em>engine</em> — a reusable framework where adding a new force or a new body takes a few lines, not a rewrite. This is the artifact you'll port to JavaScript in Block 3 and build your final project on. Design it well.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; From Scripts to an Engine</h2>
+
+<p>Look back at your labs. Each one repeated the same skeleton: set up state, loop over time, compute forces, update with an integrator, store results, plot. You copy-pasted that skeleton six times. An <strong>engine</strong> writes the skeleton <em>once</em> and lets you plug in the parts that change.</p>
+
+<table><caption>Overview of key components and their ownership in the physics simulation</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What changes between labs</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Engine component that owns it</th></tr></thead>
+  <tbody>
+    <tr><td>The objects (mass, radius, position...)</td><td><code style="font-size: 12pt;">Body</code></td></tr>
+    <tr><td>The forces (gravity, springs, drag...)</td><td><code style="font-size: 12pt;">Force</code> objects in a registry</td></tr>
+    <tr><td>The update rule (Euler-Cromer, Verlet...)</td><td><code style="font-size: 12pt;">Integrator</code></td></tr>
+    <tr><td>The overall simulation &amp; time stepping</td><td><code style="font-size: 12pt;">World</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; The Game Loop &amp; Fixed Timestep</h2>
+
+<p>Every physics engine, from yours to Unity, runs a loop: <em>compute forces → integrate → handle collisions → (render) → repeat</em>. The critical design rule:</p>
+
+<div class="key-idea">
+  <strong>💡 Use a fixed timestep for physics.</strong> Always advance the physics by the same small <code style="font-size: 12pt;">dt</code>, no matter how fast the display runs. Variable timesteps make simulations non-reproducible and can blow up when a frame lags. In Block 3, you'll render at the browser's frame rate but still step physics at a fixed dt — a pattern called the "accumulator." Build the habit now.
+</div>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">while</span> running:
+    compute_all_forces()     <span class="comment" style="font-size: 12pt;"># sum forces on every body</span>
+    integrator.step(dt)      <span class="comment" style="font-size: 12pt;"># advance state by fixed dt</span>
+    handle_collisions()      <span class="comment" style="font-size: 12pt;"># detect and resolve</span>
+    record_or_render()       <span class="comment" style="font-size: 12pt;"># store data (Python) or draw (JS later)</span>
+</pre>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; The Four Components</h2>
+
+<div class="arch-diagram" style="font-size: 12pt;">
+┌────────────────────────────────────┐<br>
+│&nbsp;&nbsp;<strong style="font-size: 12pt;">World</strong>&nbsp;&nbsp;(owns everything, runs the loop)&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+│&nbsp;&nbsp;• bodies: [Body, Body, ...]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+│&nbsp;&nbsp;• forces: [Force, Force, ...]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+│&nbsp;&nbsp;• integrator: Integrator&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+│&nbsp;&nbsp;• step(dt)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+└───┬─────────┬─────────┬───────────┘<br>
+&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+&nbsp;&nbsp;<strong style="font-size: 12pt;">Body</strong>&nbsp;&nbsp;&nbsp;<strong style="font-size: 12pt;">Force</strong>&nbsp;&nbsp;&nbsp;<strong style="font-size: 12pt;">Integrator</strong><br>
+&nbsp;&nbsp;m,r,v&nbsp;&nbsp;&nbsp;apply()&nbsp;&nbsp;&nbsp;step(world,dt)<br>
+&nbsp;&nbsp;theta,ω&nbsp;&nbsp;to bodies&nbsp;&nbsp;(Euler-Cromer<br>
+&nbsp;&nbsp;I,radius&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or Verlet)
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.1 &nbsp; The Body</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">import</span> numpy <span class="keyword" style="font-size: 12pt;">as</span> np
+
+<span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">Body</span>:
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">__init__</span>(self, mass, pos, vel, radius=<span class="number" style="font-size: 12pt;">0.1</span>, I=<span class="keyword" style="font-size: 12pt;">None</span>):
+        self.m = mass
+        self.r = np.array(pos, dtype=float)
+        self.v = np.array(vel, dtype=float)
+        self.radius = radius
+        self.theta = <span class="number" style="font-size: 12pt;">0.0</span>      <span class="comment" style="font-size: 12pt;"># orientation</span>
+        self.omega = <span class="number" style="font-size: 12pt;">0.0</span>      <span class="comment" style="font-size: 12pt;"># angular velocity</span>
+        self.I = I <span class="keyword" style="font-size: 12pt;">if</span> I <span class="keyword" style="font-size: 12pt;">is not</span> <span class="keyword" style="font-size: 12pt;">None</span> <span class="keyword" style="font-size: 12pt;">else</span> <span class="number" style="font-size: 12pt;">0.5</span>*mass*radius**<span class="number" style="font-size: 12pt;">2</span>
+        self.force = np.zeros(<span class="number" style="font-size: 12pt;">2</span>)   <span class="comment" style="font-size: 12pt;"># accumulator, reset each step</span>
+        self.torque = <span class="number" style="font-size: 12pt;">0.0</span>
+
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">clear_accumulators</span>(self):
+        self.force = np.zeros(<span class="number" style="font-size: 12pt;">2</span>)
+        self.torque = <span class="number" style="font-size: 12pt;">0.0</span>
+</pre>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.2 &nbsp; Forces (the registry pattern)</h3>
+
+<p>Each force is an object that knows how to <em>apply itself</em> to the bodies in the world. The world holds a list of them, so adding gravity, drag, or a spring is just appending to that list.</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">Gravity</span>:
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">__init__</span>(self, g=<span class="number" style="font-size: 12pt;">9.81</span>):
+        self.g = np.array([<span class="number" style="font-size: 12pt;">0.0</span>, -g])
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">apply</span>(self, world):
+        <span class="keyword" style="font-size: 12pt;">for</span> b <span class="keyword" style="font-size: 12pt;">in</span> world.bodies:
+            b.force += b.m * self.g        <span class="comment" style="font-size: 12pt;"># F = mg</span>
+
+<span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">Drag</span>:
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">__init__</span>(self, c):
+        self.c = c
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">apply</span>(self, world):
+        <span class="keyword" style="font-size: 12pt;">for</span> b <span class="keyword" style="font-size: 12pt;">in</span> world.bodies:
+            b.force += -self.c * np.linalg.norm(b.v) * b.v   <span class="comment" style="font-size: 12pt;"># quadratic drag</span>
+</pre>
+
+<div class="key-idea">
+  <strong>💡 Why this is powerful:</strong> to change the physics of your simulation, you change the <em>list of forces</em>, not the loop. Want an orbit? Add a <code style="font-size: 12pt;">NewtonGravity</code> force. Want a damped oscillator? Add a <code style="font-size: 12pt;">Spring</code> and a <code style="font-size: 12pt;">Drag</code>. The engine core never changes. This is the "open–closed principle" — open to extension, closed to modification.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.3 &nbsp; The Integrator (swappable)</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">EulerCromer</span>:
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">step</span>(self, world, dt):
+        <span class="keyword" style="font-size: 12pt;">for</span> b <span class="keyword" style="font-size: 12pt;">in</span> world.bodies:
+            a = b.force / b.m
+            b.v += a * dt
+            b.r += b.v * dt
+            alpha = b.torque / b.I
+            b.omega += alpha * dt
+            b.theta += b.omega * dt
+</pre>
+
+<div class="physics-note">
+  <strong>🔬 This is Lab 2's swap, promoted to architecture.</strong> Back in Lab 2 you switched Euler for Euler-Cromer by changing one function. Now the integrator is an <em>object</em> you hand to the world. Swapping to Verlet for an orbit simulation means constructing a different integrator — zero changes to bodies or forces.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.4 &nbsp; The World (ties it together)</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">World</span>:
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">__init__</span>(self, integrator):
+        self.bodies = []
+        self.forces = []
+        self.integrator = integrator
+        self.time = <span class="number" style="font-size: 12pt;">0.0</span>
+
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">add_body</span>(self, body):  self.bodies.append(body)
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">add_force</span>(self, force): self.forces.append(force)
+
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">step</span>(self, dt):
+        <span class="keyword" style="font-size: 12pt;">for</span> b <span class="keyword" style="font-size: 12pt;">in</span> self.bodies:
+            b.clear_accumulators()
+        <span class="keyword" style="font-size: 12pt;">for</span> f <span class="keyword" style="font-size: 12pt;">in</span> self.forces:
+            f.apply(self)                 <span class="comment" style="font-size: 12pt;"># each force adds to body accumulators</span>
+        self.integrator.step(self, dt)    <span class="comment" style="font-size: 12pt;"># advance state</span>
+        self.handle_collisions()          <span class="comment" style="font-size: 12pt;"># detect + resolve</span>
+        self.time += dt
+
+    <span class="keyword" style="font-size: 12pt;">def</span> <span class="function" style="font-size: 12pt;">handle_collisions</span>(self):
+        <span class="keyword" style="font-size: 12pt;">pass</span>   <span class="comment" style="font-size: 12pt;"># fill in using your Lab 4 collision code</span>
+</pre>
+
+<div class="try-it">
+  <strong>✍️ Try it:</strong> Reproduce Lab 1's projectile in six lines — <code style="font-size: 12pt;">world = World(EulerCromer()); world.add_body(Body(1, [0,0], [15,20])); world.add_force(Gravity())</code>, then loop <code style="font-size: 12pt;">world.step(0.01)</code> and record positions. If your old lab and your new engine agree, your architecture is sound.
+</div>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; The Collision Pipeline</h2>
+
+<p>Real engines split collision handling into stages for efficiency and clarity:</p>
+
+<table><caption>Overview of collision detection and resolution stages with implementation details</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Stage</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Job</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Your implementation</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Broad phase</strong></td><td>Quickly rule out pairs that can't collide</td><td>For now, just loop all pairs (fine for tens of bodies)</td></tr>
+    <tr><td><strong>Narrow phase</strong></td><td>Precisely detect overlaps</td><td>Your circle–circle test from Lab 4</td></tr>
+    <tr><td><strong>Resolution</strong></td><td>Compute new velocities</td><td>Your <code style="font-size: 12pt;">collide_2d</code> from Lab 4</td></tr>
+  </tbody>
+</table>
+
+<div class="physics-note">
+  <strong>🔬 Broad phase is an optimization, not physics.</strong> Checking all pairs is O(N²). For thousands of bodies, engines use spatial grids or trees to cut this down. You don't need that yet — but knowing the pipeline has a "broad phase" slot means you can drop in an optimization later without touching the physics.
+</div>
+
+<!-- ============================================================ -->
+<h2>5 &nbsp; Testing Your Engine</h2>
+
+<div class="key-idea">
+  <strong>💡 Your conservation laws are your regression tests.</strong> Because your engine is modular, you can test each piece against a lab you already trust: projectile (Lab 1–2), oscillator (Lab 3), collisions (Lab 4), orbit (Lab 5), rotation (Lab 6). If the engine reproduces all six with the right conservation behavior, it's correct. Keep these as automated checks.
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ Resist over-engineering.</strong> You do <em>not</em> need inheritance hierarchies, abstract base classes, or a plugin system. Four clean classes and a list of forces is enough to carry you through the final project. Clarity beats cleverness — you'll be porting this to JavaScript, and simple designs port more easily.
+</div>
+
+<!-- ============================================================ -->
+<h2>6 &nbsp; Looking Ahead to Lab 7 &amp; the Block 2 Checkpoint</h2>
+
+<p>In Lab 7 you'll refactor your accumulated lab code into this <code style="font-size: 12pt;">World</code>/<code style="font-size: 12pt;">Body</code>/<code style="font-size: 12pt;">Force</code>/<code style="font-size: 12pt;">Integrator</code> architecture and demonstrate it reproducing at least three earlier labs. The <strong>Block 2 Checkpoint</strong> then asks you to show off a multi-body scene with collisions running on your engine — the Python prototype you'll carry across the Stage 1 → Stage 2 line into the browser.</p>
+
+<div class="try-it">
+  <strong>✍️ Before the lab:</strong> Draw your engine's class diagram on paper — four boxes, the data each holds, and the arrows showing what talks to what. You'll submit this diagram with Lab 7, and a clear diagram almost always means clean code.
+</div>
+
+
+
+</body></html>
