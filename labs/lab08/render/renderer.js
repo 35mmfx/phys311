@@ -39,9 +39,85 @@ export function drawScaleBar(ctx, canvas, cam, metres, text) {
   ctx.textAlign = "left";
 }
 
+function drawPartAScene(ctx, canvas, cam) {
+  const xMin = Math.ceil(cam.toWorldX(0));
+  const xMax = Math.floor(cam.toWorldX(canvas.width));
+  const yMin = Math.ceil(cam.toWorldY(canvas.height));
+  const yMax = Math.floor(cam.toWorldY(0));
+  const groundY = cam.toScreenY(0);
+  const axisX = cam.toScreenX(0);
+
+  ctx.strokeStyle = "#2f2f2f";
+  ctx.lineWidth = 1;
+  for (let x = xMin; x <= xMax; x++) {
+    const px = cam.toScreenX(x);
+    ctx.beginPath();
+    ctx.moveTo(px, 0);
+    ctx.lineTo(px, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = yMin; y <= yMax; y++) {
+    const py = cam.toScreenY(y);
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(canvas.width, py);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#28a745";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(canvas.width, groundY);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#d4d4d4";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(axisX, 0);
+  ctx.lineTo(axisX, canvas.height);
+  ctx.stroke();
+
+  ctx.font = "12px monospace";
+  ctx.fillStyle = "#d4d4d4";
+  for (let x = Math.max(1, xMin); x <= xMax; x++) {
+    const px = cam.toScreenX(x);
+    ctx.beginPath();
+    ctx.moveTo(px, groundY - 5);
+    ctx.lineTo(px, groundY + 5);
+    ctx.stroke();
+    ctx.fillText(String(x), px - 3, groundY + 20);
+  }
+  for (let y = Math.max(1, yMin); y <= yMax; y++) {
+    const py = cam.toScreenY(y);
+    ctx.beginPath();
+    ctx.moveTo(axisX - 5, py);
+    ctx.lineTo(axisX + 5, py);
+    ctx.stroke();
+    ctx.fillText(String(y), axisX - 20, py + 4);
+  }
+  ctx.fillText("0", axisX - 13, groundY + 20);
+
+  ctx.beginPath();
+  ctx.arc(cam.toScreenX(2), cam.toScreenY(3), cam.toScreenLen(0.3), 0, Math.PI * 2);
+  ctx.fillStyle = "#ff8200";
+  ctx.fill();
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = "#d4d4d4";
+  ctx.fillText("Circle: (2 m, 3 m), radius 0.3 m", 590, 24);
+}
+
 export function draw(ctx, canvas, world, hud) {
   const cam = world.meta.camera;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (world.meta.kind === "part-a") {
+    drawPartAScene(ctx, canvas, cam);
+    return;
+  }
 
   if (world.meta.kind === "spring") {
     drawGrid(ctx, canvas, cam, 0.5, 1);
@@ -69,12 +145,16 @@ export function draw(ctx, canvas, world, hud) {
   for (const b of world.bodies) {
     // trail
     if (b.trail.length > 1) {
-      ctx.strokeStyle = "rgba(255,130,0,0.45)"; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cam.toScreenX(b.trail[0].x), cam.toScreenY(b.trail[0].y));
-      for (let i = 1; i < b.trail.length; i++)
-        ctx.lineTo(cam.toScreenX(b.trail[i].x), cam.toScreenY(b.trail[i].y));
-      ctx.stroke();
+      for (let i = 0; i < b.trail.length; i++) {
+        const p = b.trail[i];
+        const alpha = (i + 1) / b.trail.length;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(cam.toScreenX(p.x), cam.toScreenY(p.y), 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = b.color;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     }
     // body
     ctx.beginPath();
@@ -93,18 +173,31 @@ export function draw(ctx, canvas, world, hud) {
 
   // HUD
   const drift = hud.E0 === 0 ? 0 : (world.totalEnergy() - hud.E0) / hud.E0;
+  const body = world.bodies[0];
+  const speed = body ? body.vel.length() : 0;
+  const kinetic = world.kineticEnergy();
+  const potential = world.potentialEnergy();
+  const total = kinetic + potential;
   const lines = [
-    "t      = " + world.time.toFixed(4) + " s",
+    "t      = " + world.time.toFixed(3) + " s",
+    "x      = " + (body ? body.pos.x : 0).toFixed(3) + " m",
+    "y      = " + (body ? body.pos.y : 0).toFixed(3) + " m",
+    "|v|    = " + speed.toFixed(3) + " m/s",
+    "KE     = " + kinetic.toFixed(3) + " J",
+    "PE     = " + potential.toFixed(3) + " J",
+    "E_total= " + total.toFixed(3) + " J",
     "steps  = " + world.steps,
     "fps    = " + hud.fps.toFixed(0) + "   (steps/frame " + hud.lastSteps + ")",
-    "DT     = 1/" + hud.dtDenom + " s",
+    hud.timestepMode === "fixed"
+      ? "DT     = 1/" + hud.dtDenom + " s (fixed)"
+      : "dt(frame) = " + hud.frameDt.toFixed(3) + " s",
+    "mode   = " + hud.timestepMode,
     "method = " + hud.method,
-    "E      = " + world.totalEnergy().toFixed(6) + " J",
     "dE/E0  = " + (drift >= 0 ? "+" : "") + drift.toExponential(3)
   ];
   ctx.font = "13px monospace"; ctx.textBaseline = "top";
   ctx.fillStyle = "rgba(0,0,0,0.65)";
-  ctx.fillRect(8, 8, 250, lines.length * 18 + 14);
+  ctx.fillRect(8, 8, 360, lines.length * 18 + 14);
   for (let i = 0; i < lines.length; i++) {
     ctx.fillStyle = (i === lines.length - 1)
       ? (Math.abs(drift) > 0.01 ? "#f48771" : "#4ec9b0") : "#d4d4d4";

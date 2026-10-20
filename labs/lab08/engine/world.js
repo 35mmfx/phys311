@@ -7,7 +7,7 @@ export class World {
   add(b)      { this.bodies.push(b); return b; }
   addForce(f) { this.forces.push(f); return f; }
 
-  clearForces() { for (const b of this.bodies) b.force.zero(); }
+  clearForces() { for (const b of this.bodies) b.clearForce(); }
   applyForces() { for (const f of this.forces) f.apply(this); }
 
   primeAccelerations() {
@@ -28,7 +28,7 @@ export class World {
 
   kineticEnergy() {
     let K = 0;
-    for (const b of this.bodies) if (!b.fixed) K += 0.5 * b.mass * b.vel.lengthSq();
+    for (const b of this.bodies) if (!b.fixed) K += b.kineticEnergy();
     return K;
   }
   potentialEnergy() {

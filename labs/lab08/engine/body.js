@@ -14,4 +14,8 @@ export class Body {
     this.fixed = fixed;
     this.trail = [];
   }
+
+  get m() { return this.mass; }
+  clearForce() { this.force.zero(); }
+  kineticEnergy() { return this.fixed ? 0 : 0.5 * this.mass * this.vel.lengthSq(); }
 }

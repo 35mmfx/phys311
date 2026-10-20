@@ -16,7 +16,7 @@
 <canvas id="sim" width="900" height="520"></canvas>
 
 <div class="panel">
-  <label>Integrator
+  <label>Integrator (live switch)
     <select id="integrator">
       <option value="verlet">Velocity Verlet</option>
       <option value="euler-cromer">Euler-Cromer</option>
@@ -25,7 +25,8 @@
   </label>
   <label>Scene
     <select id="scene">
-      <option value="projectile">Projectile (v0=25, 45&deg;)</option>
+      <option value="part-a">Part A: Static coordinates</option>
+      <option value="projectile">Projectile (v0=20 m/s, 50&deg;)</option>
       <option value="spring">Spring oscillator (m=k=1)</option>
     </select>
   </label>
@@ -37,9 +38,17 @@
       <option value="20">1/20 s (coarse)</option>
     </select>
   </label>
+  <label>Timestep mode
+    <select id="timestep-mode">
+      <option value="fixed">Fixed accumulator</option>
+      <option value="variable">Variable frame dt</option>
+    </select>
+  </label>
   <button id="pause">Pause</button>
   <button id="reset">Reset</button>
+  <button class="alt" id="induce-lag">Induce 500 ms lag (C2)</button>
   <button class="alt" id="validate">Validate at t = 2.0 s</button>
+  <button class="alt" id="headless">Run 10 s headless (C1)</button>
 </div>
 
 <div id="log">Ready. Press <b>Validate</b> to reproduce the notebook's reference numbers.</div>

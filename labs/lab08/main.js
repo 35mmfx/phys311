@@ -19,6 +19,8 @@ let world, hud, paused = false;
 let accumulator = 0;
 let lastTime = performance.now() / 1000;
 let fpsEMA = 60;
+let timestepMode = "fixed";
+let pendingLagObservation = null;
 
 function makeIntegrator(name) {
   if (name === "euler")        return new Euler();
@@ -26,9 +28,9 @@ function makeIntegrator(name) {
   return new VelocityVerlet();
 }
 
-function buildProjectile(integratorName) {
+function buildProjectile(integratorName, v0 = 20, angleDegrees = 50) {
   const w = new World(makeIntegrator(integratorName));
-  const v0 = 25, th = 45 * Math.PI / 180;
+  const th = angleDegrees * Math.PI / 180;
   w.add(new Body({
     mass: 1, radius: 0.35, color: "#ff8200",
     pos: new Vec2(0, 0),
@@ -52,7 +54,14 @@ function buildSpring(integratorName) {
   return w;
 }
 
+function buildPartAScene() {
+  const w = new World(new VelocityVerlet());
+  w.meta = { kind: "part-a", camera: new Camera(50, 80, 480) };
+  return w;
+}
+
 function buildScene(sceneName, integratorName) {
+  if (sceneName === "part-a") return buildPartAScene();
   return sceneName === "spring" ? buildSpring(integratorName)
                                 : buildProjectile(integratorName);
 }
@@ -64,42 +73,61 @@ function resetSim() {
   DT = 1 / dtDenom;
 
   world = buildScene(sceneName, method);
-  hud = { E0: world.totalEnergy(), fps: 60, lastSteps: 0,
-          method: method, dtDenom: dtDenom };
+  hud = { E0: world.totalEnergy(), fps: 60, lastSteps: 0, frameDt: 0,
+          method: method, dtDenom: dtDenom, timestepMode: timestepMode };
   accumulator = 0;
   lastTime = performance.now() / 1000;
 }
 
-function frame(nowMs) {
-  const now = nowMs / 1000;
-  let frameTime = now - lastTime;
+function frame() {
+  const now = performance.now() / 1000;
+  const frameTime = Math.max(now - lastTime, 0);
   lastTime = now;
 
   if (frameTime > 0) fpsEMA = 0.9 * fpsEMA + 0.1 * (1 / frameTime);
   hud.fps = fpsEMA;
 
-  if (frameTime > MAX_FRAME) frameTime = MAX_FRAME;
+  hud.frameDt = frameTime;
 
   let n = 0;
-  if (!paused) {
-    accumulator += frameTime;
-    while (accumulator >= DT) {
-      world.step(DT);
-      accumulator -= DT;
-      n++;
-      if (world.steps % 4 === 0) {
+  if (!paused && world.meta.kind !== "part-a") {
+    const advance = (stepDt) => {
+      world.step(stepDt);
+      if (world.meta.kind === "projectile") {
         const b = world.bodies[0];
         b.trail.push(b.pos.clone());
-        if (b.trail.length > 600) b.trail.shift();
+        if (b.trail.length > 200) b.trail.shift();
       }
       if (world.meta.kind === "projectile" && world.bodies[0].pos.y < 0) {
         paused = true;
         document.getElementById("pause").textContent = "Resume";
-        break;
+      }
+    };
+
+    if (timestepMode === "variable") {
+      if (frameTime > 0) {
+        advance(frameTime);
+        n = 1;
+      }
+    } else {
+      accumulator += Math.min(frameTime, MAX_FRAME);
+      while (accumulator >= DT && !paused) {
+        advance(DT);
+        accumulator -= DT;
+        n++;
       }
     }
   }
   hud.lastSteps = n;
+
+  if (pendingLagObservation) {
+    const before = pendingLagObservation;
+    say(`C2 ${before.mode} lag test: measured frame dt = ${frameTime.toFixed(6)} s; ` +
+        `simulated time advanced = ${(world.time - before.time).toFixed(6)} s; ` +
+        `E_total = ${before.energy.toFixed(9)} -> ${world.totalEnergy().toFixed(9)} J; ` +
+        `physics steps = ${n}.`, "ok");
+    pendingLagObservation = null;
+  }
 
   draw(ctx, canvas, world, hud);
   requestAnimationFrame(frame);
@@ -118,6 +146,7 @@ function say(s, cls) {
 function vec2SelfTest() {
   const a = new Vec2(3, 4), b = new Vec2(1, -2);
   say("=== Vec2 self-test (Lab 8 Part A) ===", "dim");
+  console.log("=== Vec2 self-test (Lab 8 Part A) ===");
   const checks = [
     ["a.add(b)",       `(${a.add(b).x}, ${a.add(b).y})`,            "(4, 2)"],
     ["a.sub(b)",       `(${a.sub(b).x}, ${a.sub(b).y})`,            "(2, 6)"],
@@ -127,23 +156,33 @@ function vec2SelfTest() {
     ["a.lengthSq()",   a.lengthSq().toFixed(10),                    "25.0000000000"],
     ["a.normalized()", `(${a.normalized().x.toFixed(10)}, ${a.normalized().y.toFixed(10)})`,
                        "(0.6000000000, 0.8000000000)"],
-    ["|normalized|",   a.normalized().length().toFixed(15),         "1.000000000000000"]
+    ["|normalized|",   a.normalized().length().toFixed(15),         "1.000000000000000"],
+    ["a.clone()",      `(${a.clone().x}, ${a.clone().y})`,           "(3, 4)"],
+    ["clone.addTo(b)", `(${a.clone().addTo(b).x}, ${a.clone().addTo(b).y})`,
+                                                                     "(4, 2)"],
+    ["clone.addScaled(b, 2)", `(${a.clone().addScaled(b, 2).x}, ${a.clone().addScaled(b, 2).y})`,
+                                                                     "(5, 0)"]
   ];
   let allPass = true;
   for (const [name, got, want] of checks) {
     const pass = got === want;
     if (!pass) allPass = false;
-    say((pass ? "  PASS  " : "  FAIL  ") + name.padEnd(16) + "= " + got.padEnd(30) +
-        (pass ? "" : " expected " + want), pass ? "ok" : "bad");
+    const result = (pass ? "PASS  " : "FAIL  ") + name.padEnd(22) + "= " + got.padEnd(30) +
+                   (pass ? "" : " expected " + want);
+    say("  " + result, pass ? "ok" : "bad");
+    console.log(result);
   }
-  say(allPass ? "  -> all Vec2 operations agree with Python exactly."
-              : "  -> MISMATCH: fix Vec2 before trusting anything downstream.",
-      allPass ? "ok" : "bad");
+  const summary = allPass ? "All Vec2 operations agree with the hand-calculated results."
+                          : "MISMATCH: fix Vec2 before trusting anything downstream.";
+  say("  -> " + summary, allPass ? "ok" : "bad");
+  console.log(summary);
   say("");
 }
 
 function runHeadless(sceneName, method, dt, tEnd) {
-  const w = buildScene(sceneName, method);
+  const w = sceneName === "reference-projectile"
+    ? buildProjectile(method, 25, 45)
+    : buildScene(sceneName, method);
   const E0 = w.totalEnergy();
   let Emin = E0, Emax = E0;
   while (w.time < tEnd - 1e-12) {
@@ -156,6 +195,36 @@ function runHeadless(sceneName, method, dt, tEnd) {
   return { x: b.pos.x, y: b.pos.y, vx: b.vel.x, vy: b.vel.y,
            t: w.time, n: w.steps, E0: E0, E: w.totalEnergy(),
            worst: Math.max(Math.abs(Emax - E0), Math.abs(Emin - E0)) / E0 };
+}
+
+function runC1Headless() {
+  const method = document.getElementById("integrator").value;
+  const dt = 1 / 120;
+  const steps = 1200;
+  const result = runHeadless("projectile", method, dt, steps * dt);
+  const values = {
+    integrator: method,
+    dt,
+    steps: result.n,
+    simulatedTime: result.t,
+    x: result.x,
+    y: result.y,
+    vx: result.vx,
+    vy: result.vy,
+    E_total: result.E
+  };
+
+  clearLog();
+  say("=== C1 headless projectile: 1200 steps at dt=1/120 s ===", "dim");
+  say("Same initial conditions as the interactive projectile (20 m/s at 50 degrees).");
+  say("Copy these full-precision values into the JavaScript column of your C1 table:");
+  for (const [name, value] of Object.entries(values)) {
+    const text = typeof value === "number" ? value.toPrecision(17) : value;
+    say(`  ${name.padEnd(16)} ${text}`, "ok");
+  }
+  console.log("C1 headless result (copy these full-precision values for comparison):");
+  console.table(values);
+  for (const [name, value] of Object.entries(values)) console.log(`${name} = ${value}`);
 }
 
 function row(label, got, ref, tol) {
@@ -185,7 +254,7 @@ function validate() {
   };
 
   for (const m of ["euler-cromer", "verlet"]) {
-    const r = runHeadless("projectile", m, DTv, 2.0);
+    const r = runHeadless("reference-projectile", m, DTv, 2.0);
     say("  -- " + m + "  (" + r.n + " steps) --", "dim");
     if (r.n !== 480) {
       say("  FAIL  step count = " + r.n + ", expected 480 " +
@@ -203,7 +272,7 @@ function validate() {
 
   say("");
   say("=== Euler-Cromer error vs. the Week 2 §5.5 closed form ===", "dim");
-  const ec = runHeadless("projectile", "euler-cromer", DTv, 2.0);
+  const ec = runHeadless("reference-projectile", "euler-cromer", DTv, 2.0);
   const yExact = 25 * Math.sin(45 * Math.PI / 180) * 2 - 0.5 * G * 4;
   const dyMeas = ec.y - yExact;
   const dyPred = -0.5 * G * 2.0 * DTv;
@@ -285,12 +354,18 @@ document.getElementById("pause").addEventListener("click", (e) => {
 });
 
 document.getElementById("reset").addEventListener("click", () => {
+  pendingLagObservation = null;
   resetSim();
   paused = false;
   document.getElementById("pause").textContent = "Pause";
 });
 
-for (const id of ["integrator", "scene", "dt"]) {
+document.getElementById("integrator").addEventListener("change", (e) => {
+  world.integrator = makeIntegrator(e.target.value);
+  hud.method = e.target.value;
+});
+
+for (const id of ["scene", "dt"]) {
   document.getElementById(id).addEventListener("change", () => {
     resetSim();
     paused = false;
@@ -299,6 +374,32 @@ for (const id of ["integrator", "scene", "dt"]) {
 }
 
 document.getElementById("validate").addEventListener("click", validate);
+document.getElementById("headless").addEventListener("click", runC1Headless);
+
+document.getElementById("induce-lag").addEventListener("click", () => {
+  if (world.meta.kind === "part-a") {
+    say("Select the spring or projectile scene before running the C2 lag test.", "bad");
+    return;
+  }
+  clearLog();
+  say(`C2 lag test | scene=${world.meta.kind} | integrator=${hud.method} | ` +
+      `mode=${timestepMode} | nominal DT=1/${hud.dtDenom} s`, "dim");
+  pendingLagObservation = {
+    mode: timestepMode,
+    time: world.time,
+    energy: world.totalEnergy()
+  };
+  const deadline = performance.now() + 500;
+  while (performance.now() < deadline) {}
+});
+
+document.getElementById("timestep-mode").addEventListener("change", (e) => {
+  timestepMode = e.target.value;
+  hud.timestepMode = timestepMode;
+  accumulator = 0;
+  pendingLagObservation = null;
+  lastTime = performance.now() / 1000;
+});
 
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space") { e.preventDefault(); document.getElementById("pause").click(); }
