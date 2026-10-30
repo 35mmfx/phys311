@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 9 Lesson — Structuring a JS Physics Engine</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .arch-diagram { background-color: #f8f9fa; border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; font-family: "SF Mono", "Consolas", monospace; font-size: 0.85em; line-height: 1.5; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h1>Week 9 -- Structuring a JS Physics Engine</h1>
+
+<div class="objectives">
+  <strong>&#127919; By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Organize a JavaScript project into ES6 modules with clean imports and exports</li>
+    <li>Port the <code>World</code> / <code>Body</code> / <code>Force</code> / <code>Integrator</code> architecture from Python to JavaScript</li>
+    <li>Separate the <strong>renderer</strong> from the physics so neither knows about the other</li>
+    <li>Implement a broad-phase &rarr; narrow-phase &rarr; resolution collision pipeline in real time</li>
+    <li>Display conservation-law diagnostics live as a HUD</li>
+    <li>Profile your loop and identify what actually costs time</li>
+  </ul>
+</div>
+
+
+<div class="key-idea">
+  <strong>&#128161; This week completes the port.</strong> Week 8 moved one body across. This week moves the 
+	architecture across, many bodies, a force registry, swappable integrators, collisions, and live diagnostics. When you finish, everything you built in seven weeks of Python will be running in a browser tab, and you'll be ready to make it interactive in Week 10.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; Modules: One File per Idea</h2>
+
+<p>Lab 8 probably lived mostly in one <code>main.js</code>. That won't scale. ES6 modules give you Python's import system with slightly different syntax:</p>
+
+<table>
+  <thead><tr><th>Python</th><th>JavaScript</th></tr></thead>
+  <tbody>
+    <tr><td><code>from vec2 import Vec2</code></td><td><code>import { Vec2 } from "./vec2.js";</code></td></tr>
+    <tr><td><code>import forces</code></td><td><code>import * as forces from "./forces.js";</code></td></tr>
+    <tr><td>(implicit &mdash; everything public)</td><td><code>export class Vec2 { ... }</code> &mdash; <strong>must</strong> export explicitly</td></tr>
+  </tbody>
+</table>
+
+<h3>1.1 &nbsp; A file layout that works</h3>
+
+<pre>
+labs/lab09/
+  index.html
+  style.css
+  main.js              <span class="comment">// wiring only: build a scene, start the loop</span>
+  engine/
+    vec2.js            <span class="comment">// Vec2                (from Lab 8)</span>
+    body.js            <span class="comment">// Body</span>
+    forces.js          <span class="comment">// Gravity, Drag, Spring, NewtonGravity</span>
+    integrators.js     <span class="comment">// EulerCromer, VelocityVerlet</span>
+    collisions.js      <span class="comment">// detection + resolution</span>
+    world.js           <span class="comment">// World: owns bodies, forces, integrator</span>
+  render/
+    camera.js          <span class="comment">// physics coords &harr; pixels  (from Lab 8)</span>
+    renderer.js        <span class="comment">// all ctx.* drawing lives here</span>
+    hud.js             <span class="comment">// diagnostics overlay</span>
+</pre>
+
+<div class="key-idea">
+  <strong>&#128161; The <code>engine/</code> vs. <code>render/</code> split is the most important line in this lesson.</strong> Nothing inside <code>engine/</code> is allowed to mention <code>canvas</code>, <code>ctx</code>, or pixels. Nothing inside <code>render/</code> is allowed to modify a body's state. If you keep that boundary clean, you can swap renderers, run headless tests, and reuse the whole engine in your final project. If you blur it, you'll be untangling it in Week 12 under deadline pressure.
+</div>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; Module gotchas.</strong> The <code>.js</code> extension is required in import paths (unlike Python). Paths must start with <code>./</code> or <code>../</code>. Modules are always strict mode, so undeclared variables throw errors &mdash; a feature, not a bug. And modules only work over HTTP: keep using <strong>Live Server</strong>.
+</div>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; The Architecture, in JavaScript</h2>
+
+<div class="arch-diagram">
+&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;&nbsp;&nbsp;&nbsp;&nbsp;&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;<br>
+&#9474;&nbsp;&nbsp;<strong>World</strong> (engine/world.js)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&nbsp;&nbsp;<strong>Renderer</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;<br>
+&#9474;&nbsp;&nbsp;&#8226; bodies[]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&nbsp;reads&nbsp;&#9474;&nbsp;&nbsp;&#8226; camera&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;<br>
+&#9474;&nbsp;&nbsp;&#8226; forces[]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&#9472;&#9472;&#9472;&#9472;&#9472;&#9658;&#9474;&nbsp;&nbsp;&#8226; draw(world)&nbsp;&nbsp;&nbsp;&#9474;<br>
+&#9474;&nbsp;&nbsp;&#8226; integrator&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&nbsp;never&nbsp;&#9474;&nbsp;&nbsp;&#8226; hud(world)&nbsp;&nbsp;&nbsp;&nbsp;&#9474;<br>
+&#9474;&nbsp;&nbsp;&#8226; collisionHandler&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;&nbsp;writes&nbsp;&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;<br>
+&#9474;&nbsp;&nbsp;&#8226; <strong>step(dt)</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#9474;<br>
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;
+</div>
+
+<h3>2.1 &nbsp; World.step(dt) &mdash; the whole engine in eight lines</h3>
+
+<pre>
+<span class="keyword">import</span> { EulerCromer } <span class="keyword">from</span> <span class="string">"./integrators.js"</span>;
+<span class="keyword">import</span> { resolveCollisions } <span class="keyword">from</span> <span class="string">"./collisions.js"</span>;
+
+<span class="keyword">export class</span> <span class="class">World</span> {
+  <span class="function">constructor</span>({ integrator = <span class="keyword">new</span> <span class="class">EulerCromer</span>(), bounds = <span class="keyword">null</span> } = {}) {
+    <span class="keyword">this</span>.bodies = [];
+    <span class="keyword">this</span>.forces = [];
+    <span class="keyword">this</span>.integrator = integrator;
+    <span class="keyword">this</span>.bounds = bounds;       <span class="comment">// {xMin, xMax, yMin, yMax} in meters</span>
+    <span class="keyword">this</span>.time = <span class="number">0</span>;
+    <span class="keyword">this</span>.restitution = <span class="number">0.9</span>;
+  }
+
+  <span class="function">add</span>(body)       { <span class="keyword">this</span>.bodies.push(body); <span class="keyword">return</span> body; }
+  <span class="function">addForce</span>(force) { <span class="keyword">this</span>.forces.push(force); <span class="keyword">return</span> force; }
+
+  <span class="function">step</span>(dt) {
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> <span class="keyword">this</span>.bodies) b.clearForce();      <span class="comment">// 1. reset</span>
+    <span class="keyword">for</span> (<span class="keyword">const</span> f <span class="keyword">of</span> <span class="keyword">this</span>.forces) f.apply(<span class="keyword">this</span>);         <span class="comment">// 2. accumulate</span>
+    <span class="keyword">this</span>.integrator.step(<span class="keyword">this</span>, dt);                   <span class="comment">// 3. integrate</span>
+    resolveCollisions(<span class="keyword">this</span>);                          <span class="comment">// 4. collide</span>
+    <span class="keyword">this</span>.time += dt;                                  <span class="comment">// 5. advance clock</span>
+  }
+
+  <span class="function">totalEnergy</span>() {
+    <span class="keyword">let</span> E = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> <span class="keyword">this</span>.bodies) E += b.kineticEnergy();
+    <span class="keyword">for</span> (<span class="keyword">const</span> f <span class="keyword">of</span> <span class="keyword">this</span>.forces) E += f.potentialEnergy?.(<span class="keyword">this</span>) ?? <span class="number">0</span>;
+    <span class="keyword">return</span> E;
+  }
+
+  <span class="function">totalMomentum</span>() {
+    <span class="keyword">const</span> p = <span class="keyword">new</span> <span class="class">Vec2</span>();
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> <span class="keyword">this</span>.bodies) p.addScaled(b.vel, b.m);
+    <span class="keyword">return</span> p;
+  }
+}
+</pre>
+
+<div class="physics-note">
+  <strong>&#128300; Recognize this?</strong> It is character-for-character the same five-stage loop as your Lab 7 <code>World.step()</code>. That's the payoff of building the Python prototype first: the hard design thinking was already done, and this week is transcription plus rendering. Note <code>f.potentialEnergy?.(this) ?? 0</code> &mdash; JavaScript's optional-call and nullish-coalescing operators let forces opt in to reporting PE without every force needing the method.
+</div>
+
+<h3>2.2 &nbsp; Forces: the same polymorphism</h3>
+
+<pre>
+<span class="keyword">export class</span> <span class="class">Gravity</span> {
+  <span class="function">constructor</span>(g = <span class="number">9.81</span>) { <span class="keyword">this</span>.g = g; }
+  <span class="function">apply</span>(world) {
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">if</span> (b.isStatic) <span class="keyword">continue</span>;
+      b.force.y -= b.m * <span class="keyword">this</span>.g;
+    }
+  }
+  <span class="function">potentialEnergy</span>(world) {
+    <span class="keyword">let</span> U = <span class="number">0</span>;
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) U += b.m * <span class="keyword">this</span>.g * b.pos.y;
+    <span class="keyword">return</span> U;
+  }
+}
+
+<span class="keyword">export class</span> <span class="class">Drag</span> {
+  <span class="function">constructor</span>(c = <span class="number">0.1</span>) { <span class="keyword">this</span>.c = c; }
+  <span class="function">apply</span>(world) {
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">const</span> speed = b.vel.length();
+      <span class="keyword">if</span> (speed &gt; <span class="number">0</span>) b.force.addScaled(b.vel, -<span class="keyword">this</span>.c * speed);
+    }
+  }
+  <span class="comment">// no potentialEnergy &mdash; drag is non-conservative. That's the point.</span>
+}
+
+<span class="keyword">export class</span> <span class="class">NewtonGravity</span> {
+  <span class="function">constructor</span>(G = <span class="number">1</span>, softening = <span class="number">0.01</span>) { <span class="keyword">this</span>.G = G; <span class="keyword">this</span>.eps = softening; }
+  <span class="function">apply</span>(world) {
+    <span class="keyword">const</span> bs = world.bodies;
+    <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; bs.length; i++) {
+      <span class="keyword">for</span> (<span class="keyword">let</span> j = i + <span class="number">1</span>; j &lt; bs.length; j++) {
+        <span class="keyword">const</span> d = bs[j].pos.sub(bs[i].pos);
+        <span class="keyword">const</span> r2 = d.lengthSq() + <span class="keyword">this</span>.eps ** <span class="number">2</span>;
+        <span class="keyword">const</span> F = <span class="keyword">this</span>.G * bs[i].m * bs[j].m / (r2 * Math.sqrt(r2));
+        bs[i].force.addScaled(d,  F);
+        bs[j].force.addScaled(d, -F);   <span class="comment">// Newton's third law, for free</span>
+      }
+    }
+  }
+}
+</pre>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; Softening isn't optional in the browser.</strong> Two bodies passing very close give r &rarr; 0 and a force &rarr; &infin;, which sends a body to infinity in one frame and then to <code>NaN</code>. In Python you saw a bad plot; in a live animation the whole scene vanishes and never returns, because <code>NaN</code> propagates forever. The <code>+ eps&sup2;</code> term caps the force at close range. Add it now.
+</div>
+
+<h3>2.3 &nbsp; Integrators as objects</h3>
+
+<pre>
+<span class="keyword">export class</span> <span class="class">EulerCromer</span> {
+  <span class="function">step</span>(world, dt) {
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">if</span> (b.isStatic) <span class="keyword">continue</span>;
+      b.acc.set(b.force.x / b.m, b.force.y / b.m);
+      b.vel.addScaled(b.acc, dt);      <span class="comment">// velocity first</span>
+      b.pos.addScaled(b.vel, dt);      <span class="comment">// then position</span>
+    }
+  }
+}
+
+<span class="keyword">export class</span> <span class="class">VelocityVerlet</span> {
+  <span class="function">step</span>(world, dt) {
+    <span class="comment">// half-kick, drift, recompute forces, half-kick</span>
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">if</span> (b.isStatic) <span class="keyword">continue</span>;
+      b.acc.set(b.force.x / b.m, b.force.y / b.m);
+      b.vel.addScaled(b.acc, <span class="number">0.5</span> * dt);
+      b.pos.addScaled(b.vel, dt);
+    }
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) b.clearForce();
+    <span class="keyword">for</span> (<span class="keyword">const</span> f <span class="keyword">of</span> world.forces) f.apply(world);
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">if</span> (b.isStatic) <span class="keyword">continue</span>;
+      b.acc.set(b.force.x / b.m, b.force.y / b.m);
+      b.vel.addScaled(b.acc, <span class="number">0.5</span> * dt);
+    }
+  }
+}
+</pre>
+
+<div class="key-idea">
+  <strong>&#128161; Swapping integrators is now one line:</strong> <code>world.integrator = new VelocityVerlet();</code>. That's the whole reason for the object wrapper. In Week 10 you'll wire it to a dropdown and let users flip it mid-simulation &mdash; turning your Week 2 integrator comparison into something anyone can play with.
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; The Collision Pipeline, Live</h2>
+
+<p>Week 4 gave you the physics. Now it runs 120 times a second, so the structure matters:</p>
+
+<table>
+  <thead><tr><th>Phase</th><th>Question</th><th>Cost</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Broad</strong></td><td>Which pairs might be touching?</td><td>Cheap &mdash; reject most pairs fast</td></tr>
+    <tr><td><strong>Narrow</strong></td><td>Are they actually overlapping, and by how much?</td><td>Moderate &mdash; exact test</td></tr>
+    <tr><td><strong>Resolution</strong></td><td>Separate them, then apply the impulse</td><td>Cheap &mdash; but order matters</td></tr>
+  </tbody>
+</table>
+
+<h3>3.1 &nbsp; Circle&ndash;circle resolution</h3>
+
+<pre>
+<span class="keyword">export function</span> <span class="function">resolvePair</span>(a, b, e = <span class="number">0.9</span>) {
+  <span class="keyword">const</span> d = b.pos.sub(a.pos);
+  <span class="keyword">const</span> distSq = d.lengthSq();
+  <span class="keyword">const</span> rSum = a.radius + b.radius;
+  <span class="keyword">if</span> (distSq &gt;= rSum * rSum || distSq === <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">false</span>;   <span class="comment">// no contact</span>
+
+  <span class="keyword">const</span> dist = Math.sqrt(distSq);
+  <span class="keyword">const</span> n = d.mul(<span class="number">1</span> / dist);            <span class="comment">// unit normal, a &rarr; b</span>
+
+  <span class="comment">// --- 1. Positional correction: push them apart (no overlap!) ---</span>
+  <span class="keyword">const</span> overlap = rSum - dist;
+  <span class="keyword">const</span> invA = a.isStatic ? <span class="number">0</span> : <span class="number">1</span> / a.m;
+  <span class="keyword">const</span> invB = b.isStatic ? <span class="number">0</span> : <span class="number">1</span> / b.m;
+  <span class="keyword">const</span> invSum = invA + invB;
+  <span class="keyword">if</span> (invSum === <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">false</span>;          <span class="comment">// two static bodies</span>
+  a.pos.addScaled(n, -overlap * (invA / invSum));
+  b.pos.addScaled(n,  overlap * (invB / invSum));
+
+  <span class="comment">// --- 2. Impulse: only if they're approaching ---</span>
+  <span class="keyword">const</span> relVel = b.vel.sub(a.vel);
+  <span class="keyword">const</span> vn = relVel.dot(n);
+  <span class="keyword">if</span> (vn &gt; <span class="number">0</span>) <span class="keyword">return</span> <span class="keyword">true</span>;                <span class="comment">// separating &mdash; leave alone</span>
+
+  <span class="keyword">const</span> J = -(<span class="number">1</span> + e) * vn / invSum;      <span class="comment">// impulse magnitude</span>
+  a.vel.addScaled(n, -J * invA);
+  b.vel.addScaled(n,  J * invB);
+  <span class="keyword">return</span> <span class="keyword">true</span>;
+}
+</pre>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; The <code>if (vn &gt; 0) return</code> guard is essential.</strong> Without it, bodies that are overlapping but already moving apart get hit with another impulse, which shoves them back together. The result is the classic "jitter" &mdash; objects vibrating and buzzing instead of resting. This one line is the difference between a demo that looks professional and one that looks broken.
+</div>
+
+<div class="physics-note">
+  <strong>&#128300; Why separate positional correction from the impulse?</strong> They fix different errors. Position correction fixes a discretization artifact &mdash; the bodies overlap only because we stepped past the true contact instant. The impulse is the physics &mdash; it enforces the restitution law from Week 4. Conflating them (a common shortcut) either leaves objects sinking into each other or injects fake energy.
+</div>
+
+<h3>3.2 &nbsp; Broad phase: when O(n&sup2;) stops being fine</h3>
+
+<p>Checking all pairs is n(n&minus;1)/2 tests. At 120 physics steps per second:</p>
+
+<table>
+  <thead><tr><th>Bodies</th><th>Pairs / step</th><th>Tests / second</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>20</td><td>190</td><td>~23,000</td><td>Trivial</td></tr>
+    <tr><td>100</td><td>4,950</td><td>~594,000</td><td>Fine</td></tr>
+    <tr><td>500</td><td>124,750</td><td>~15,000,000</td><td>Starting to hurt</td></tr>
+    <tr><td>2000</td><td>1,999,000</td><td>~240,000,000</td><td>Unusable</td></tr>
+  </tbody>
+</table>
+
+<p>If you need more than a few hundred bodies, add a <strong>uniform grid</strong>: bucket bodies by cell, test only within a cell and its neighbors.</p>
+
+<pre>
+<span class="keyword">export function</span> <span class="function">gridPairs</span>(bodies, cellSize) {
+  <span class="keyword">const</span> cells = <span class="keyword">new</span> Map();
+  <span class="keyword">const</span> key = (i, j) =&gt; `${i},${j}`;
+
+  <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> bodies) {
+    <span class="keyword">const</span> i = Math.floor(b.pos.x / cellSize);
+    <span class="keyword">const</span> j = Math.floor(b.pos.y / cellSize);
+    <span class="keyword">const</span> k = key(i, j);
+    <span class="keyword">if</span> (!cells.has(k)) cells.set(k, []);
+    cells.get(k).push(b);
+    b._ci = i; b._cj = j;
+  }
+
+  <span class="keyword">const</span> pairs = [];
+  <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> bodies) {
+    <span class="keyword">for</span> (<span class="keyword">let</span> di = -<span class="number">1</span>; di &lt;= <span class="number">1</span>; di++)
+      <span class="keyword">for</span> (<span class="keyword">let</span> dj = -<span class="number">1</span>; dj &lt;= <span class="number">1</span>; dj++) {
+        <span class="keyword">const</span> bucket = cells.get(key(b._ci + di, b._cj + dj));
+        <span class="keyword">if</span> (!bucket) <span class="keyword">continue</span>;
+        <span class="keyword">for</span> (<span class="keyword">const</span> o <span class="keyword">of</span> bucket) <span class="keyword">if</span> (b !== o &amp;&amp; b.id &lt; o.id) pairs.push([b, o]);
+      }
+  }
+  <span class="keyword">return</span> pairs;
+}
+</pre>
+
+<div class="key-idea">
+  <strong>&#128161; Choose <code>cellSize</code> &asymp; 2&times; the largest body radius.</strong> Too small and bodies span many cells; too large and every body lands in the same bucket, giving you O(n&sup2;) with extra bookkeeping. And note: <strong>don't build this until you measure that you need it.</strong> Profile first (&sect;5), optimize second.
+</div>
+
+<h3>3.3 &nbsp; Tunneling: the bug that only appears in real time</h3>
+
+<p>A fast body can move past a thin wall in a single step, so the overlap test never fires and it sails straight through. This is <strong>tunneling</strong>, and it's the most common "my collisions randomly fail" complaint.</p>
+
+<div class="eq">Tunneling occurs when |v| &middot; &Delta;t &gt; (body diameter + wall thickness)</div>
+
+<table>
+  <thead><tr><th>Fix</th><th>Cost</th><th>When to use</th></tr></thead>
+  <tbody>
+    <tr><td>Smaller DT (e.g. 1/240)</td><td>More steps/frame</td><td>Simplest; usually enough</td></tr>
+    <tr><td>Thicker walls</td><td>Free</td><td>Always do this &mdash; make walls at least a body-diameter thick</td></tr>
+    <tr><td>Speed cap on bodies</td><td>Free, slightly unphysical</td><td>Games; document that you did it</td></tr>
+    <tr><td>Swept / continuous detection</td><td>Complex</td><td>Only if you truly need bullets</td></tr>
+  </tbody>
+</table>
+
+<div class="try-it">
+  <strong>&#9997;&#65039; Try it:</strong> With DT = 1/60 and a body of radius 0.2 m, at what speed does it start tunneling through a 0.1 m-thick wall? Compute it, then verify in your simulation by ramping the launch speed until the body escapes. Predicting a bug before you see it is the mark of understanding the method.
+</div>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; The Renderer and the Live HUD</h2>
+
+<p>The renderer's contract: read the world, write to the canvas, change nothing.</p>
+
+<pre>
+<span class="keyword">export class</span> <span class="class">Renderer</span> {
+  <span class="function">constructor</span>(canvas, camera) {
+    <span class="keyword">this</span>.ctx = canvas.getContext(<span class="string">"2d"</span>);
+    <span class="keyword">this</span>.canvas = canvas;
+    <span class="keyword">this</span>.camera = camera;
+  }
+
+  <span class="function">draw</span>(world) {
+    <span class="keyword">const</span> { ctx, canvas, camera } = <span class="keyword">this</span>;
+    ctx.clearRect(<span class="number">0</span>, <span class="number">0</span>, canvas.width, canvas.height);
+
+    <span class="keyword">for</span> (<span class="keyword">const</span> b <span class="keyword">of</span> world.bodies) {
+      <span class="keyword">const</span> p = camera.toScreen(b.pos);
+      ctx.fillStyle = b.color ?? <span class="string">"#ff8200"</span>;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, b.radius * camera.scale, <span class="number">0</span>, <span class="number">2</span> * Math.PI);
+      ctx.fill();
+    }
+  }
+}
+</pre>
+
+<h3>4.1 &nbsp; Conservation laws as a live readout</h3>
+
+<pre>
+<span class="keyword">export function</span> <span class="function">drawHUD</span>(ctx, world, E0, p0) {
+  <span class="keyword">const</span> E = world.totalEnergy();
+  <span class="keyword">const</span> p = world.totalMomentum();
+  <span class="keyword">const</span> dE = E0 === <span class="number">0</span> ? <span class="number">0</span> : (E - E0) / Math.abs(E0);
+
+  <span class="keyword">const</span> lines = [
+    `t        = ${world.time.toFixed(<span class="number">2</span>)} s`,
+    `bodies   = ${world.bodies.length}`,
+    `E        = ${E.toFixed(<span class="number">4</span>)} J`,
+    `dE/E0    = ${(dE * <span class="number">100</span>).toFixed(<span class="number">3</span>)} %`,
+    `|p|      = ${p.length().toFixed(<span class="number">4</span>)}`,
+  ];
+
+  ctx.font = <span class="string">"13px monospace"</span>;
+  ctx.fillStyle = Math.abs(dE) &gt; <span class="number">0.01</span> ? <span class="string">"#dc3545"</span> : <span class="string">"#2d3b45"</span>;  <span class="comment">// red if drifting!</span>
+  lines.forEach((line, i) =&gt; ctx.fillText(line, <span class="number">12</span>, <span class="number">20</span> + i * <span class="number">17</span>));
+}
+</pre>
+
+<div class="key-idea">
+  <strong>&#128161; Turning the HUD red past 1% drift is the single best debugging feature you can build.</strong> It's your entire Block 1 validation philosophy compressed into one visual signal, running continuously. You'll catch bugs in seconds that would take a full Python run and a plot to notice &mdash; and a viewer of your final project can see, at a glance, that your physics is honest.
+</div>
+
+<div class="physics-note">
+  <strong>&#128300; Which law catches which bug.</strong> <strong>Momentum</strong> is the sharpest collision test: with no external forces, <code>|p|</code> must be constant to round-off through any number of collisions. If it jumps, your impulse is asymmetric &mdash; you applied it to one body and not the other, or used the wrong sign. <strong>Energy</strong> catches integrator problems and, with e = 1, catches collision-code errors that momentum can't see.
+</div>
+
+<!-- ============================================================ -->
+<h2>5 &nbsp; Performance: Measure, Then Optimize</h2>
+
+<p>You have a 16.7 ms budget per frame at 60 fps. Physics, collisions, and rendering all share it.</p>
+
+<pre>
+<span class="keyword">const</span> t0 = performance.now();
+<span class="keyword">while</span> (acc &gt;= DT) { world.step(DT); acc -= DT; }
+<span class="keyword">const</span> tPhysics = performance.now() - t0;
+
+<span class="keyword">const</span> t1 = performance.now();
+renderer.draw(world);
+<span class="keyword">const</span> tRender = performance.now() - t1;
+</pre>
+
+<p>Display both on the HUD. Now you know where the time actually goes &mdash; and students are usually surprised.</p>
+
+<table>
+  <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Physics time dominates</td><td>O(n&sup2;) pair loops</td><td>Spatial grid (&sect;3.2)</td></tr>
+    <tr><td>Render time dominates</td><td>Too many <code>beginPath</code>/state changes; huge trails</td><td>Batch by color; cap trail length</td></tr>
+    <tr><td>Smooth, then sudden stutter</td><td>Garbage collection</td><td>Use in-place <code>Vec2</code> ops in the hot loop</td></tr>
+    <tr><td>Everything freezes permanently</td><td><code>NaN</code> in a position</td><td>Add softening; guard divide-by-zero; check with <code>Number.isFinite</code></td></tr>
+  </tbody>
+</table>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; <code>NaN</code> is permanent.</strong> Any arithmetic involving <code>NaN</code> produces <code>NaN</code>, so one bad division silently corrupts a body forever and it simply disappears from the screen. Add a guard during development:
+  <pre style="margin-top:10px">
+<span class="keyword">if</span> (!Number.isFinite(b.pos.x) || !Number.isFinite(b.pos.y)) {
+  console.error(<span class="string">"NaN body!"</span>, b);
+  debugger;   <span class="comment">// pauses execution so you can inspect state</span>
+}</pre>
+</div>
+
+<div class="try-it">
+  <strong>&#9997;&#65039; Try it:</strong> Build a scene with 50 bouncing balls and read your physics/render timings. Now bump it to 200 and to 500. Where does the frame budget break? Which number grew faster &mdash; physics or render? Predict the answer before you measure.
+</div>
+
+<!-- ============================================================ -->
+<h2>6 &nbsp; Where You Are Now</h2>
+
+<table>
+  <thead><tr><th>Lab 7 (Python)</th><th>Lab 9 (JavaScript)</th><th>Change</th></tr></thead>
+  <tbody>
+    <tr><td><code>World.step(dt)</code></td><td><code>World.step(dt)</code></td><td>Identical logic</td></tr>
+    <tr><td>Force objects with <code>apply()</code></td><td>Same</td><td>Syntax only</td></tr>
+    <tr><td>Swappable integrators</td><td>Same</td><td>Syntax only</td></tr>
+    <tr><td>Collision detect &rarr; resolve</td><td>Same + broad phase</td><td>Real-time pressure adds structure</td></tr>
+    <tr><td>Recorder &rarr; Matplotlib</td><td>Renderer &rarr; Canvas</td><td><strong>Replaced</strong></td></tr>
+    <tr><td>Energy plot at end of run</td><td>Live HUD</td><td><strong>Better</strong></td></tr>
+    <tr><td>Fixed dt by construction</td><td>Fixed dt by accumulator</td><td>Now must be enforced</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>&#128161; What's left.</strong> Your engine is complete and validated. It has no user. Week 10 adds mouse, keyboard, and UI controls &mdash; turning a simulation you watch into a tool someone can operate. That's the last gap between "a lab" and "something worth publishing."
+</div>
+
+<div class="try-it">
+  <strong>&#9997;&#65039; Before the lab:</strong> Sketch your module dependency graph on paper &mdash; which file imports which. If any arrow points from <code>engine/</code> into <code>render/</code>, you have a layering violation. Find it now, while it's a five-minute fix.
+</div>
+
+<!-- ============================================================ -->
+<h2>Deliverables This Week</h2>
+
+<ul>
+  <li><strong>Lab 9 &mdash; Multi-Body Browser Simulation:</strong> the full engine, many bodies, collisions, live diagnostics</li>
+  <li><strong>Discussion:</strong> Show Your Simulation &mdash; post a link or screen recording and give feedback to two peers</li>
+  <li><strong>Journal entry:</strong> What did porting reveal about your Python design? What would you architect differently if you started over?</li>
+</ul>
+
+</body>
+</html>

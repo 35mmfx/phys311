@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lab 9 — Multi-Body Browser Simulation</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610  "; font-size: 1.15em; }
+</style>
+</head>
+<body>
+
+<h1>Code lab 9 &mdash; Multi-Body Browser Simulation</h1>
+
+<div class="concept-box">
+  <strong>&#128203; Lab Overview</strong><br>
+  <strong>Due:</strong> End of Week 9 (see Canvas calendar for exact date/time)<br>
+  <strong>Submit:</strong> Live GitHub Pages link + write-up (PDF or Markdown) via Canvas<br>
+  <strong>Also:</strong> Commit and push to <code>labs/lab09/</code> in your <code>phys311</code> repo<br>
+  <strong>Points:</strong> 100 (+ up to 10 bonus)<br>
+  <strong>Estimated time:</strong> 6&ndash;7 hours
+</div>
+
+<p>This week your Lab 7 engine finishes its journey into the browser. You'll build the modular <code>World</code>/<code>Body</code>/<code>Force</code>/<code>Integrator</code> architecture in JavaScript, add a real collision pipeline, and prove it's correct with a live conservation-law HUD. By the end, you'll have a running, public, multi-body physics simulation.</p>
+
+<div class="key-idea">
+  <strong>&#128161; The big idea this week:</strong> Architecture is what makes the difference between a demo and an engine. You should be able to build a completely new scene &mdash; different bodies, different forces &mdash; by editing <code>main.js</code> alone, without touching a single file in <code>engine/</code>. Your Part C scenes will test exactly that.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Lab 8 &mdash; Port Your Integrator (you'll reuse <code>Vec2</code>, the camera, and the accumulator verbatim)</li>
+  <li>Lab 7 &mdash; Python Engine (your architectural reference)</li>
+  <li>Week 9 Lesson: Structuring a JS Physics Engine</li>
+  <li>Your module dependency sketch from the lesson's final "Try it"</li>
+</ul>
+
+<h3>Getting Started</h3>
+<ol>
+  <li>Create <code>labs/lab09/</code> with subfolders <code>engine/</code> and <code>render/</code></li>
+  <li>Copy <code>vec2.js</code> and your camera code over from Lab 8 &mdash; they should need no changes</li>
+  <li>Confirm Live Server works before writing physics</li>
+</ol>
+
+<div class="physics-note">
+  <strong>&#128300; Graded on architecture, like Lab 7.</strong> Clean module boundaries, sensible names, and the engine/render separation carry real points here. You are building the codebase you will spend Weeks 11&ndash;14 living inside. Every shortcut now is a tax on your final project.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A &mdash; The Modular Engine (30 points)</h2>
+<span class="part-label part-a">GUIDED &mdash; Follow the Lesson</span>
+
+<h3>What to do</h3>
+<ol>
+  <li><strong>Build the module structure</strong> from the lesson: <code>engine/</code> containing <code>vec2.js</code>, <code>body.js</code>, <code>forces.js</code>, <code>integrators.js</code>, <code>collisions.js</code>, <code>world.js</code>; <code>render/</code> containing <code>camera.js</code>, <code>renderer.js</code>, <code>hud.js</code>.</li>
+  <li><strong>Implement <code>World</code></strong> with <code>bodies[]</code>, <code>forces[]</code>, a swappable <code>integrator</code>, and a <code>step(dt)</code> that runs the five-stage loop: clear forces &rarr; apply forces &rarr; integrate &rarr; resolve collisions &rarr; advance time.</li>
+  <li><strong>Implement at least three forces</strong>, each with an <code>apply(world)</code> method: <code>Gravity</code> (uniform), plus two of <code>Drag</code> / <code>Spring</code> / <code>NewtonGravity</code>. Give conservative forces a <code>potentialEnergy(world)</code> method.</li>
+  <li><strong>Implement both integrators</strong> (<code>EulerCromer</code>, <code>VelocityVerlet</code>) sharing a <code>step(world, dt)</code> signature.</li>
+  <li><strong>Implement the renderer</strong> in <code>render/renderer.js</code>. Enforce the rule: no file in <code>engine/</code> mentions <code>canvas</code>, <code>ctx</code>, or pixels.</li>
+  <li><strong>Keep <code>main.js</code> thin</strong> &mdash; it should only construct a scene, build the world, and run the accumulator loop.</li>
+</ol>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; The layering rule is graded and is checked by inspection.</strong> Search your <code>engine/</code> folder for the strings <code>ctx</code>, <code>canvas</code>, and <code>document</code>. If any appear, you have a violation. The test that matters: could you run your engine in a Node script with no browser at all? It should be yes.
+</div>
+
+<details><summary>&#128161; Hint: giving bodies stable IDs</summary>
+<p>Collision code and the grid broad phase both need to avoid testing a pair twice. Give each body a unique integer at construction:</p>
+<pre>
+<span class="keyword">let</span> _nextId = <span class="number">0</span>;
+<span class="keyword">export class</span> <span class="class">Body</span> {
+  <span class="function">constructor</span>(opts) { <span class="keyword">this</span>.id = _nextId++; <span class="comment">/* ... */</span> }
+}
+</pre>
+<p>Then <code>if (a.id &lt; b.id)</code> guarantees each pair is considered exactly once.</p></details>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B &mdash; Collisions and Live Validation (35 points)</h2>
+<span class="part-label part-b">GUIDED &rarr; INDEPENDENT</span>
+
+<h3>B1 &mdash; The collision pipeline (18 pts)</h3>
+<ol>
+  <li><strong>Implement wall collisions</strong> against world <code>bounds</code>, with restitution and positional correction (clamp the position, then reflect the velocity).</li>
+  <li><strong>Implement circle&ndash;circle collisions</strong> with the three required pieces from the lesson: positional correction weighted by inverse mass, the <code>vn &gt; 0</code> separating guard, and the restitution impulse.</li>
+  <li><strong>Support static bodies</strong> via an <code>isStatic</code> flag (treated as infinite mass &mdash; inverse mass zero). Use one as an immovable obstacle in a scene.</li>
+  <li><strong>Demonstrate the jitter bug deliberately.</strong> Comment out the <code>vn &gt; 0</code> guard, record what happens (screenshot or 5-second recording), restore it. Explain in 2&ndash;3 sentences why the guard fixes it.</li>
+</ol>
+
+<h3>B2 &mdash; The conservation HUD (17 pts)</h3>
+<ol>
+  <li><strong>Display live:</strong> <code>t</code>, body count, <code>E_total</code>, fractional drift <code>(E &minus; E&#8320;)/|E&#8320;|</code> as a percentage, <code>|p|</code>, fps, and physics-vs-render timing in ms.</li>
+  <li><strong>Color-code the drift</strong> &mdash; turn the readout red when |&Delta;E/E&#8320;| exceeds 1%.</li>
+  <li><strong>Run the momentum test:</strong> build a scene with no external forces (no gravity), e = 1, and 20 balls in a box. Total momentum must stay constant to round-off through hundreds of collisions. Report <code>|p|</code> at t = 0 and t = 60 s.</li>
+  <li><strong>Run the energy test:</strong> same scene, e = 1. Report <code>E_total</code> at t = 0 and t = 60 s and the fractional drift.</li>
+  <li><strong>Then set e = 0.8</strong> and confirm energy now decreases monotonically while momentum is still conserved. Explain in 2&ndash;3 sentences why the two laws behave differently.</li>
+</ol>
+
+<div class="physics-note">
+  <strong>&#128300; This is the sharpest test in the whole course.</strong> In an isolated box with elastic collisions, momentum conservation is exact &mdash; not approximate. Round-off only. If your <code>|p|</code> drifts even in the third decimal, you have a genuine asymmetry in your impulse code, and no amount of "it looks right" fixes that. Chase it down.
+</div>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; Careful with e = 1 plus gravity.</strong> Positional correction slightly changes potential energy, so a perfectly elastic ball bouncing under gravity can creep upward or downward over time. That's why the momentum and energy tests above specify <strong>no gravity</strong> &mdash; it isolates the collision code from the integrator. Test one thing at a time; that's the Block 1 lesson applied.
+</div>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C &mdash; Three Scenes from One Engine (35 points)</h2>
+<span class="part-label part-c">INDEPENDENT</span>
+
+<p>Prove the architecture works by building three genuinely different simulations that share identical engine code. A scene-selector dropdown or buttons should switch between them at runtime.</p>
+
+<table>
+  <thead><tr><th>Scene</th><th>Must include</th><th>Diagnostic to show</th><th>Pts</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1. Billiards / ball pit</strong><br>(Week 4 physics)</td><td>&ge;20 circles in a box, wall + pair collisions, adjustable e</td><td>Momentum conserved; energy monotonically decreasing for e &lt; 1</td><td>12</td></tr>
+    <tr><td><strong>2. Gravitational N-body</strong><br>(Week 5 physics)</td><td><code>NewtonGravity</code> with softening, Velocity Verlet, 3&ndash;10 bodies, motion trails</td><td>Energy bounded &amp; oscillating, not drifting, over &ge;60 s</td><td>12</td></tr>
+    <tr><td><strong>3. Your choice</strong></td><td>A spring network, a pendulum chain, a rolling/ramp scene, a projectile range-finder &mdash; anything using a force or system from Blocks 1&ndash;2</td><td>An appropriate conservation check, justified in your write-up</td><td>11</td></tr>
+  </tbody>
+</table>
+
+<h3>Requirements for all three</h3>
+<ol>
+  <li><strong>Same engine, zero changes.</strong> Scenes live in <code>main.js</code> (or a <code>scenes.js</code> outside <code>engine/</code>). If you had to modify an engine file to make a scene work, say so honestly in the write-up and explain what the design missed &mdash; honest analysis earns most of the credit back.</li>
+  <li><strong>Runtime integrator switch</strong> available in every scene.</li>
+  <li><strong>The HUD is visible</strong> and accurate in every scene.</li>
+  <li><strong>Scene 2 must run for at least 60 seconds without a body escaping to infinity or producing <code>NaN</code>.</strong> If it does, fix your softening and time step &mdash; don't just restart it.</li>
+</ol>
+
+<h3>Performance report (required)</h3>
+<ol>
+  <li><strong>Scale Scene 1</strong> to 20, 50, 100, and 200 bodies. Record physics ms, render ms, and fps for each.</li>
+  <li><strong>Present a table and identify the bottleneck.</strong> Which grew faster, and does that match the O(n&sup2;) prediction from the lesson?</li>
+  <li><strong>State the largest body count your machine sustains at 60 fps</strong>, and what you would optimize first to raise it.</li>
+</ol>
+
+<!-- ============================ BONUS ============================ -->
+<div class="bonus-box">
+  <h3 style="margin-top:0">&#11088; Bonus &mdash; Choose One (up to 10 points)</h3>
+  <ul>
+    <li><strong>Spatial grid broad phase (10 pts).</strong> Implement the uniform grid from the lesson. Show a before/after timing table at 200 and 500 bodies, and report the speedup. Verify the grid version produces the same physics (momentum still conserved).</li>
+    <li><strong>Rotational bodies (10 pts).</strong> Port your Week 6 rigid-body work: add <code>theta</code>, <code>omega</code>, <code>I</code>, and torque to <code>Body</code>; draw a radius line so rotation is visible; add angular momentum to the HUD and demonstrate it's conserved for a torque-free scene.</li>
+    <li><strong>Deterministic replay (10 pts).</strong> Add a seeded pseudo-random generator and a "replay" button that re-runs a scene from identical initial conditions. Show that two runs produce bit-identical final states &mdash; the ultimate proof your fixed timestep works.</li>
+  </ul>
+</div>
+
+<!-- ============================ DELIVERABLES ============================ -->
+<div class="deliverable-box">
+  <h3 style="margin-top:0">&#128230; What to Submit</h3>
+  <p><strong>1. Code, pushed to <code>labs/lab09/</code>:</strong></p>
+  <ul class="checklist">
+    <li><code>index.html</code>, <code>style.css</code>, <code>main.js</code></li>
+    <li><code>engine/</code> &mdash; six modules, no rendering code anywhere inside</li>
+    <li><code>render/</code> &mdash; camera, renderer, HUD</li>
+    <li><code>README.md</code> &mdash; what each scene shows, how to switch scenes, what controls exist</li>
+  </ul>
+  <p><strong>2. Write-up (PDF or Markdown) via Canvas:</strong></p>
+  <ul class="checklist">
+    <li>A module dependency diagram (ASCII, Mermaid, or a photo of a sketch)</li>
+    <li>Jitter-bug demonstration + explanation (B1)</li>
+    <li>Momentum and energy test results, all three conditions (B2)</li>
+    <li>One screenshot per scene with the HUD legible (C)</li>
+    <li>The performance scaling table + bottleneck analysis (C)</li>
+    <li>Honest note on any engine changes a scene forced</li>
+  </ul>
+  <p style="margin-bottom:0"><strong>3. Live GitHub Pages link</strong> &mdash; required this week, not optional.</p>
+</div>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; Before submitting:</strong> open your deployed link in a private window, let each scene run for 60 seconds, and confirm the Console is clean and no body has vanished. Deployed-and-broken scores the same as not submitted.
+</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+  <h3 style="margin-top:0">&#128203; Grading Rubric (100 points + 10 bonus)</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Points</th><th>What earns full credit</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A1.</strong> Module structure &amp; clean imports</td><td>8</td><td>Files split as specified; explicit exports; no circular imports</td></tr>
+      <tr><td><strong>A2.</strong> <code>World</code> with five-stage <code>step(dt)</code></td><td>8</td><td>Force accumulator pattern correct; energy &amp; momentum methods present</td></tr>
+      <tr><td><strong>A3.</strong> Three+ forces, polymorphic <code>apply()</code></td><td>7</td><td>World never checks force type; conservative forces report PE</td></tr>
+      <tr><td><strong>A4.</strong> Engine/render separation</td><td>7</td><td>No <code>ctx</code>/<code>canvas</code>/<code>document</code> anywhere in <code>engine/</code></td></tr>
+      <tr><td><strong>B1.</strong> Collision pipeline</td><td>18</td><td>Walls + pairs; inverse-mass positional correction; separating guard; static bodies; jitter demo &amp; explanation</td></tr>
+      <tr><td><strong>B2.</strong> Conservation HUD &amp; validation</td><td>17</td><td>All quantities live; red-drift warning; momentum conserved to round-off; energy results reported for both e values with correct explanation</td></tr>
+      <tr><td><strong>C1.</strong> Scene 1 &mdash; collisions</td><td>12</td><td>&ge;20 bodies, stable, adjustable e, diagnostics correct</td></tr>
+      <tr><td><strong>C2.</strong> Scene 2 &mdash; N-body gravity</td><td>12</td><td>Runs &ge;60 s with no escape or <code>NaN</code>; Verlet; energy bounded not drifting</td></tr>
+      <tr><td><strong>C3.</strong> Scene 3 &mdash; your choice</td><td>11</td><td>Genuinely different physics; appropriate diagnostic chosen and justified</td></tr>
+      <tr><td colspan="3" style="background:#f0f7ff"><strong>Cross-cutting</strong></td></tr>
+      <tr><td>Performance report</td><td>included above</td><td>Table complete; bottleneck correctly identified against O(n&sup2;) expectation</td></tr>
+      <tr><td>Deployed link works</td><td>required</td><td>&minus;15 if the live link is broken or errors on load</td></tr>
+      <tr><td>Code quality</td><td>&minus;0 to &minus;5</td><td>Naming, comments, no dead code, consistent Vec2 conventions</td></tr>
+      <tr><td><strong>Bonus.</strong> Grid / rotation / replay</td><td>+10</td><td>Working, measured, and verified not to change the physics</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="key-idea">
+  <strong>&#128161; Looking ahead:</strong> Week 10 adds the user &mdash; mouse, keyboard, sliders, and pause/reset &mdash; and ends with the <strong>Block 3 Checkpoint</strong>. Whatever you build cleanly this week becomes the foundation of your final project. Several students each term end up submitting a polished descendant of their Lab 9 engine as their 
+	final project.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lab 9 - Modular Physics Engine</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Lab 9: Modular Physics Engine</h1>
+        <p>Three simulations, one reusable physics engine.</p>
+      </header>
+
+      <section class="layout" aria-label="Physics simulation and controls">
+        <div class="simulation-column">
+          <div class="toolbar">
+            <label>
+              Scene
+              <select id="scene">
+                <option value="billiards">Billiards / ball pit</option>
+                <option value="gravity">Three-body gravity</option>
+                <option value="springs">Spring network</option>
+                <option value="jitter">Collision guard demonstration</option>
+                <option value="rotation">Torque-free rotation</option>
+              </select>
+            </label>
+            <label>
+              Integrator
+              <select id="integrator">
+                <option value="EulerCromer">Euler-Cromer</option>
+                <option value="VelocityVerlet" selected>Velocity Verlet</option>
+              </select>
+            </label>
+          </div>
+          <div id="hud" aria-live="polite"></div>
+          <canvas id="simulation" aria-label="Physics simulation canvas"></canvas>
+          <p id="description" class="description"></p>
+        </div>
+
+        <aside class="controls" aria-label="Simulation controls">
+          <h2>Controls</h2>
+          <label class="range-control" for="restitution">
+            Restitution <output id="restitution-value">1.00</output>
+            <input id="restitution" type="range" min="0" max="1" value="1" step="0.05">
+          </label>
+          <label class="checkbox-control">
+            <input id="trails" type="checkbox" checked>
+            Show motion trails
+          </label>
+          <label class="checkbox-control" id="jitter-control" hidden>
+            <input id="jitter-bug" type="checkbox">
+            Disable separating guard (jitter demo)
+          </label>
+          <div class="button-row">
+            <button id="play-pause" type="button">Pause</button>
+            <button id="step" type="button">Step</button>
+            <button id="reset" type="button">Reset</button>
+          </div>
+          <button id="run-tests" type="button" class="secondary">Run validation &amp; benchmarks</button>
+          <button id="replay" type="button" class="secondary">Run deterministic replay</button>
+          <pre id="test-results" aria-live="polite"></pre>
+          <p class="hint">Use the dropdowns to change scenes and integrators. The HUD reports energy drift from the initial state; walls are external forces and can change total momentum.</p>
+        </aside>
+      </section>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

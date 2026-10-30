@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Physics 311 - Week 9 Reference Engine (standalone)</title>
+<style>
+:root{--ut:#ff8200;--bg:#0b0e14;--panel:#141a24;--line:#243040;--tx:#e6edf3;--mut:#8892a6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(90deg,#1b2433,#0b0e14);
+  border-bottom:3px solid var(--ut);padding:14px 20px}
+header h1{margin:0;font-size:19px}
+header p{margin:4px 0 0;color:var(--mut);font-size:13px}
+.wrap{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:16px;
+  max-width:1280px;margin:0 auto}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}
+canvas{width:100%;display:block;border-radius:6px;cursor:grab;touch-action:none}
+canvas:active{cursor:grabbing}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.panel h2{margin:0 0 10px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ut)}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 3px}
+select,input[type=number]{width:100%;background:#0b0e14;color:var(--tx);
+  border:1px solid var(--line);border-radius:5px;padding:6px 8px;font:13px inherit}
+.row{display:flex;gap:8px;margin-top:12px}
+button{flex:1;background:var(--ut);color:#111;border:0;border-radius:5px;
+  padding:9px 10px;font:600 13px inherit;cursor:pointer}
+button.ghost{background:#263142;color:var(--tx)}
+button:hover{filter:brightness(1.1)}
+.checks{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--mut)}
+.checks label{display:flex;align-items:center;gap:5px;margin:0}
+#hud{margin-top:6px;font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}
+.hud-row{display:flex;justify-content:space-between}
+.hud-row b{font-weight:600}
+.hud-row.good b{color:#8ad67b}.hud-row.warn b{color:#ffd166}.hud-row.bad b{color:#ff5d5d}
+#hud hr{border:0;border-top:1px solid var(--line);margin:7px 0}
+.note{margin-top:10px;font-size:12px;color:var(--mut);border-left:3px solid var(--ut);
+  padding:8px 10px;background:#0f141d;border-radius:0 5px 5px 0}
+.tests{display:none;white-space:pre;overflow:auto;max-height:340px;margin-top:12px;
+  background:#06080c;border:1px solid var(--line);border-radius:6px;padding:10px;
+  font:11px/1.45 ui-monospace,Consolas,monospace}
+.tests.good{border-color:#2f6b3a}.tests.bad{border-color:#7a2b2b}
+footer{color:var(--mut);font-size:12px;text-align:center;padding:14px}
+code{background:#0f141d;padding:1px 5px;border-radius:4px;color:var(--ut)}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Physics 311 &middot; Block 3 Week 9 &mdash; Structuring a JS Physics Engine</h1>
+  <p>STANDALONE build (no server needed). Reference implementation: ES6 modules, <code>engine/</code> vs <code>render/</code> separation,
+     broad phase, fixed-timestep accumulator, live conservation HUD.</p>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="sim"></canvas>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>Scene</h2>
+      <label for="scene">Simulation</label>
+      <select id="scene"></select>
+
+      <label for="integrator">Integrator</label>
+      <select id="integrator"></select>
+
+      <label for="broadphase">Broad phase</label>
+      <select id="broadphase">
+        <option value="brute">Brute force &mdash; O(N&sup2;)</option>
+        <option value="hash">Spatial hash &mdash; ~O(N)</option>
+      </select>
+
+      <label for="dt">Fixed timestep DT (s) <span id="dtLabel"></span></label>
+      <select id="dt">
+        <option value="0.01">1e-2 (coarse)</option>
+        <option value="0.004166666666666667" selected>1/240 (default)</option>
+        <option value="0.001">1e-3</option>
+        <option value="0.0002">2e-4 (fine)</option>
+      </select>
+
+      <div class="row">
+        <button id="playpause">Pause</button>
+        <button id="stepOnce" class="ghost">Step</button>
+        <button id="reset" class="ghost">Reset</button>
+      </div>
+
+      <div class="checks">
+        <label><input type="checkbox" id="trails" checked> trails</label>
+        <label><input type="checkbox" id="vectors"> v &amp; a</label>
+        <label><input type="checkbox" id="grid" checked> grid</label>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h2>Conservation HUD</h2>
+      <div id="hud"></div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <h2>Headless validation</h2>
+      <p style="font-size:12px;color:#8892a6;margin:0">
+        The same suite you can run with <code>node tests/validate.js</code>.
+        It needs no canvas &mdash; that is what the layering rule buys you.</p>
+      <div class="row"><button id="runTests">Run 9 checks</button></div>
+      <pre class="tests" id="testOut"></pre>
+    </div>
+  </div>
+</div>
+
+<footer>Drag to pan &middot; scroll to zoom &middot; Physics 311, University of Tennessee</footer>
+<script>
+/* ===== engine/Vec2.js ===== */
+// engine/Vec2.js -- 2D vector. Pure math: no DOM, no canvas, no window.
+//
+// DESIGN RULE: every method that returns a Vec2 returns a NEW Vec2.
+// The only mutating methods are addInPlace / scaleInPlace, and they are
+// named loudly so you can see aliasing bugs when you read the code.
+
+class Vec2 {
+  constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+
+  clone()        { return new Vec2(this.x, this.y); }
+  add(v)         { return new Vec2(this.x + v.x, this.y + v.y); }
+  sub(v)         { return new Vec2(this.x - v.x, this.y - v.y); }
+  scale(s)       { return new Vec2(this.x * s, this.y * s); }
+  neg()          { return new Vec2(-this.x, -this.y); }
+  dot(v)         { return this.x * v.x + this.y * v.y; }
+  cross(v)       { return this.x * v.y - this.y * v.x; }   // z-component
+  len()          { return Math.hypot(this.x, this.y); }
+  len2()         { return this.x * this.x + this.y * this.y; }
+  perp()         { return new Vec2(-this.y, this.x); }
+
+  normalized() {
+    const L = this.len();
+    return L === 0 ? new Vec2(0, 0) : new Vec2(this.x / L, this.y / L);
+  }
+
+  // Mutating -- use only in hot loops where you own the object.
+  addInPlace(v)   { this.x += v.x; this.y += v.y; return this; }
+  scaleInPlace(s) { this.x *= s;   this.y *= s;   return this; }
+  set(x, y)       { this.x = x;    this.y = y;    return this; }
+  zero()          { this.x = 0;    this.y = 0;    return this; }
+
+  toString() { return `(${this.x.toFixed(6)}, ${this.y.toFixed(6)})`; }
+}
+
+const vec = (x, y) => new Vec2(x, y);
+
+/* ===== engine/Body.js ===== */
+// engine/Body.js -- state of one rigid disc. No rendering data except `color`,
+// which is tolerated because it is inert and never read by the engine.
+
+
+class Body {
+  constructor({
+    pos = vec(0, 0),
+    vel = vec(0, 0),
+    mass = 1,
+    radius = 0.25,
+    theta = 0,            // orientation (rad)
+    omega = 0,            // angular velocity (rad/s)
+    inertiaCoeff = 0.5,   // I = coeff * m * r^2   (0.5 = uniform disc)
+    restitution = 0.9,
+    fixed = false,        // immovable (infinite mass)
+    color = '#ff8200',
+    name = ''
+  } = {}) {
+    this.pos = pos.clone();
+    this.vel = vel.clone();
+    this.acc = vec(0, 0);
+    this.force = vec(0, 0);     // accumulator, cleared every step
+    this.mass = mass;
+    this.radius = radius;
+    this.theta = theta;
+    this.omega = omega;
+    this.inertiaCoeff = inertiaCoeff;
+    this.restitution = restitution;
+    this.fixed = fixed;
+    this.color = color;
+    this.name = name;
+  }
+
+  get invMass() { return this.fixed ? 0 : 1 / this.mass; }
+  get I()       { return this.inertiaCoeff * this.mass * this.radius ** 2; }
+  get invI()    { return this.fixed ? 0 : 1 / this.I; }
+
+  kinetic()    { return 0.5 * this.mass * this.vel.len2(); }
+  rotational() { return 0.5 * this.I * this.omega ** 2; }
+  momentum()   { return this.vel.scale(this.mass); }
+
+  clearForces() { this.force.zero(); }
+  applyForce(F) { this.force.addInPlace(F); }
+}
+
+/* ===== engine/Forces.js ===== */
+// engine/Forces.js -- every force is an object with
+//     apply(bodies, t)            -> adds to body.force
+//     potential(bodies)  [opt]    -> potential energy, for the conservation HUD
+//
+// RULE: internal forces must be applied as an equal-and-opposite PAIR.
+// If you write `a.applyForce(F)` you must write `b.applyForce(F.neg())`
+// on the very next line. That is what makes momentum conservation a
+// structural guarantee instead of something World has to police.
+
+
+class UniformGravity {
+  constructor(g = 9.81, groundY = 0) { this.g = g; this.groundY = groundY; }
+  apply(bodies) {
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      b.applyForce(vec(0, -b.mass * this.g));
+    }
+  }
+  potential(bodies) {
+    let U = 0;
+    for (const b of bodies) if (!b.fixed) U += b.mass * this.g * (b.pos.y - this.groundY);
+    return U;
+  }
+}
+
+class NewtonGravity {
+  // Pairwise 1/r^2 attraction. softening avoids the r->0 singularity.
+  constructor(G = 1, softening = 0) { this.G = G; this.softening = softening; }
+  apply(bodies) {
+    const e2 = this.softening ** 2;
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const a = bodies[i], b = bodies[j];
+        const d = b.pos.sub(a.pos);
+        const r2 = d.len2() + e2;
+        const r = Math.sqrt(r2);
+        if (r === 0) continue;
+        const F = d.scale(this.G * a.mass * b.mass / (r2 * r));
+        a.applyForce(F);          // equal ...
+        b.applyForce(F.neg());    // ... and opposite
+      }
+    }
+  }
+  potential(bodies) {
+    const e2 = this.softening ** 2;
+    let U = 0;
+    for (let i = 0; i < bodies.length; i++)
+      for (let j = i + 1; j < bodies.length; j++) {
+        const r = Math.sqrt(bodies[j].pos.sub(bodies[i].pos).len2() + e2);
+        if (r > 0) U -= this.G * bodies[i].mass * bodies[j].mass / r;
+      }
+    return U;
+  }
+}
+
+class Spring {
+  // Hookean spring between two bodies (damping c is dissipative: no potential).
+  constructor(a, b, k, restLength, c = 0) {
+    this.a = a; this.b = b; this.k = k; this.restLength = restLength; this.c = c;
+  }
+  apply() {
+    const d = this.b.pos.sub(this.a.pos);
+    const L = d.len();
+    if (L === 0) return;
+    const n = d.scale(1 / L);
+    const stretch = L - this.restLength;
+    const vRel = this.b.vel.sub(this.a.vel).dot(n);
+    const mag = this.k * stretch + this.c * vRel;
+    const F = n.scale(mag);
+    this.a.applyForce(F);
+    this.b.applyForce(F.neg());
+  }
+  potential() {
+    const L = this.b.pos.sub(this.a.pos).len();
+    return 0.5 * this.k * (L - this.restLength) ** 2;
+  }
+}
+
+class QuadraticDrag {
+  // F = -(1/2) rho Cd A |v| v, rolled into one coefficient b: F = -b|v|v
+  constructor(b = 0.01) { this.b = b; }
+  apply(bodies) {
+    for (const body of bodies) {
+      if (body.fixed) continue;
+      const s = body.vel.len();
+      if (s === 0) continue;
+      body.applyForce(body.vel.scale(-this.b * s));
+    }
+  }
+  // dissipative: no potential energy. Energy leaves the system on purpose.
+}
+
+class PointAttractor {
+  // Fixed centre of attraction -- useful for single-body orbit tests.
+  constructor(center = vec(0, 0), mu = 1, softening = 1e-6) {
+    this.center = center.clone(); this.mu = mu; this.softening = softening;
+  }
+  apply(bodies) {
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      const d = this.center.sub(b.pos);
+      const r2 = d.len2() + this.softening ** 2;
+      const r = Math.sqrt(r2);
+      b.applyForce(d.scale(this.mu * b.mass / (r2 * r)));
+    }
+  }
+  potential(bodies) {
+    let U = 0;
+    for (const b of bodies) if (!b.fixed) {
+      const r = Math.sqrt(this.center.sub(b.pos).len2() + this.softening ** 2);
+      U -= this.mu * b.mass / r;
+    }
+    return U;
+  }
+}
+
+/* ===== engine/Integrators.js ===== */
+// engine/Integrators.js -- swappable time-steppers.
+// Each exposes step(world, dt). They differ ONLY in the order of updates.
+//
+// See Week 2 section 5.5: on a projectile (constant force) Euler and
+// Euler-Cromer are equally accurate -- the position error is +/- (1/2) g t dt.
+// Use the spring or the orbit scene to see them actually separate.
+
+class Euler {
+  static label = 'Euler (explicit)';
+  step(world, dt) {
+    world.computeAccelerations();
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.pos.addInPlace(b.vel.scale(dt));       // uses OLD velocity
+      b.vel.addInPlace(b.acc.scale(dt));
+      b.theta += b.omega * dt;
+    }
+  }
+}
+
+class EulerCromer {
+  static label = 'Euler-Cromer (symplectic)';
+  step(world, dt) {
+    world.computeAccelerations();
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.vel.addInPlace(b.acc.scale(dt));       // velocity FIRST
+      b.pos.addInPlace(b.vel.scale(dt));       // then NEW velocity
+      b.theta += b.omega * dt;
+    }
+  }
+}
+
+class VelocityVerlet {
+  static label = 'Velocity Verlet (symplectic, 2nd order)';
+  step(world, dt) {
+    world.computeAccelerations();                       // a(t)
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.pos.addInPlace(b.vel.scale(dt).add(b.acc.scale(0.5 * dt * dt)));
+      b.halfVel = b.vel.add(b.acc.scale(0.5 * dt));     // stash v(t+dt/2)
+      b.theta += b.omega * dt;
+    }
+    world.computeAccelerations();                       // a(t+dt)
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.vel = b.halfVel.add(b.acc.scale(0.5 * dt));
+    }
+  }
+}
+
+const INTEGRATORS = { Euler, EulerCromer, VelocityVerlet };
+
+/* ===== engine/Collision.js ===== */
+// engine/Collision.js -- broad phase + narrow phase + impulse response.
+//
+// Broad phase answers "which pairs COULD be touching?" cheaply.
+// Narrow phase answers "are they actually touching?" exactly.
+// Separating those two questions is the whole reason 300 bodies is tractable.
+
+
+/* ---------------------------------------------------------- broad phase */
+
+function bruteForcePairs(bodies, stats) {
+  const pairs = [];
+  for (let i = 0; i < bodies.length; i++)
+    for (let j = i + 1; j < bodies.length; j++) {
+      if (stats) stats.checks++;
+      pairs.push([bodies[i], bodies[j]]);
+    }
+  return pairs;
+}
+
+class SpatialHash {
+  // Uniform grid. cellSize should be >= 2 * largest radius.
+  constructor(cellSize = 1) { this.cellSize = cellSize; this.map = new Map(); }
+
+  _key(ix, iy) { return ix + ',' + iy; }
+
+  build(bodies) {
+    this.map.clear();
+    const s = this.cellSize;
+    for (const b of bodies) {
+      const ix = Math.floor(b.pos.x / s), iy = Math.floor(b.pos.y / s);
+      const k = this._key(ix, iy);
+      let cell = this.map.get(k);
+      if (!cell) { cell = []; this.map.set(k, cell); }
+      cell.push(b);
+      b._cx = ix; b._cy = iy;
+    }
+  }
+
+  // Each body is tested against its own cell and 4 of the 8 neighbours,
+  // so every pair is produced exactly once.
+  pairs(bodies, stats) {
+    this.build(bodies);
+    const out = [];
+    const seenOffsets = [[0, 0], [1, 0], [1, 1], [0, 1], [-1, 1]];
+    for (const b of bodies) {
+      for (const [dx, dy] of seenOffsets) {
+        const cell = this.map.get(this._key(b._cx + dx, b._cy + dy));
+        if (!cell) continue;
+        for (const other of cell) {
+          if (dx === 0 && dy === 0 && other === b) continue;
+          // within the same cell, keep each unordered pair once
+          if (dx === 0 && dy === 0 && cell.indexOf(other) < cell.indexOf(b)) continue;
+          if (stats) stats.checks++;
+          out.push([b, other]);
+        }
+      }
+    }
+    return out;
+  }
+}
+
+/* --------------------------------------------------------- narrow phase */
+
+function overlapping(a, b) {
+  const d = b.pos.sub(a.pos);
+  const R = a.radius + b.radius;
+  return d.len2() < R * R;
+}
+
+/* -------------------------------------------------------------- response */
+
+// Impulse-based resolution of a disc-disc contact.
+// Returns true if an impulse was actually applied.
+function resolveContact(a, b, restitution = null) {
+  const d = b.pos.sub(a.pos);
+  const dist = d.len();
+  const R = a.radius + b.radius;
+  if (dist === 0 || dist >= R) return false;
+
+  const n = d.scale(1 / dist);                 // unit normal, a -> b
+  const vRel = b.vel.sub(a.vel);
+  const vn = vRel.dot(n);                      // closing speed along n
+
+  // GUARD: if they are already separating, do nothing. Without this line
+  // an overlapping-but-separating pair gets re-resolved every frame and
+  // pumps energy into the simulation (the "sticky pair" bug).
+  if (vn > 0) { positionalCorrection(a, b, n, R - dist); return false; }
+
+  const e = restitution !== null ? restitution
+                                 : Math.min(a.restitution, b.restitution);
+  const invSum = a.invMass + b.invMass;
+  if (invSum === 0) return false;
+
+  const jImp = -(1 + e) * vn / invSum;         // scalar impulse
+  const J = n.scale(jImp);
+  if (!a.fixed) a.vel.addInPlace(J.scale(-a.invMass));
+  if (!b.fixed) b.vel.addInPlace(J.scale( b.invMass));
+
+  positionalCorrection(a, b, n, R - dist);
+  return true;
+}
+
+// Push the pair apart so they stop overlapping. Split by INVERSE MASS so
+// the correction adds no net momentum (a heavy body barely moves).
+function positionalCorrection(a, b, n, depth, percent = 0.8, slop = 1e-4) {
+  const invSum = a.invMass + b.invMass;
+  if (invSum === 0) return;
+  const mag = Math.max(depth - slop, 0) / invSum * percent;
+  const corr = n.scale(mag);
+  if (!a.fixed) a.pos.addInPlace(corr.scale(-a.invMass));
+  if (!b.fixed) b.pos.addInPlace(corr.scale( b.invMass));
+}
+
+/* ------------------------------------------------------------- boundaries */
+
+// Axis-aligned box. NOTE: walls are an EXTERNAL force -- momentum is NOT
+// conserved while they are on. Energy still is, at e = 1, because a wall
+// only flips a velocity component and does no work.
+class BoxBounds {
+  constructor(xmin, ymin, xmax, ymax, restitution = 1.0) {
+    Object.assign(this, { xmin, ymin, xmax, ymax, restitution });
+    this.enabled = true;
+    this.hits = 0;
+  }
+  apply(bodies) {
+    if (!this.enabled) return;
+    const e = this.restitution;
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      const r = b.radius;
+      if (b.pos.x - r < this.xmin) { b.pos.x = this.xmin + r; b.vel.x = Math.abs(b.vel.x) * e; this.hits++; }
+      if (b.pos.x + r > this.xmax) { b.pos.x = this.xmax - r; b.vel.x = -Math.abs(b.vel.x) * e; this.hits++; }
+      if (b.pos.y - r < this.ymin) { b.pos.y = this.ymin + r; b.vel.y = Math.abs(b.vel.y) * e; this.hits++; }
+      if (b.pos.y + r > this.ymax) { b.pos.y = this.ymax - r; b.vel.y = -Math.abs(b.vel.y) * e; this.hits++; }
+    }
+  }
+}
+
+/* ===== engine/World.js ===== */
+// engine/World.js -- owns bodies, forces, boundaries, integrator, diagnostics.
+//
+// THE LAYERING RULE (Week 9): nothing in engine/ may mention
+//   ctx, canvas, document, window, requestAnimationFrame, or a colour.
+// If this file stays clean, the same code runs in Node for your convergence
+// study, in a Web Worker, and in the browser. Break the rule and the
+// headless validation in tests/ becomes impossible to write.
+
+
+class World {
+  constructor({ integrator = new EulerCromer(), broadPhase = 'brute' } = {}) {
+    this.bodies = [];
+    this.forces = [];
+    this.bounds = null;
+    this.integrator = integrator;
+    this.t = 0;
+    this.steps = 0;
+    this.collisionCount = 0;
+    this.broadPhase = broadPhase;         // 'brute' | 'hash'
+    this.hash = new SpatialHash(1);
+    this.stats = { checks: 0, pairs: 0, lastStepMs: 0 };
+    this._baseline = null;
+  }
+
+  add(...bodies)      { this.bodies.push(...bodies); return this; }
+  addForce(...forces) { this.forces.push(...forces); return this; }
+
+  /* -------------------------------------------------- force accumulation */
+
+  computeAccelerations() {
+    for (const b of this.bodies) b.clearForces();
+    for (const f of this.forces) f.apply(this.bodies, this.t);
+    for (const b of this.bodies) {
+      b.acc = b.fixed ? vec(0, 0) : b.force.scale(b.invMass);
+    }
+  }
+
+  /* -------------------------------------------------------------- stepping */
+
+  step(dt) {
+    const t0 = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+
+    this.integrator.step(this, dt);          // 1. move
+    if (this.bounds) this.bounds.apply(this.bodies);   // 2. boundaries
+    this.resolveCollisions();                 // 3. contacts
+
+    this.t += dt;
+    this.steps++;
+    const t1 = (typeof performance !== 'undefined') ? performance.now() : Date.now();
+    this.stats.lastStepMs = t1 - t0;
+  }
+
+  resolveCollisions() {
+    if (this.bodies.length < 2) return;
+    this.stats.checks = 0;
+    let pairs;
+    if (this.broadPhase === 'hash') {
+      let maxR = 0;
+      for (const b of this.bodies) maxR = Math.max(maxR, b.radius);
+      this.hash.cellSize = Math.max(2 * maxR, 1e-6);
+      pairs = this.hash.pairs(this.bodies, this.stats);
+    } else {
+      pairs = bruteForcePairs(this.bodies, this.stats);
+    }
+    this.stats.pairs = pairs.length;
+    for (const [a, b] of pairs) {
+      if (resolveContact(a, b)) this.collisionCount++;
+    }
+  }
+
+  /* ----------------------------------------------------------- diagnostics */
+
+  kineticEnergy() {
+    let K = 0;
+    for (const b of this.bodies) K += b.kinetic() + b.rotational();
+    return K;
+  }
+
+  potentialEnergy() {
+    let U = 0;
+    for (const f of this.forces) if (f.potential) U += f.potential(this.bodies);
+    return U;
+  }
+
+  totalEnergy() { return this.kineticEnergy() + this.potentialEnergy(); }
+
+  momentum() {
+    const p = vec(0, 0);
+    for (const b of this.bodies) if (!b.fixed) p.addInPlace(b.momentum());
+    return p;
+  }
+
+  angularMomentum(about = vec(0, 0)) {
+    let L = 0;
+    for (const b of this.bodies) {
+      if (b.fixed) continue;
+      L += b.mass * b.pos.sub(about).cross(b.vel) + b.I * b.omega;
+    }
+    return L;
+  }
+
+  centerOfMass() {
+    let M = 0; const c = vec(0, 0);
+    for (const b of this.bodies) {
+      if (b.fixed) continue;
+      M += b.mass; c.addInPlace(b.pos.scale(b.mass));
+    }
+    return M === 0 ? c : c.scale(1 / M);
+  }
+
+  // Capture the initial invariants ONCE. The conservation HUD compares
+  // against THIS, never against a value recomputed inside the frame
+  // callback -- an instrument measured against itself always reads 0.000%.
+  captureBaseline() {
+    this._baseline = {
+      E: this.totalEnergy(),
+      p: this.momentum(),
+      L: this.angularMomentum(),
+      t: this.t
+    };
+    return this._baseline;
+  }
+
+  get baseline() {
+    if (!this._baseline) this.captureBaseline();
+    return this._baseline;
+  }
+
+  drift() {
+    const b = this.baseline;
+    const E = this.totalEnergy();
+    const p = this.momentum();
+    const L = this.angularMomentum();
+    const rel = (now, then) => (Math.abs(then) < 1e-12 ? Math.abs(now - then)
+                                                       : (now - then) / Math.abs(then));
+    const p0mag = b.p.len();
+    return {
+      E, p, L,
+      dE: rel(E, b.E),
+      dL: rel(L, b.L),
+      dp: p0mag < 1e-12 ? p.sub(b.p).len() : p.sub(b.p).len() / p0mag
+    };
+  }
+}
+
+/* ===== engine/Accumulator.js ===== */
+// engine/Accumulator.js -- fixed physics timestep, variable render rate.
+//
+// Never integrate with the wall-clock frame time: a 144 Hz monitor would
+// get different physics from a 60 Hz one, and a stalled tab would get a
+// single catastrophic step. Consume real time in fixed DT chunks instead.
+
+class Accumulator {
+  constructor(DT = 1 / 240, maxFrame = 0.25) {
+    this.DT = DT;            // fixed physics step (s)
+    this.maxFrame = maxFrame;// clamp: refuse to simulate more than this per frame
+    this.acc = 0;
+    this.lastMs = null;
+    this.stepsLastFrame = 0;
+    this.clamped = false;
+  }
+
+  reset() { this.acc = 0; this.lastMs = null; }
+
+  // cb(DT) is called 0..N times. Returns alpha in [0,1) for render
+  // interpolation between the last two physics states.
+  advance(nowMs, cb) {
+    if (this.lastMs === null) { this.lastMs = nowMs; return 0; }
+    let frame = (nowMs - this.lastMs) / 1000;   // ms -> SECONDS
+    this.lastMs = nowMs;
+
+    this.clamped = frame > this.maxFrame;
+    if (this.clamped) frame = this.maxFrame;    // avoid the spiral of death
+
+    this.acc += frame;
+    let n = 0;
+    while (this.acc >= this.DT) { cb(this.DT); this.acc -= this.DT; n++; }
+    this.stepsLastFrame = n;
+    return this.acc / this.DT;                  // leftover fraction
+  }
+}
+
+/* ===== render/Camera.js ===== */
+// render/Camera.js -- the ONLY place the y-flip lives.
+//
+// World coords: y up, metres, origin wherever the scene wants it.
+// Screen coords: y DOWN, pixels, origin at the canvas top-left.
+// Every sign confusion in a canvas physics project comes from doing this
+// conversion in more than one place. Do it here, once.
+
+class Camera {
+  constructor(canvas, { center = { x: 0, y: 0 }, scale = 40 } = {}) {
+    this.canvas = canvas;
+    this.center = { ...center };   // world point shown at canvas centre
+    this.scale = scale;            // pixels per metre
+  }
+
+  worldToScreen(p) {
+    return {
+      x: this.canvas.width  / 2 + (p.x - this.center.x) * this.scale,
+      y: this.canvas.height / 2 - (p.y - this.center.y) * this.scale   // flip
+    };
+  }
+
+  screenToWorld(s) {
+    return {
+      x: this.center.x + (s.x - this.canvas.width  / 2) / this.scale,
+      y: this.center.y - (s.y - this.canvas.height / 2) / this.scale    // flip
+    };
+  }
+
+  lengthToScreen(L) { return L * this.scale; }
+
+  fit(xmin, ymin, xmax, ymax, pad = 1.08) {
+    const w = (xmax - xmin) * pad, h = (ymax - ymin) * pad;
+    this.scale = Math.min(this.canvas.width / w, this.canvas.height / h);
+    this.center = { x: (xmin + xmax) / 2, y: (ymin + ymax) / 2 };
+  }
+}
+
+/* ===== render/Renderer.js ===== */
+// render/Renderer.js -- draws a World. Reads the world; never changes it.
+// If you ever feel the urge to write `body.vel.x = ...` in this file,
+// that code belongs in engine/.
+
+class Renderer {
+  constructor(canvas, camera) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.camera = camera;
+    this.showTrails = true;
+    this.showVectors = false;
+    this.showGrid = true;
+    this.trails = new Map();       // body -> array of world points
+    this.trailLength = 400;
+  }
+
+  clearTrails() { this.trails.clear(); }
+
+  recordTrails(world) {
+    if (!this.showTrails) return;
+    for (const b of world.bodies) {
+      let t = this.trails.get(b);
+      if (!t) { t = []; this.trails.set(b, t); }
+      t.push({ x: b.pos.x, y: b.pos.y });
+      if (t.length > this.trailLength) t.shift();
+    }
+  }
+
+  draw(world) {
+    const { ctx, canvas, camera } = this;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);   // every frame, always
+    ctx.fillStyle = '#10141c';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (this.showGrid) this._grid();
+    if (world.bounds && world.bounds.enabled) this._bounds(world.bounds);
+    if (this.showTrails) this._trails();
+
+    for (const b of world.bodies) this._body(b);
+    if (this.showVectors) for (const b of world.bodies) this._vectors(b);
+  }
+
+  _grid() {
+    const { ctx, canvas, camera } = this;
+    const step = this._niceStep(120 / camera.scale);
+    const tl = camera.screenToWorld({ x: 0, y: 0 });
+    const br = camera.screenToWorld({ x: canvas.width, y: canvas.height });
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = Math.ceil(tl.x / step) * step; x < br.x; x += step) {
+      const s = camera.worldToScreen({ x, y: 0 });
+      ctx.moveTo(s.x, 0); ctx.lineTo(s.x, canvas.height);
+    }
+    for (let y = Math.ceil(br.y / step) * step; y < tl.y; y += step) {
+      const s = camera.worldToScreen({ x: 0, y });
+      ctx.moveTo(0, s.y); ctx.lineTo(canvas.width, s.y);
+    }
+    ctx.stroke();
+  }
+
+  _niceStep(raw) {
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const m = raw / p;
+    return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * p;
+  }
+
+  _bounds(b) {
+    const { ctx, camera } = this;
+    const a = camera.worldToScreen({ x: b.xmin, y: b.ymax });
+    const c = camera.worldToScreen({ x: b.xmax, y: b.ymin });
+    ctx.strokeStyle = 'rgba(255,130,0,0.55)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(a.x, a.y, c.x - a.x, c.y - a.y);
+  }
+
+  _trails() {
+    const { ctx, camera } = this;
+    ctx.lineWidth = 1.5;
+    for (const [body, pts] of this.trails) {
+      if (pts.length < 2) continue;
+      ctx.strokeStyle = body.color + '66';
+      ctx.beginPath();
+      let s = camera.worldToScreen(pts[0]);
+      ctx.moveTo(s.x, s.y);
+      for (let i = 1; i < pts.length; i++) {
+        s = camera.worldToScreen(pts[i]);
+        ctx.lineTo(s.x, s.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  _body(b) {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(b.pos);
+    const r = Math.max(camera.lengthToScreen(b.radius), 2);
+    ctx.fillStyle = b.color;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    // orientation spoke, so rotation is visible
+    if (r > 4) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + r * Math.cos(b.theta), s.y - r * Math.sin(b.theta));
+      ctx.stroke();
+    }
+  }
+
+  _vectors(b) {
+    const { ctx, camera } = this;
+    const s = camera.worldToScreen(b.pos);
+    const k = camera.scale * 0.12;
+    const arrow = (vx, vy, col) => {
+      if (vx === 0 && vy === 0) return;
+      ctx.strokeStyle = col; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x + vx * k, s.y - vy * k);   // flip y here too
+      ctx.stroke();
+    };
+    arrow(b.vel.x, b.vel.y, '#4ec9f5');
+    arrow(b.acc.x, b.acc.y, '#ff5d5d');
+  }
+}
+
+/* ===== render/HUD.js ===== */
+// render/HUD.js -- live conservation readout. Your most useful debugger.
+//
+// It compares against world.baseline, which was captured ONCE at reset.
+// Recomputing E0 inside the frame callback would make the drift read
+// 0.000% forever -- an instrument measuring a quantity against itself.
+
+const fmt = (x, n = 3) =>
+  (Math.abs(x) < 1e-3 && x !== 0) ? x.toExponential(2) : x.toFixed(n);
+
+class HUD {
+  constructor(el) { this.el = el; this.warn = 0.01; }   // 1% = red
+
+  update(world, acc) {
+    const d = world.drift();
+    const k = world.kineticEnergy(), u = world.potentialEnergy();
+    const cls = Math.abs(d.dE) > this.warn ? 'bad'
+              : Math.abs(d.dE) > this.warn / 10 ? 'warn' : 'good';
+
+    this.el.innerHTML = `
+      <div class="hud-row"><span>t</span><b>${world.t.toFixed(2)} s</b></div>
+      <div class="hud-row"><span>bodies</span><b>${world.bodies.length}</b></div>
+      <div class="hud-row"><span>steps</span><b>${world.steps}</b></div>
+      <div class="hud-row"><span>collisions</span><b>${world.collisionCount}</b></div>
+      <hr>
+      <div class="hud-row"><span>KE</span><b>${fmt(k)}</b></div>
+      <div class="hud-row"><span>PE</span><b>${fmt(u)}</b></div>
+      <div class="hud-row"><span>E</span><b>${fmt(d.E)}</b></div>
+      <div class="hud-row ${cls}"><span>&Delta;E/E&#8320;</span>
+        <b>${(d.dE * 100).toFixed(4)} %</b></div>
+      <div class="hud-row"><span>|&Delta;p|/|p&#8320;|</span>
+        <b>${d.dp.toExponential(2)}</b></div>
+      <div class="hud-row"><span>&Delta;L/L&#8320;</span>
+        <b>${d.dL.toExponential(2)}</b></div>
+      <hr>
+      <div class="hud-row"><span>pair checks</span><b>${world.stats.checks}</b></div>
+      <div class="hud-row"><span>step time</span>
+        <b>${world.stats.lastStepMs.toFixed(3)} ms</b></div>
+      <div class="hud-row"><span>steps/frame</span>
+        <b>${acc ? acc.stepsLastFrame : '-'}${acc && acc.clamped ? ' (clamped)' : ''}</b></div>`;
+  }
+}
+
+/* ===== scenes/scenes.js ===== */
+// scenes/scenes.js -- a scene is a pure function that returns a fresh World.
+// No scene touches the canvas. That is what makes every one of them
+// runnable headlessly in tests/validate.js.
+
+
+const PALETTE = ['#ff8200', '#4ec9f5', '#8ad67b', '#f55d8b',
+                 '#c792ea', '#ffd166', '#6ee7b7', '#fb7185'];
+
+/* ----------------------------------------------------- 1. projectile */
+function projectile() {
+  const w = new World({ integrator: new VelocityVerlet() });
+  const speed = 25, deg = 45;
+  w.add(new Body({
+    pos: vec(-20, 0.2),
+    vel: vec(speed * Math.cos(deg * Math.PI / 180),
+             speed * Math.sin(deg * Math.PI / 180)),
+    mass: 1, radius: 0.35, color: PALETTE[0], name: 'ball'
+  }));
+  w.addForce(new UniformGravity(9.81, 0));
+  w.view = { xmin: -25, ymin: -2, xmax: 50, ymax: 22 };
+  w.note = 'Range should be 63.71 m (Week 1). Verlet is EXACT here: '
+         + 'constant force means no truncation error, so this scene cannot '
+         + 'tell the integrators apart. Use the orbit or the chain for that.';
+  return w;
+}
+
+/* ------------------------------------------------- 2. collisions in a box */
+function collisionBox({ n = 14, e = 1.0, seed = 7, walls = true, spread = null } = {}) {
+  const rnd = mulberry32(seed);
+  const w = new World({ integrator: new EulerCromer() });
+  const L = 9;
+  const S = spread !== null ? spread : L - 1;
+  for (let i = 0; i < n; i++) {
+    w.add(new Body({
+      pos: vec((rnd() - 0.5) * 2 * S, (rnd() - 0.5) * 2 * S),
+      vel: vec((rnd() - 0.5) * 8, (rnd() - 0.5) * 8),
+      mass: 1, radius: 0.5, restitution: e,
+      color: PALETTE[i % PALETTE.length], name: 'b' + i
+    }));
+  }
+  if (walls) w.bounds = new BoxBounds(-L, -L, L, L, e);
+  w.view = { xmin: -L - 1, ymin: -L - 1, xmax: L + 1, ymax: L + 1 };
+  w.note = walls
+    ? 'Walls ON: momentum is NOT conserved (a wall is an external force), '
+      + 'but at e = 1 energy still is -- a wall flips a sign and does no work.'
+    : 'Walls OFF: isolated system. |dp|/|p0| must stay at ~1e-16 for every e.';
+  return w;
+}
+
+/* ------------------------------------------------- 3. figure-eight 3-body */
+function figureEight() {
+  // Chenciner-Montgomery choreography. G = m = 1, period T = 6.32591398.
+  const w = new World({ integrator: new VelocityVerlet() });
+  const v = vec(0.93240737, 0.86473146);
+  w.add(
+    new Body({ pos: vec(-0.97000436,  0.24308753), vel: v.scale(0.5),  mass: 1, radius: 0.045, color: PALETTE[0], name: 'A' }),
+    new Body({ pos: vec( 0.97000436, -0.24308753), vel: v.scale(0.5),  mass: 1, radius: 0.045, color: PALETTE[1], name: 'B' }),
+    new Body({ pos: vec( 0,           0         ), vel: v.scale(-1),   mass: 1, radius: 0.045, color: PALETTE[2], name: 'C' })
+  );
+  w.addForce(new NewtonGravity(1, 0));
+  w.view = { xmin: -1.4, ymin: -0.6, xmax: 1.4, ymax: 0.6 };
+  w.period = 6.32591398;
+  w.note = 'Eleven lines of scene setup, zero new engine code. Momentum stays '
+         + 'at machine zero because NewtonGravity applies +F and -F on '
+         + 'consecutive lines -- a structural guarantee, not a check.';
+  return w;
+}
+
+/* ------------------------------------------------- 4. coupled spring chain */
+function springChain({ n = 6, k = 40 } = {}) {
+  const w = new World({ integrator: new VelocityVerlet() });
+  const a = 1.0;
+  const bodies = [];
+  for (let i = 0; i < n; i++) {
+    bodies.push(new Body({
+      pos: vec((i - (n - 1) / 2) * a, 0),
+      mass: 1, radius: 0.18, fixed: (i === 0 || i === n - 1),
+      color: (i === 0 || i === n - 1) ? '#8892a6' : PALETTE[i % PALETTE.length],
+      name: 'm' + i
+    }));
+  }
+  bodies[Math.floor(n / 2)].pos.y = 0.9;          // pluck
+  w.add(...bodies);
+  for (let i = 0; i < n - 1; i++)
+    w.addForce(new Spring(bodies[i], bodies[i + 1], k, a, 0));
+  w.view = { xmin: -n / 2 - 1, ymin: -2, xmax: n / 2 + 1, ymax: 2 };
+  w.note = 'Conservative: dE/E0 should stay below ~1e-5 with Verlet and '
+         + 'grow without bound with Euler. THIS is the scene that separates '
+         + 'the integrators, because the force depends on position.';
+  return w;
+}
+
+/* --------------------------------------- 5. crowd, for broad-phase profiling */
+function crowd({ n = 250, seed = 3 } = {}) {
+  const rnd = mulberry32(seed);
+  const w = new World({ integrator: new EulerCromer(), broadPhase: 'hash' });
+  const L = 16;
+  for (let i = 0; i < n; i++) {
+    w.add(new Body({
+      pos: vec((rnd() - 0.5) * 2 * (L - 0.6), (rnd() - 0.5) * 2 * (L - 0.6)),
+      vel: vec((rnd() - 0.5) * 6, (rnd() - 0.5) * 6),
+      mass: 1, radius: 0.22, restitution: 1.0,
+      color: PALETTE[i % PALETTE.length]
+    }));
+  }
+  w.bounds = new BoxBounds(-L, -L, L, L, 1.0);
+  w.view = { xmin: -L - 1, ymin: -L - 1, xmax: L + 1, ymax: L + 1 };
+  w.note = 'Toggle the broad phase and watch "pair checks" in the HUD. '
+         + 'Brute force is N(N-1)/2 = 31125 for N = 250; the spatial hash '
+         + 'is roughly linear. The PHYSICS must be identical either way.';
+  return w;
+}
+
+/* --------------------------------------------- deterministic PRNG (seeded) */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const SCENES = {
+  projectile:   { label: '1 - Projectile (sanity check)',        make: () => projectile() },
+  collisions:   { label: '2 - Collisions in a box (14 discs)',   make: () => collisionBox({ n: 14, e: 1.0 }) },
+  inelastic:    { label: '3 - Same box, e = 0.8',                make: () => collisionBox({ n: 14, e: 0.8 }) },
+  isolated:     { label: '4 - Isolated collisions (no walls)',   make: () => collisionBox({ n: 10, e: 0.9, walls: false, spread: 2.6 }) },
+  figureEight:  { label: '5 - Figure-eight 3-body choreography', make: () => figureEight() },
+  springChain:  { label: '6 - Coupled spring chain',             make: () => springChain({ n: 6 }) },
+  crowd:        { label: '7 - 250-body crowd (broad phase)',     make: () => crowd({ n: 250 }) }
+};
+
+/* ===== tests/validate.js ===== */
+// tests/validate.js -- headless validation. Runs in Node AND in the browser.
+//
+//   node tests/validate.js         (from the project root)
+//
+// This file is the payoff for the layering rule. Because engine/ and
+// scenes/ never mention the DOM, the exact same code that draws your
+// simulation can be run with no canvas at all -- which is what makes a
+// convergence study possible.
+
+
+const results = [];
+const log = [];
+function out(s) { log.push(s); if (typeof window === 'undefined') console.log(s); }
+function check(name, ok, detail) {
+  results.push({ name, ok, detail });
+  out(`${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(46)} ${detail}`);
+}
+
+function run(world, dt, T) {
+  world.captureBaseline();
+  const n = Math.round(T / dt);
+  for (let i = 0; i < n; i++) world.step(dt);
+  return world;
+}
+
+function validate() {
+  results.length = 0; log.length = 0;
+  out('='.repeat(78));
+  out('WEEK 9 ENGINE -- HEADLESS VALIDATION');
+  out('='.repeat(78));
+
+  /* --- 1. projectile range: the Week 1 answer key ---------------------- */
+  out('\n[1] Projectile range, v0 = 25 m/s at 45 deg, Verlet, dt = 1e-4');
+  {
+    const w = new World({ integrator: new VelocityVerlet() });
+    const th = Math.PI / 4;
+    w.add(new Body({ pos: vec(0, 0), vel: vec(25 * Math.cos(th), 25 * Math.sin(th)) }));
+    w.addForce(new UniformGravity(9.81, 0));
+    const dt = 1e-4;
+    let prev = null, range = null;
+    for (let i = 0; i < 100000; i++) {
+      prev = { x: w.bodies[0].pos.x, y: w.bodies[0].pos.y };
+      w.step(dt);
+      const p = w.bodies[0].pos;
+      if (p.y < 0) {                       // interpolate to y = 0
+        const f = prev.y / (prev.y - p.y);
+        range = prev.x + f * (p.x - prev.x);
+        break;
+      }
+    }
+    const exact = 25 ** 2 * Math.sin(2 * th) / 9.81;
+    out(`    numerical = ${range.toFixed(6)} m   exact = ${exact.toFixed(6)} m`);
+    check('projectile range matches theory', Math.abs(range - exact) < 1e-3,
+          `|err| = ${Math.abs(range - exact).toExponential(2)} m`);
+  }
+
+  /* --- 2. integrators on a SPRING (not a projectile) ------------------- */
+  out('\n[2] Spring, 10 periods, dt = 0.01: max |dE|/E0');
+  out('    (a projectile cannot separate these -- see Week 2 section 5.5)');
+  {
+    const k = 10, m = 1, T = 2 * Math.PI * Math.sqrt(m / k);
+    const rows = [];
+    for (const I of [Euler, EulerCromer, VelocityVerlet]) {
+      const w = new World({ integrator: new I() });
+      const a = new Body({ pos: vec(0, 0), mass: 1e9, fixed: true, radius: 0.01 });
+      const b = new Body({ pos: vec(1, 0), mass: m, radius: 0.01 });
+      w.add(a, b);
+      w.addForce(new Spring(a, b, k, 0, 0));
+      w.captureBaseline();
+      let worst = 0;
+      const n = Math.round(10 * T / 0.01);
+      for (let i = 0; i < n; i++) { w.step(0.01); worst = Math.max(worst, Math.abs(w.drift().dE)); }
+      rows.push([I.label, worst]);
+      out(`    ${I.label.padEnd(38)} ${worst.toExponential(3)}`);
+    }
+    check('Verlet beats Euler-Cromer beats Euler', rows[2][1] < rows[1][1] && rows[1][1] < rows[0][1],
+          `${rows[0][1].toExponential(2)} > ${rows[1][1].toExponential(2)} > ${rows[2][1].toExponential(2)}`);
+  }
+
+  /* --- 3. Verlet is 2nd order ------------------------------------------ */
+  out('\n[3] Verlet convergence on the spring chain (error ratio should be ~4)');
+  {
+    const ref = (dt) => {
+      const w = springChain({ n: 6, k: 40 });
+      run(w, dt, 2.0);
+      return w.bodies[3].pos.y;
+    };
+    const fine = ref(1e-5);
+    const e1 = Math.abs(ref(4e-3) - fine);
+    const e2 = Math.abs(ref(2e-3) - fine);
+    const e3 = Math.abs(ref(1e-3) - fine);
+    out(`    dt=4e-3 err=${e1.toExponential(3)}`);
+    out(`    dt=2e-3 err=${e2.toExponential(3)}  ratio=${(e1 / e2).toFixed(2)}`);
+    out(`    dt=1e-3 err=${e3.toExponential(3)}  ratio=${(e2 / e3).toFixed(2)}`);
+    check('Verlet is second order', Math.abs(e2 / e3 - 4) < 0.6,
+          `ratio = ${(e2 / e3).toFixed(3)} (expect 4.00)`);
+  }
+
+  /* --- 4. isolated collisions conserve momentum exactly ---------------- */
+  out('\n[4] Isolated collisions (walls off): |dp|/|p0| for several e');
+  {
+    let worst = 0;
+    for (const e of [1.0, 0.9, 0.5, 0.0]) {
+      const w = collisionBox({ n: 10, e, seed: 7, walls: false, spread: 2.6 });
+      run(w, 0.002, 12);
+      const d = w.drift();
+      worst = Math.max(worst, Math.abs(d.dp));
+      out(`    e = ${e.toFixed(1)}   |dp|/|p0| = ${d.dp.toExponential(2)}` +
+          `   KE kept = ${(100 * w.kineticEnergy() / w.baseline.E).toFixed(2)} %` +
+          `   collisions = ${w.collisionCount}`);
+    }
+    check('momentum conserved to machine precision', worst < 1e-12,
+          `worst = ${worst.toExponential(2)}`);
+  }
+
+  /* --- 5. elastic box: walls break p but not E ------------------------- */
+  out('\n[5] Box with walls, e = 1: energy kept, momentum NOT');
+  {
+    const w = collisionBox({ n: 14, e: 1.0, seed: 7, walls: true });
+    run(w, 0.002, 10);
+    const d = w.drift();
+    out(`    dE/E0 = ${(100 * d.dE).toFixed(6)} %   |dp|/|p0| = ${d.dp.toExponential(2)}`);
+    out(`    wall hits = ${w.bounds.hits}   pair collisions = ${w.collisionCount}`);
+    check('elastic walls do no work', Math.abs(d.dE) < 1e-10,
+          `dE/E0 = ${d.dE.toExponential(2)}`);
+  }
+
+  /* --- 6. figure-eight choreography ------------------------------------ */
+  out('\n[6] Figure-eight, 4 periods, Verlet, dt = 1e-4');
+  {
+    const w = figureEight();
+    const r0 = w.bodies.map(b => b.pos.clone());
+    run(w, 1e-4, 4 * w.period);
+    const d = w.drift();
+    const back = Math.max(...w.bodies.map((b, i) => b.pos.sub(r0[i]).len()));
+    out(`    dE/E0 = ${d.dE.toExponential(3)}   |p| = ${w.momentum().len().toExponential(2)}`);
+    out(`    dL/L0 = ${d.dL.toExponential(3)}   max return error = ${back.toExponential(3)}`);
+    check('figure-eight closes and conserves', Math.abs(d.dE) < 1e-6 && back < 1e-2,
+          `dE = ${d.dE.toExponential(2)}, return = ${back.toExponential(2)}`);
+  }
+
+  /* --- 7. broad phase must not change the physics ---------------------- */
+  out('\n[7] Brute force vs spatial hash: same physics, different cost');
+  {
+    const mk = (bp) => { const w = crowd({ n: 120, seed: 3 }); w.broadPhase = bp; return w; };
+    const wb = mk('brute'), wh = mk('hash');
+    run(wb, 0.004, 3); run(wh, 0.004, 3);
+    const diff = Math.max(...wb.bodies.map((b, i) => b.pos.sub(wh.bodies[i].pos).len()));
+    out(`    brute: ${wb.stats.checks} checks/step, ${wb.collisionCount} collisions`);
+    out(`    hash : ${wh.stats.checks} checks/step, ${wh.collisionCount} collisions`);
+    out(`    max position difference = ${diff.toExponential(3)}`);
+    check('broad phase is physics-neutral', diff < 1e-9,
+          `max |dr| = ${diff.toExponential(2)}`);
+    check('hash does fewer checks than brute', wh.stats.checks < wb.stats.checks / 4,
+          `${wh.stats.checks} vs ${wb.stats.checks}`);
+  }
+
+  /* --- 8. the separating guard ----------------------------------------- */
+  out('\n[8] Sticky-pair guard: overlapping but separating pair');
+  {
+    const a = new Body({ pos: vec(0, 0),    vel: vec(-1, 0), radius: 0.5 });
+    const b = new Body({ pos: vec(0.9, 0),  vel: vec( 1, 0), radius: 0.5 });
+    const applied = resolveContact(a, b);
+    out(`    impulse applied = ${applied} (must be false: they are separating)`);
+    check('separating pair is not re-resolved', applied === false, 'guard works');
+  }
+
+  const passed = results.filter(r => r.ok).length;
+  out('\n' + '='.repeat(78));
+  out(`${passed} / ${results.length} checks passed`);
+  out('='.repeat(78));
+  return { results, text: log.join('\n'), passed, total: results.length };
+}
+
+if (typeof window === 'undefined') {
+  const { passed, total } = validate();
+  process.exit(passed === total ? 0 : 1);
+}
+
+/* ===== main.js ===== */
+// main.js -- the ONLY file that knows about both layers.
+// It wires DOM controls to the engine and drives the render loop.
+// Notice how little code this is: that is the point of the separation.
+
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('sim');
+const camera = new Camera(canvas);
+const renderer = new Renderer(canvas, camera);
+const hud = new HUD($('hud'));
+
+let world = null;
+let acc = new Accumulator(1 / 240);
+let running = true;
+let sceneKey = 'collisions';
+
+function resize() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = Math.max(320, Math.floor(r.width));
+  canvas.height = Math.max(240, Math.floor(r.width * 0.62));
+  if (world) camera.fit(world.view.xmin, world.view.ymin, world.view.xmax, world.view.ymax);
+}
+
+function buildScene() {
+  world = SCENES[sceneKey].make();
+  const I = INTEGRATORS[$('integrator').value];
+  world.integrator = new I();
+  world.broadPhase = $('broadphase').value;
+  world.captureBaseline();          // ONCE, here. Never inside the frame loop.
+  renderer.clearTrails();
+  acc = new Accumulator(parseFloat($('dt').value));
+  camera.fit(world.view.xmin, world.view.ymin, world.view.xmax, world.view.ymax);
+  $('note').textContent = world.note || '';
+  $('dtLabel').textContent = (+$('dt').value).toExponential(0).replace('e-', 'e-');
+}
+
+/* ------------------------------------------------------------ controls */
+
+function fillSelects() {
+  const s = $('scene');
+  for (const [k, v] of Object.entries(SCENES)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = v.label; s.appendChild(o);
+  }
+  s.value = sceneKey;
+  const i = $('integrator');
+  for (const [k, C] of Object.entries(INTEGRATORS)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = C.label; i.appendChild(o);
+  }
+  i.value = 'VelocityVerlet';
+}
+
+function wire() {
+  $('scene').onchange = (e) => { sceneKey = e.target.value; buildScene(); };
+  $('integrator').onchange = buildScene;
+  $('broadphase').onchange = () => { world.broadPhase = $('broadphase').value; };
+  $('dt').onchange = buildScene;
+  $('reset').onclick = buildScene;
+  $('playpause').onclick = () => {
+    running = !running;
+    $('playpause').textContent = running ? 'Pause' : 'Play';
+    acc.reset();                 // discard the time spent paused
+  };
+  $('stepOnce').onclick = () => { world.step(acc.DT); renderer.recordTrails(world); };
+  $('trails').onchange  = (e) => { renderer.showTrails = e.target.checked; renderer.clearTrails(); };
+  $('vectors').onchange = (e) => { renderer.showVectors = e.target.checked; };
+  $('grid').onchange    = (e) => { renderer.showGrid = e.target.checked; };
+  $('runTests').onclick = () => {
+    const panel = $('testOut');
+    panel.style.display = 'block';
+    panel.textContent = 'running...';
+    setTimeout(() => {
+      const r = validate();
+      panel.textContent = r.text;
+      panel.className = 'tests ' + (r.passed === r.total ? 'good' : 'bad');
+    }, 20);
+  };
+  window.addEventListener('resize', resize);
+
+  // click-drag to pan, wheel to zoom
+  let drag = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    drag = { x: e.offsetX, y: e.offsetY, c: { ...camera.center } };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    camera.center.x = drag.c.x - (e.offsetX - drag.x) / camera.scale;
+    camera.center.y = drag.c.y + (e.offsetY - drag.y) / camera.scale;
+  });
+  canvas.addEventListener('pointerup', () => { drag = null; });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    camera.scale *= Math.exp(-e.deltaY * 0.0015);
+  }, { passive: false });
+}
+
+/* ----------------------------------------------------------- the loop */
+
+function frame(nowMs) {
+  if (running) {
+    acc.advance(nowMs, (DT) => world.step(DT));
+    renderer.recordTrails(world);
+  }
+  renderer.draw(world);          // render EVERY frame, even when paused
+  hud.update(world, acc);
+  requestAnimationFrame(frame);
+}
+
+fillSelects();
+wire();
+resize();
+buildScene();
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>
