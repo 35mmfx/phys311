@@ -135,12 +135,13 @@ The three visuals communicate:
 The canvas resizes with the window and uses a device-pixel-ratio-scaled backing
 buffer. Inputs have associated labels, the canvas includes fallback text, and
 the canvas/control focus indicators remain visible. **Unplugged-mouse test:**
-a keyboard-only browser check passed: Space paused the simulation, R reset it,
-Tab moved focus to controls, the integrator changed to Euler-Cromer, and the
-gravity slider changed from 9.81 to 9.82 m/s² with an arrow key. The physical
-unplugged-mouse check still needs to be confirmed on the user's computer. For
-gravity, Tab from the canvas to Preset, then Tab four more times to the Gravity
-slider and press Left or Right; the visible value readout updates.
+passed on the user's computer: pause, reset, change gravity, and switch the
+integrator all worked using only the keyboard. For gravity, Tab from the canvas
+to Preset, then Tab four more times to the Gravity slider and press Left or
+Right; the visible value readout updates. A separate browser check also
+confirmed that Space paused the simulation, R reset it, Tab moved focus through
+controls, the integrator changed to Euler-Cromer, and the gravity slider changed
+from 9.81 to 9.82 m/s².
 
 ---
 
