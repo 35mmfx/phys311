@@ -69,6 +69,20 @@ button[aria-pressed=true]{border-color:var(--ut-orange)}
 kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   border-radius:4px;padding:0 .3rem;font:inherit;font-size:.78rem}
 .keys{font-size:.78rem;color:var(--dim);line-height:1.9}
+.mission-copy{font-size:.88rem;margin:.35rem 0;color:var(--ink)}
+.physics-note{font-size:.78rem;color:var(--dim);border-left:2px solid var(--ut-orange);
+  padding-left:.55rem;margin:.55rem 0}
+.mission-status{min-height:1.5rem;margin:.45rem 0;color:var(--ok);font-weight:650}
+.mission-status[data-state=crashed]{color:var(--bad)}
+.mission-status[data-state=landed]{color:var(--ok)}
+.lander-controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.45rem;margin:.75rem 0}
+.lander-controls[hidden]{display:none}
+.lander-button{min-height:3rem;font-size:1rem;touch-action:none;user-select:none}
+.lander-button:active{border-color:var(--ut-orange);background:#39414c}
+.advanced{margin-top:1rem;border-top:1px solid var(--line);padding-top:.65rem}
+.advanced summary{cursor:pointer;color:var(--dim);font-size:.83rem}
+.advanced summary:focus-visible{outline:3px solid var(--ut-orange);outline-offset:3px}
+.advanced[open] summary{margin-bottom:.8rem}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
   white-space:nowrap}
 footer{padding:0 1rem 1.5rem;color:var(--dim);font-size:.8rem;max-width:70ch}

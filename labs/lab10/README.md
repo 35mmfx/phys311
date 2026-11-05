@@ -1,9 +1,10 @@
 # Physics 311 — Block 3, Week 10 Reference Project
 ### Interactivity, UI & Publishing
 
-A complete, runnable browser simulation showing everything Week 10 asks for:
-pointer dragging, a live control panel, pause/step/reset, keyboard accessibility,
-shareable permalinks, an honest conservation HUD, and a GitHub-Pages-ready layout.
+A complete, runnable browser simulation with a focused lunar-lander challenge,
+keyboard controls, pause/step/reset, shareable permalinks, an honest physics HUD,
+and a GitHub-Pages-ready layout. The earlier reference scenes remain available
+under the advanced settings.
 
 This is the Week 9 engine with a **UI layer added on top**. The `engine/` folder
 is unchanged in character: it still contains no `canvas`, no `document`, no pixels.
@@ -28,7 +29,21 @@ is unchanged in character: it still contains no `canvas`, no `document`, no pixe
 
 ---
 
-## 2. Try these five things first
+## 2. Try the lunar lander first
+
+1. Focus the canvas. Hold **Left/Right** (or **A/D**) to rotate and **Up** (or
+   **W**) to thrust. The electric thruster is the lander's braking system:
+   point it opposite your motion to slow down.
+2. Aim the solar reflectors toward the sunlight to recharge the propulsion
+   reserve. The reserve is limited; thrusting drains it.
+3. Touch down inside the green pad, nearly upright, with vertical speed under
+   1.8 m/s and horizontal speed under 1.1 m/s. Press **R** to restart.
+4. Read the HUD's energy line as an **open-system** change during flight: solar
+   charging and thrust add or remove energy. It is not a conservation score.
+5. Open **Other scenes and simulation settings** to revisit the original
+   Lab 10 scenes and test their integrators and conservation diagnostics.
+
+The original scenes also support these reference experiments:
 
 1. **Drag a ball.** Click and hold any body, then whip it around. Watch
    `Δp/p₀` — on scene 3 it is `n/a` until you grab something, because *your finger
@@ -143,6 +158,29 @@ confirmed that Space paused the simulation, R reset it, Tab moved focus through
 controls, the integrator changed to Euler-Cromer, and the gravity slider changed
 from 9.81 to 9.82 m/s².
 
+### Part C — Lunar lander game
+
+The default experience is a single-craft landing challenge. It uses lunar
+gravity (1.62 m/s²), a steerable thrust force, a limited propulsion-energy
+reserve, and solar reflectors that replenish that reserve when aimed toward
+the sunlight. Rotation is directly controlled at a fixed rate; craft
+rotational inertia is outside this model. Touchdown is checked before the
+terrain's collision response, and the game reports success only inside the pad
+at low horizontal and vertical speeds and within 15° of upright.
+
+Controls: **Left/Right** or **A/D** rotate; hold **Up** or **W** to thrust;
+on touchscreens, press and hold the on-screen rotate/thrust buttons. **Space**
+pauses; **R** restarts. The game state, altitude, velocity,
+orientation, and propulsion reserve are visible, while the energy and momentum
+diagnostics remain available. Powered flight is explicitly marked as an open
+system so its energy change is not presented as solver drift.
+
+There is no parachute: the Moon has no atmosphere dense enough to provide
+parachute braking. The electric thruster provides the retro-braking instead.
+This is a simplified educational model; it does not simulate propellant mass,
+orbital mechanics, terrain geometry, or the physical efficiency of solar-electric
+propulsion.
+
 ---
 
 ## 4. Verified numbers (`node tests/validate.js`)
@@ -161,6 +199,8 @@ from 9.81 to 9.82 m/s².
 | Projectile: Euler vs Verlet | 8.2e-3 vs 3.0e-14 — **degenerate** |
 | Spring chain: Euler vs Verlet | 1.6e+0 vs 1.6e-4 — **10⁴× worse** |
 | Energy ledger at e = 1 / 0.95 / 0.5 / 0 | drift **≤ 8e-16** in every case |
+| Lunar free fall, Verlet, 60 s | \|ΔE/E₀\| = **2.32e-13** (unpowered, closed-system test) |
+| Lunar mission impact checks | safe pad touchdown succeeds; a miss and a 3 m/s touchdown crash |
 | Permalink round trip | every control survives |
 | DOM identifiers in `engine/` | **none** |
 | Absolute paths in `index.html` | **none** |
@@ -169,7 +209,8 @@ from 9.81 to 9.82 m/s².
 
 ## 5. Accessibility checklist (Lab 10 grades this)
 
-- Every mouse action has a keyboard equivalent (`Keyboard.js`).
+- Lander controls work from the keyboard (`input.js`) and the on-screen
+  press-and-hold buttons; the controls can be used without a mouse.
 - The canvas is `tabindex="0"` and has a descriptive `aria-label`.
 - Visible `:focus-visible` outline in UT orange on every control.
 - Sliders carry `aria-valuetext` so a screen reader says "9.81 m/s²", not "9.81".
@@ -214,8 +255,9 @@ python3 build_standalone.py
 
 - Collisions are **circle-only** and resolved in a single pass. A dense pile
   will jitter; that needs iterative solving, which is beyond Week 10.
-- There is **no rotation**. Bodies carry `theta`/`omega` nowhere — spin was
-  Week 6 in Python and is left as a Lab 10 extension.
+- Lander orientation is a controlled visual/thrust direction, not a rotational
+  dynamics model: angular inertia, torque, and rotation-related energy are not
+  simulated. General collision bodies remain circles.
 - The spatial hash turns on above 40 bodies. Check 7 of the Week 9 project
   showed brute force and hash agree to **exactly 0.0**, so it is a speed
   optimisation only.

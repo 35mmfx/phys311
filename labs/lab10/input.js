@@ -61,6 +61,7 @@ export class PointerInput {
       c.setPointerCapture(ev.pointerId);
       this.activePointerId = ev.pointerId;
       const [x, y] = this._updateCursor(ev);
+      if (this.world.landerDrive) return;
       if (this.slingshotMode) {
         if (this.world.pick(x, y, 0.15)) return;
         const origin = { x, y };
@@ -119,13 +120,25 @@ export class KeyboardInput {
     this._held = null;
     this.slingshotMode = false;
     this.launch = null;
+    this._landerHeld = new Set();
+    this._bindLanderButtons();
     window.addEventListener('keydown', (e) => this._down(e));
     window.addEventListener('keyup',   (e) => this._up(e));
+    window.addEventListener('blur', () => this._clearLanderControls());
   }
 
   _down(e) {
     if (e.target.matches('input, select, textarea, button, a, [contenteditable="true"]')) return;
     const A = this.actions;
+    if (this.world.landerDrive && this.world.mission?.status === 'flying') {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'w', 'arrowleft', 'a', 'arrowright', 'd'].includes(key)) {
+        this._landerHeld.add(key);
+        this._updateLanderControls();
+        e.preventDefault();
+        return;
+      }
+    }
     switch (e.key) {
       case ' ':      A.togglePause(); e.preventDefault(); break;
       case '.':      A.stepOnce(); e.preventDefault(); break;
@@ -172,8 +185,61 @@ export class KeyboardInput {
   }
 
   _up(e) {
+    if (this.world.landerDrive) {
+      this._landerHeld.delete(e.key.toLowerCase());
+      this._updateLanderControls();
+    }
     if (e.key.startsWith('Arrow') && !this.launch) {
       this.spring.release(); this._held = null;
+    }
+  }
+
+  _updateLanderControls() {
+    const drive = this.world.landerDrive;
+    if (!drive) return;
+    const held = this._landerHeld;
+    drive.thrusting = held.has('arrowup') || held.has('w') || held.has('button-thrust');
+    drive.rotation = (held.has('arrowleft') || held.has('a') || held.has('button-left') ? 1 : 0)
+      - (held.has('arrowright') || held.has('d') || held.has('button-right') ? 1 : 0);
+  }
+
+  _clearLanderControls() {
+    this._landerHeld.clear();
+    this._updateLanderControls();
+  }
+
+  _bindLanderButtons() {
+    for (const [id, key] of [
+      ['lander-left', 'button-left'],
+      ['lander-thrust', 'button-thrust'],
+      ['lander-right', 'button-right']
+    ]) {
+      const button = document.getElementById(id);
+      if (!button) continue;
+      const press = event => {
+        if (this.world.mission?.status !== 'flying') return;
+        this._landerHeld.add(key);
+        this._updateLanderControls();
+        if (event.cancelable) event.preventDefault();
+        if (event.pointerId !== undefined) button.setPointerCapture(event.pointerId);
+      };
+      const release = event => {
+        this._landerHeld.delete(key);
+        this._updateLanderControls();
+        if (event.pointerId !== undefined && button.hasPointerCapture?.(event.pointerId))
+          button.releasePointerCapture(event.pointerId);
+      };
+      button.addEventListener('pointerdown', press);
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('lostpointercapture', release);
+      button.addEventListener('blur', release);
+      button.addEventListener('keydown', event => {
+        if (event.key === ' ' || event.key === 'Enter') press(event);
+      });
+      button.addEventListener('keyup', event => {
+        if (event.key === ' ' || event.key === 'Enter') release(event);
+      });
     }
   }
 

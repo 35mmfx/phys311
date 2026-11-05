@@ -45,6 +45,7 @@ export class Renderer {
 
     this._grid(world);
     if (world.bounds) this._bounds(world.bounds);
+    if (world.lander) this._landerScene(world);
 
     if (this.showTrails && !this.reducedMotion) {
       ctx.save();
@@ -75,6 +76,10 @@ export class Renderer {
     if (this.showForceVectors) this._forceVectors(world);
 
     for (const b of world.bodies) {
+      if (b.tag === 'lander') {
+        this._landerCraft(b, world.landerDrive);
+        continue;
+      }
       const [px, py] = cam.toScreen(b.pos.x, b.pos.y);
       const r = Math.max(2.5, b.radius * cam.scale);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -94,6 +99,74 @@ export class Renderer {
 
     if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+  }
+
+  _landerScene(world) {
+    const ctx = this.ctx, cam = this.cam, mission = world.mission;
+    const [groundX, groundY] = cam.toScreen(world.bounds.xmin, world.bounds.ymin);
+    const [rightX, bottomY] = cam.toScreen(world.bounds.xmax, world.bounds.ymin - 1);
+    ctx.fillStyle = '#292a2b';
+    ctx.fillRect(groundX, groundY, rightX - groundX, bottomY - groundY);
+
+    const [padLeft, padY] = cam.toScreen(mission.padCenter - mission.padHalfWidth, 0);
+    const [padRight] = cam.toScreen(mission.padCenter + mission.padHalfWidth, 0);
+    ctx.strokeStyle = '#7ee787';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(padLeft, padY); ctx.lineTo(padRight, padY); ctx.stroke();
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 13; i++) {
+      const x = world.bounds.xmin + 1 + i * 1.5;
+      const [sx, sy] = cam.toScreen(x, 0);
+      ctx.strokeStyle = '#5b6065';
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 0.3 * cam.scale, sy + 0.22 * cam.scale); ctx.stroke();
+    }
+
+    const [sunX, sunY] = cam.toScreen(0, 16.5);
+    ctx.fillStyle = '#ffd866';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ffd866';
+    ctx.globalAlpha = 0.3;
+    ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.moveTo(sunX, sunY + 22); ctx.lineTo(sunX, cam.toScreen(0, 0)[1]); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffd866';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText('SUNLIGHT', sunX - 29, sunY + 38);
+  }
+
+  _landerCraft(body, drive) {
+    const ctx = this.ctx, cam = this.cam;
+    const [x, y] = cam.toScreen(body.pos.x, body.pos.y);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-body.angle);
+    ctx.scale(cam.scale, cam.scale);
+    ctx.lineWidth = 0.045;
+    ctx.strokeStyle = '#e6edf3';
+    ctx.fillStyle = '#c9d1d9';
+    ctx.beginPath();
+    ctx.moveTo(0, -0.34); ctx.lineTo(-0.25, -0.04);
+    ctx.lineTo(-0.19, 0.22); ctx.lineTo(0.19, 0.22);
+    ctx.lineTo(0.25, -0.04); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    const panelColor = drive.charge > 0 ? '#58a6ff' : '#6e7681';
+    ctx.fillStyle = panelColor;
+    ctx.strokeStyle = '#c9d1d9';
+    ctx.fillRect(-0.62, -0.12, 0.33, 0.13);
+    ctx.strokeRect(-0.62, -0.12, 0.33, 0.13);
+    ctx.fillRect(0.29, -0.12, 0.33, 0.13);
+    ctx.strokeRect(0.29, -0.12, 0.33, 0.13);
+    ctx.beginPath(); ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
+    ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
+    ctx.stroke();
+
+    if (drive.thrusting && drive.charge > 0 && !body.fixed) {
+      ctx.fillStyle = '#ff8200';
+      ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
+      ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   }
 
   _velocityVectors(world) {

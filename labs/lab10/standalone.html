@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Week 10 Reference (standalone) — Interactive Physics Simulation</title>
+<title>Physics 311 — Lunar Lander</title>
 <style>
 :root{
   --ut-orange:#ff8200; --bg:#15181c; --panel:#1e2228; --line:#30363d;
@@ -76,6 +76,20 @@ button[aria-pressed=true]{border-color:var(--ut-orange)}
 kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   border-radius:4px;padding:0 .3rem;font:inherit;font-size:.78rem}
 .keys{font-size:.78rem;color:var(--dim);line-height:1.9}
+.mission-copy{font-size:.88rem;margin:.35rem 0;color:var(--ink)}
+.physics-note{font-size:.78rem;color:var(--dim);border-left:2px solid var(--ut-orange);
+  padding-left:.55rem;margin:.55rem 0}
+.mission-status{min-height:1.5rem;margin:.45rem 0;color:var(--ok);font-weight:650}
+.mission-status[data-state=crashed]{color:var(--bad)}
+.mission-status[data-state=landed]{color:var(--ok)}
+.lander-controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.45rem;margin:.75rem 0}
+.lander-controls[hidden]{display:none}
+.lander-button{min-height:3rem;font-size:1rem;touch-action:none;user-select:none}
+.lander-button:active{border-color:var(--ut-orange);background:#39414c}
+.advanced{margin-top:1rem;border-top:1px solid var(--line);padding-top:.65rem}
+.advanced summary{cursor:pointer;color:var(--dim);font-size:.83rem}
+.advanced summary:focus-visible{outline:3px solid var(--ut-orange);outline-offset:3px}
+.advanced[open] summary{margin-bottom:.8rem}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
   white-space:nowrap}
 footer{padding:0 1rem 1.5rem;color:var(--dim);font-size:.8rem;max-width:70ch}
@@ -87,8 +101,8 @@ a{color:var(--ut-orange)}
 <body>
 
 <header>
-  <h1>Physics 311 &middot; Week 10 Reference</h1>
-  <span class="sub">STANDALONE single-file build &mdash; Interactivity, UI &amp; Publishing &mdash; drag a body, change a slider, share the link</span>
+  <h1>Physics 311 &middot; Lunar Lander</h1>
+  <span class="sub">A fixed-step physics challenge: steer, harvest sunlight, and land softly.</span>
 </header>
 
 <div class="layout">
@@ -96,21 +110,44 @@ a{color:var(--ut-orange)}
   <main class="stage">
     <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
     <canvas id="sim" tabindex="0" role="img"
-            aria-label="Interactive physics simulation"
+            aria-label="Lunar lander game. Rotate and thrust to reach the green landing pad."
             aria-describedby="canvas-help">
-      Interactive physics simulation. Use the controls and keyboard instructions below to explore bodies, motion, and forces.
+      Lunar lander simulation. Use left and right arrows to rotate, and hold up to thrust. Land upright and gently on the green pad.
     </canvas>
     <p id="canvas-help" class="sr-only">
-      Focus the simulation canvas to use keyboard controls. Use the left and right bracket keys to select a body,
-      the arrow keys to drag it, and enable Slingshot launch then press L, use arrow keys to aim, and press Enter to launch.
+      Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
+      Solar reflectors collect sunlight most efficiently when the lander points upward. Land on the green pad with low speed and nearly upright.
     </p>
+    <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
 
-  <aside class="panel" aria-label="Simulation controls">
+  <aside class="panel" aria-label="Lunar lander controls">
 
+    <h2>Mission</h2>
+    <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+    <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+    <p class="keys">
+      Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
+      hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+      <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
+    </p>
+    <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+    </div>
+    <div class="btns">
+      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-reset">&#8635; Restart</button>
+      <button id="btn-step">&#9197; Step</button>
+      <button id="btn-link">&#128279; Copy link</button>
+    </div>
+
+    <details class="advanced">
+      <summary>Other scenes and simulation settings</summary>
     <h2>Scene</h2>
     <div class="row">
       <label for="scene">Preset</label>
@@ -120,6 +157,7 @@ a{color:var(--ut-orange)}
         <option value="orbits">3 &mdash; N-body orbits</option>
         <option value="projectile">4 &mdash; Projectile (control case)</option>
         <option value="pendulums">5 &mdash; Pendulum row</option>
+        <option value="lunar">6 &mdash; Lunar lander</option>
       </select>
     </div>
     <div class="row">
@@ -166,30 +204,16 @@ a{color:var(--ut-orange)}
     <div class="check"><input type="checkbox" id="slingshot"><label for="slingshot">Slingshot launch (drag opposite the launch direction)</label></div>
     <div class="check"><input type="checkbox" id="spawn"><label for="spawn">Click adds a body</label></div>
 
-    <div class="btns">
-      <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
-      <button id="btn-step">&#9197; Step</button>
-      <button id="btn-reset">&#8635; Reset</button>
-      <button id="btn-link">&#128279; Copy link</button>
-    </div>
-
-    <h2>Keyboard</h2>
     <p class="keys">
       <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
-      <kbd>Tab</kbd> move between controls; arrows adjust a focused slider or select<br>
-      Focus the canvas: <kbd>[</kbd>/<kbd>]</kbd> select &middot; arrows drag / aim<br>
-      <kbd>L</kbd> place a slingshot body &middot; <kbd>Enter</kbd> launch<br>
-      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
+      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> scene
     </p>
+    </details>
   </aside>
 </div>
 
 <footer>
-  <strong>Reading the HUD.</strong> &Delta;E/E&#8320; is measured against a reference captured
-  once when the scene was built &mdash; it turns red past 1&nbsp;%. &Delta;p/p&#8320; reads
-  <em>n/a</em> unless the system is genuinely isolated; walls, gravity and your own
-  finger are all external forces. Try scene&nbsp;4 with each integrator: nothing changes,
-  because a constant force cannot tell them apart. Then try scene&nbsp;2.
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, and a steerable thrust force. The energy readout remains visible, but is marked <em>open</em> because solar charging and thrust exchange energy with the lander; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
 </footer>
 
 <script type="module">
@@ -229,7 +253,7 @@ let _nextId = 1;
 
 class Body {
   constructor({ pos, vel = Vec2.zero(), mass = 1, radius = 0.25,
-                fixed = false, color = '#ff8200', tag = '' } = {}) {
+                fixed = false, color = '#ff8200', tag = '', angle = 0 } = {}) {
     this.id      = _nextId++;
     this.pos     = pos.clone();
     this.vel     = vel.clone();
@@ -241,6 +265,7 @@ class Body {
     this.fixed   = fixed;
     this.color   = color;
     this.tag     = tag;
+    this.angle   = angle;
   }
 
   clearForce()      { this.force.set(0, 0); }
@@ -432,6 +457,7 @@ class PointerSpring {
     this.target  = new Vec2(0, 0);       // WORLD coordinates, set by ui/Pointer.js
     this.enabled = true;
   }
+
   grab(body, worldX, worldY) { this.grabbed = body; this.target.set(worldX, worldY); }
   moveTo(worldX, worldY)     { this.target.set(worldX, worldY); }
   release()                  { this.grabbed = null; }
@@ -448,6 +474,49 @@ class PointerSpring {
   energy() {
     if (!this.active) return 0;
     return 0.5 * this.k * this.target.sub(this.grabbed.pos).len2();
+  }
+}
+
+class LanderDrive {
+  constructor(body, { gravity = 1.62, thrust = 12, maxCharge = 100,
+                      initialCharge = 62, burnRate = 8, chargeRate = 7,
+                      rotationRate = 1.7 } = {}) {
+    this.body = body;
+    this.g = gravity;
+    this.thrust = thrust;
+    this.maxCharge = maxCharge;
+    this.charge = initialCharge;
+    this.burnRate = burnRate;
+    this.chargeRate = chargeRate;
+    this.rotationRate = rotationRate;
+    this.thrusting = false;
+    this.rotation = 0;
+  }
+
+  apply() {
+    const b = this.body;
+    if (b.fixed) return;
+    b.applyForce(new Vec2(0, -b.mass * this.g));
+    if (this.thrusting && this.charge > 0) {
+      const direction = new Vec2(-Math.sin(b.angle), Math.cos(b.angle));
+      b.applyForce(direction.mul(this.thrust));
+    }
+  }
+
+  energy(bodies) {
+    return this.g * bodies.reduce((sum, b) => sum + b.mass * b.pos.y, 0);
+  }
+
+  update(dt) {
+    const b = this.body;
+    if (b.fixed) return;
+    b.angle = (b.angle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
+    if (this.thrusting && this.charge > 0)
+      this.charge = Math.max(0, this.charge - this.burnRate * dt);
+    else {
+      const sunlight = Math.max(0, Math.cos(b.angle));
+      this.charge = Math.min(this.maxCharge, this.charge + this.chargeRate * sunlight * dt);
+    }
   }
 }
 
@@ -556,6 +625,9 @@ class World {
     // Is this an ISOLATED system? Only then must total momentum be conserved.
     // Walls, uniform gravity and the pointer spring are all EXTERNAL.
     this.momentumConserved = false;
+    this.energyMode = 'closed';
+    this.beforeCollisions = null;
+    this.afterStep = null;
     this._E0     = null;                 // reference energy, set ONCE
   }
 
@@ -574,6 +646,7 @@ class World {
     if (drag) this.dissipated += drag.dissipation(this.bodies) * dt;
 
     this.integrator.step(this, dt);
+    if (this.beforeCollisions) this.beforeCollisions(dt);
 
     // Energy ledger: an inelastic impact removes REAL energy. Book it, so the
     // HUD's drift readout measures the INTEGRATOR and not the physics. Without
@@ -594,6 +667,7 @@ class World {
 
     this.time  += dt;
     this.steps += 1;
+    if (this.afterStep) this.afterStep(dt);
   }
 
   // Fixed-timestep accumulator. Returns alpha in [0,1) for render interpolation.
@@ -729,6 +803,7 @@ class Renderer {
 
     this._grid(world);
     if (world.bounds) this._bounds(world.bounds);
+    if (world.lander) this._landerScene(world);
 
     if (this.showTrails && !this.reducedMotion) {
       ctx.save();
@@ -759,6 +834,10 @@ class Renderer {
     if (this.showForceVectors) this._forceVectors(world);
 
     for (const b of world.bodies) {
+      if (b.tag === 'lander') {
+        this._landerCraft(b, world.landerDrive);
+        continue;
+      }
       const [px, py] = cam.toScreen(b.pos.x, b.pos.y);
       const r = Math.max(2.5, b.radius * cam.scale);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -778,6 +857,74 @@ class Renderer {
 
     if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+  }
+
+  _landerScene(world) {
+    const ctx = this.ctx, cam = this.cam, mission = world.mission;
+    const [groundX, groundY] = cam.toScreen(world.bounds.xmin, world.bounds.ymin);
+    const [rightX, bottomY] = cam.toScreen(world.bounds.xmax, world.bounds.ymin - 1);
+    ctx.fillStyle = '#292a2b';
+    ctx.fillRect(groundX, groundY, rightX - groundX, bottomY - groundY);
+
+    const [padLeft, padY] = cam.toScreen(mission.padCenter - mission.padHalfWidth, 0);
+    const [padRight] = cam.toScreen(mission.padCenter + mission.padHalfWidth, 0);
+    ctx.strokeStyle = '#7ee787';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(padLeft, padY); ctx.lineTo(padRight, padY); ctx.stroke();
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 13; i++) {
+      const x = world.bounds.xmin + 1 + i * 1.5;
+      const [sx, sy] = cam.toScreen(x, 0);
+      ctx.strokeStyle = '#5b6065';
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 0.3 * cam.scale, sy + 0.22 * cam.scale); ctx.stroke();
+    }
+
+    const [sunX, sunY] = cam.toScreen(0, 16.5);
+    ctx.fillStyle = '#ffd866';
+    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ffd866';
+    ctx.globalAlpha = 0.3;
+    ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.moveTo(sunX, sunY + 22); ctx.lineTo(sunX, cam.toScreen(0, 0)[1]); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffd866';
+    ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText('SUNLIGHT', sunX - 29, sunY + 38);
+  }
+
+  _landerCraft(body, drive) {
+    const ctx = this.ctx, cam = this.cam;
+    const [x, y] = cam.toScreen(body.pos.x, body.pos.y);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-body.angle);
+    ctx.scale(cam.scale, cam.scale);
+    ctx.lineWidth = 0.045;
+    ctx.strokeStyle = '#e6edf3';
+    ctx.fillStyle = '#c9d1d9';
+    ctx.beginPath();
+    ctx.moveTo(0, -0.34); ctx.lineTo(-0.25, -0.04);
+    ctx.lineTo(-0.19, 0.22); ctx.lineTo(0.19, 0.22);
+    ctx.lineTo(0.25, -0.04); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    const panelColor = drive.charge > 0 ? '#58a6ff' : '#6e7681';
+    ctx.fillStyle = panelColor;
+    ctx.strokeStyle = '#c9d1d9';
+    ctx.fillRect(-0.62, -0.12, 0.33, 0.13);
+    ctx.strokeRect(-0.62, -0.12, 0.33, 0.13);
+    ctx.fillRect(0.29, -0.12, 0.33, 0.13);
+    ctx.strokeRect(0.29, -0.12, 0.33, 0.13);
+    ctx.beginPath(); ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
+    ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
+    ctx.stroke();
+
+    if (drive.thrusting && drive.charge > 0 && !body.fixed) {
+      ctx.fillStyle = '#ff8200';
+      ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
+      ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   }
 
   _velocityVectors(world) {
@@ -935,18 +1082,29 @@ class HUD {
   update(world, { substeps = 0, paused = false, cursor = null } = {}) {
     const dE = world.driftE();
     const dP = world.driftP();
-    const bad = Math.abs(dE) > 0.01;
+    const energyOpen = world.energyMode === 'open';
+    const bad = !energyOpen && Math.abs(dE) > 0.01;
     const expectP = world.momentumConserved && !(world.pointer && world.pointer.active);
     const badP = expectP && dP > 1e-6;
+    const lander = world.lander;
+    const drive = world.landerDrive;
+    const impact = world.mission?.impact;
     this.el.innerHTML = `
       <span class="k">t</span><span class="v">${world.time.toFixed(2)} s</span>
       <span class="k">steps</span><span class="v">${world.steps}</span>
       <span class="k">bodies</span><span class="v">${world.bodies.length}</span>
+      ${lander ? `
+      <span class="k">altitude</span><span class="v">${Math.max(0, lander.pos.y - lander.radius).toFixed(2)} m</span>
+      <span class="k">${impact ? 'vertical impact speed' : 'vertical speed'}</span><span class="v">${(impact ? impact.verticalSpeed : lander.vel.y).toFixed(2)} m/s</span>
+      <span class="k">${impact ? 'horizontal impact speed' : 'horizontal speed'}</span><span class="v">${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} m/s</span>
+      <span class="k">${impact ? 'impact angle' : 'orientation'}</span><span class="v">${((impact ? impact.angle : lander.angle) * 180 / Math.PI).toFixed(0)}°</span>
+      <span class="k">propulsion reserve</span><span class="v">${drive.charge.toFixed(0)}%</span>
+      ` : ''}
       <span class="k">KE</span><span class="v">${world.kinetic().toFixed(3)} J</span>
       <span class="k">E mech</span><span class="v">${world.mechanical().toFixed(3)} J</span>
       <span class="k">E lost</span><span class="v">${(world.inelastic + world.dissipated).toFixed(3)} J</span>
       <span class="k">&Delta;E/E&#8320;</span>
-      <span class="v ${bad ? 'bad' : 'ok'}">${(dE * 100).toFixed(3)} %</span>
+      <span class="v ${energyOpen ? 'na' : (bad ? 'bad' : 'ok')}" title="${energyOpen ? 'Open system: solar charging and electric thrust exchange energy with the lander.' : 'Closed-system energy drift'}">${(dE * 100).toFixed(3)} %${energyOpen ? ' (open)' : ''}</span>
       <span class="k">&Delta;p/p&#8320;</span>
       <span class="v ${badP ? 'bad' : (expectP ? 'ok' : 'na')}" title="${expectP ? 'isolated system: must hold' : 'external forces present: not expected to hold'}">${dP.toExponential(2)}${expectP ? '' : ' n/a'}</span>
       <span class="k">cursor</span>
@@ -955,7 +1113,7 @@ class HUD {
       <span class="k">sub/frame</span><span class="v">${substeps}${paused ? ' (paused)' : ''}</span>`;
     // Screen readers: announce only the physics honesty numbers, not fps.
     this.el.setAttribute('aria-label',
-      `time ${world.time.toFixed(1)} seconds, energy drift ${(dE*100).toFixed(2)} percent`);
+      `time ${world.time.toFixed(1)} seconds, ${energyOpen ? 'open-system energy change' : 'energy drift'} ${(dE*100).toFixed(2)} percent`);
   }
 }
 
@@ -1033,6 +1191,12 @@ class Controls {
     this.$('force').checked  = s.forceVectors;
     this.$('slingshot').checked = s.slingshotMode;
     this.$('spawn').checked  = s.spawnMode;
+    const lander = s.scene === 'lunar';
+    for (const id of ['count', 'rest', 'grav', 'drag', 'slingshot', 'spawn']) {
+      const el = this.$(id);
+      const row = el.closest('.row') || el.closest('.check');
+      if (row) row.hidden = lander;
+    }
     const put = (id, t) => { const e = this.$(id + '-out'); if (e) e.textContent = t; };
     put('dt', `1/${Math.round(1 / s.dt)} s`);
     put('rest', s.restitution.toFixed(2));
@@ -1113,6 +1277,7 @@ class PointerInput {
       c.setPointerCapture(ev.pointerId);
       this.activePointerId = ev.pointerId;
       const [x, y] = this._updateCursor(ev);
+      if (this.world.landerDrive) return;
       if (this.slingshotMode) {
         if (this.world.pick(x, y, 0.15)) return;
         const origin = { x, y };
@@ -1171,13 +1336,25 @@ class KeyboardInput {
     this._held = null;
     this.slingshotMode = false;
     this.launch = null;
+    this._landerHeld = new Set();
+    this._bindLanderButtons();
     window.addEventListener('keydown', (e) => this._down(e));
     window.addEventListener('keyup',   (e) => this._up(e));
+    window.addEventListener('blur', () => this._clearLanderControls());
   }
 
   _down(e) {
     if (e.target.matches('input, select, textarea, button, a, [contenteditable="true"]')) return;
     const A = this.actions;
+    if (this.world.landerDrive && this.world.mission?.status === 'flying') {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'w', 'arrowleft', 'a', 'arrowright', 'd'].includes(key)) {
+        this._landerHeld.add(key);
+        this._updateLanderControls();
+        e.preventDefault();
+        return;
+      }
+    }
     switch (e.key) {
       case ' ':      A.togglePause(); e.preventDefault(); break;
       case '.':      A.stepOnce(); e.preventDefault(); break;
@@ -1224,8 +1401,61 @@ class KeyboardInput {
   }
 
   _up(e) {
+    if (this.world.landerDrive) {
+      this._landerHeld.delete(e.key.toLowerCase());
+      this._updateLanderControls();
+    }
     if (e.key.startsWith('Arrow') && !this.launch) {
       this.spring.release(); this._held = null;
+    }
+  }
+
+  _updateLanderControls() {
+    const drive = this.world.landerDrive;
+    if (!drive) return;
+    const held = this._landerHeld;
+    drive.thrusting = held.has('arrowup') || held.has('w') || held.has('button-thrust');
+    drive.rotation = (held.has('arrowleft') || held.has('a') || held.has('button-left') ? 1 : 0)
+      - (held.has('arrowright') || held.has('d') || held.has('button-right') ? 1 : 0);
+  }
+
+  _clearLanderControls() {
+    this._landerHeld.clear();
+    this._updateLanderControls();
+  }
+
+  _bindLanderButtons() {
+    for (const [id, key] of [
+      ['lander-left', 'button-left'],
+      ['lander-thrust', 'button-thrust'],
+      ['lander-right', 'button-right']
+    ]) {
+      const button = document.getElementById(id);
+      if (!button) continue;
+      const press = event => {
+        if (this.world.mission?.status !== 'flying') return;
+        this._landerHeld.add(key);
+        this._updateLanderControls();
+        if (event.cancelable) event.preventDefault();
+        if (event.pointerId !== undefined) button.setPointerCapture(event.pointerId);
+      };
+      const release = event => {
+        this._landerHeld.delete(key);
+        this._updateLanderControls();
+        if (event.pointerId !== undefined && button.hasPointerCapture?.(event.pointerId))
+          button.releasePointerCapture(event.pointerId);
+      };
+      button.addEventListener('pointerdown', press);
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('lostpointercapture', release);
+      button.addEventListener('blur', release);
+      button.addEventListener('keydown', event => {
+        if (event.key === ' ' || event.key === 'Enter') press(event);
+      });
+      button.addEventListener('keyup', event => {
+        if (event.key === ' ' || event.key === 'Enter') release(event);
+      });
     }
   }
 
@@ -1452,6 +1682,81 @@ const SCENES = {
     attachCommon(w, state, { gravity: true });
     w.markReference();
     return { world: w, view: [-6.5, 6.5, -2.5, 4.5] };
+  },
+
+  lunar(state) {
+    Body.resetIds();
+    const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 18 };
+    const w = base(state, { bounds, restitution: 0.25 });
+    const lander = w.add(new Body({
+      pos: new Vec2(-5.5, 12.5),
+      vel: new Vec2(1.7, -1.8),
+      mass: 1,
+      radius: 0.42,
+      color: '#e6edf3',
+      tag: 'lander',
+      angle: 0.28
+    }));
+    const drive = w.addForce(new LanderDrive(lander));
+    w.lander = lander;
+    w.landerDrive = drive;
+    w.pointer = w.addForce(new PointerSpring());
+    w.pointer.enabled = false;
+    w.energyMode = 'open';
+    w.momentumConserved = false;
+    w.mission = {
+      status: 'flying',
+      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake.',
+      padCenter: 0,
+      padHalfWidth: 1.45
+    };
+    w.beforeCollisions = () => {
+      if (w.mission.status !== 'flying') return;
+      const { xmin, xmax, ymin, ymax } = w.bounds;
+      const r = lander.radius;
+      if (lander.pos.x - r < xmin || lander.pos.x + r > xmax ||
+          lander.pos.y + r > ymax) {
+        w.mission.status = 'crashed';
+        w.mission.message = 'Crash: the lander struck the canyon wall.';
+        return;
+      }
+      if (lander.pos.y - r >= ymin) return;
+
+      w.mission.impact = {
+        verticalSpeed: lander.vel.y,
+        horizontalSpeed: lander.vel.x,
+        angle: lander.angle
+      };
+      const onPad = Math.abs(lander.pos.x - w.mission.padCenter) <= w.mission.padHalfWidth;
+      const softVerticalSpeed = Math.abs(lander.vel.y) <= 1.8;
+      const softHorizontalSpeed = Math.abs(lander.vel.x) <= 1.1;
+      const upright = Math.abs(Math.atan2(Math.sin(lander.angle), Math.cos(lander.angle)))
+        <= 15 * Math.PI / 180;
+      if (onPad && softVerticalSpeed && softHorizontalSpeed && upright) {
+        w.mission.status = 'landed';
+        w.mission.message = 'Touchdown! The lander is safely on the pad.';
+      } else {
+        w.mission.status = 'crashed';
+        if (!onPad) w.mission.message = 'Crash: you missed the landing pad.';
+        else if (!upright) w.mission.message = 'Crash: the lander was tilted at touchdown.';
+        else w.mission.message = 'Crash: touchdown speed was too high.';
+      }
+    };
+    w.afterStep = dt => {
+      if (w.mission.status === 'flying') {
+        drive.update(dt);
+        return;
+      }
+      if (lander.fixed) return;
+      w.inelastic += lander.kinetic();
+      lander.vel.set(0, 0);
+      lander.fixed = true;
+      lander.invMass = 0;
+      drive.thrusting = false;
+      drive.rotation = 0;
+    };
+    w.markReference();
+    return { world: w, view: [-11, 11, -1, 19] };
   }
 };
 
@@ -1460,7 +1765,8 @@ const SCENE_LIST = [
   ['chain',      'Spring chain'],
   ['orbits',     'N-body orbits'],
   ['projectile', 'Projectile (control case)'],
-  ['pendulums',  'Pendulum row']
+  ['pendulums',  'Pendulum row'],
+  ['lunar',      'Lunar lander']
 ];
 
 /* ===== src/main.js ===== */
@@ -1475,7 +1781,7 @@ const SCENE_LIST = [
 
 
 const DEFAULTS = {
-  scene: 'billiards', integrator: 'verlet', dt: 1 / 240,
+  scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false
@@ -1483,6 +1789,8 @@ const DEFAULTS = {
 
 const canvas = document.getElementById('sim');
 const live   = document.getElementById('live');       // aria-live announcer
+const missionStatus = document.getElementById('mission-status');
+const landerControls = document.getElementById('lander-controls');
 const cam    = new Camera();
 const render = new Renderer(canvas, cam);
 const hud    = new HUD(document.getElementById('hud'));
@@ -1497,22 +1805,25 @@ const state = { ...DEFAULTS, ...StateURL.decode(location.hash, DEFAULTS) };
 let world = null, view = null, paused = false, lastSubsteps = 0;
 let pointer = null, keyboard = null;
 let cursor = null;
+let lastMissionStatus = null;
 
 function announce(msg) { live.textContent = msg; }
 
 function build() {
   const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
   world = made.world; view = made.view;
+  lastMissionStatus = null;
   world.setIntegrator(state.integrator);
   render.clearTrails();
   render.resize();
   cam.fit(...view);
   // Rebuilding replaces `world`, so re-point the input objects at the new one.
   if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
-  if (keyboard) { keyboard.world = world; keyboard.spring = world.pointer;
+  if (keyboard) { keyboard._clearLanderControls(); keyboard.world = world; keyboard.spring = world.pointer;
                   keyboard.selected = null; }
   if (pointer) pointer.launch = null;
   if (keyboard) keyboard.launch = null;
+  controls.syncToDOM();
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
            `integrator ${state.integrator}`);
@@ -1631,6 +1942,20 @@ function frame(now) {
     lastSubsteps = r.substeps;
     render.recordTrails(world);
   } else lastSubsteps = 0;
+
+  if (world.mission) {
+    landerControls.hidden = false;
+    missionStatus.textContent = world.mission.message;
+    missionStatus.setAttribute('data-state', world.mission.status);
+    if (world.mission.status !== lastMissionStatus &&
+        world.mission.status !== 'flying') announce(world.mission.message);
+    lastMissionStatus = world.mission.status;
+  } else {
+    landerControls.hidden = true;
+    missionStatus.textContent = '';
+    missionStatus.removeAttribute('data-state');
+    lastMissionStatus = null;
+  }
 
   render.draw(world, {
     grabbed: world.pointer.grabbed,

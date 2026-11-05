@@ -10,7 +10,7 @@ import { SCENES, SCENE_LIST } from './scenes.js';
 import { Body, Vec2 }   from './engine/World.js';
 
 const DEFAULTS = {
-  scene: 'billiards', integrator: 'verlet', dt: 1 / 240,
+  scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false
@@ -18,6 +18,8 @@ const DEFAULTS = {
 
 const canvas = document.getElementById('sim');
 const live   = document.getElementById('live');       // aria-live announcer
+const missionStatus = document.getElementById('mission-status');
+const landerControls = document.getElementById('lander-controls');
 const cam    = new Camera();
 const render = new Renderer(canvas, cam);
 const hud    = new HUD(document.getElementById('hud'));
@@ -32,22 +34,25 @@ const state = { ...DEFAULTS, ...StateURL.decode(location.hash, DEFAULTS) };
 let world = null, view = null, paused = false, lastSubsteps = 0;
 let pointer = null, keyboard = null;
 let cursor = null;
+let lastMissionStatus = null;
 
 function announce(msg) { live.textContent = msg; }
 
 function build() {
   const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
   world = made.world; view = made.view;
+  lastMissionStatus = null;
   world.setIntegrator(state.integrator);
   render.clearTrails();
   render.resize();
   cam.fit(...view);
   // Rebuilding replaces `world`, so re-point the input objects at the new one.
   if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
-  if (keyboard) { keyboard.world = world; keyboard.spring = world.pointer;
+  if (keyboard) { keyboard._clearLanderControls(); keyboard.world = world; keyboard.spring = world.pointer;
                   keyboard.selected = null; }
   if (pointer) pointer.launch = null;
   if (keyboard) keyboard.launch = null;
+  controls.syncToDOM();
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
            `integrator ${state.integrator}`);
@@ -166,6 +171,20 @@ function frame(now) {
     lastSubsteps = r.substeps;
     render.recordTrails(world);
   } else lastSubsteps = 0;
+
+  if (world.mission) {
+    landerControls.hidden = false;
+    missionStatus.textContent = world.mission.message;
+    missionStatus.setAttribute('data-state', world.mission.status);
+    if (world.mission.status !== lastMissionStatus &&
+        world.mission.status !== 'flying') announce(world.mission.message);
+    lastMissionStatus = world.mission.status;
+  } else {
+    landerControls.hidden = true;
+    missionStatus.textContent = '';
+    missionStatus.removeAttribute('data-state');
+    lastMissionStatus = null;
+  }
 
   render.draw(world, {
     grabbed: world.pointer.grabbed,

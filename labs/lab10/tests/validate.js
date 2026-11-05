@@ -3,7 +3,7 @@
 // because engine/ never touches the DOM. That is the Week 9 layering rule
 // paying its final dividend.
 import { World, Body, Vec2 } from '../src/engine/World.js';
-import { UniformGravity, Spring, NewtonGravity, PointerSpring } from '../src/engine/Forces.js';
+import { UniformGravity, Spring, NewtonGravity, PointerSpring, LanderDrive } from '../src/engine/Forces.js';
 import { Camera }   from '../src/render/Camera.js';
 import { StateURL } from '../src/ui/StateURL.js';
 import { eventToWorld, slingshotVelocity } from '../input.js';
@@ -276,6 +276,69 @@ H('13. Teleporting: direct position edits can tunnel through collisions');
      `final x = ${moved.pos.x.toFixed(1)}, collisions = ${world.collisions}`);
   ok(moved.vel.len2() === 0,
      'teleporting changes position without providing a physical collision impulse');
+}
+
+// --------------------------------------------------------------- 14
+H('14. Lunar lander: steer, recharge, and classify touchdown');
+{
+  const { world } = SCENES.lunar(ST);
+  const { lander, landerDrive: drive, mission } = world;
+  ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
+     'lunar scene builds one controllable lander with an active mission');
+
+  const reserve = drive.charge;
+  drive.thrusting = true;
+  for (let i = 0; i < 120; i++) world.step(world.DT);
+  ok(drive.charge < reserve && lander.vel.y > -1.8,
+     'powered thrust consumes reserve and slows the initial descent',
+     `reserve ${reserve.toFixed(1)}% -> ${drive.charge.toFixed(1)}%, vy=${lander.vel.y.toFixed(2)} m/s`);
+
+  drive.thrusting = false;
+  drive.rotation = 0;
+  drive.charge = 95;
+  for (let i = 0; i < 120; i++) world.step(world.DT);
+  ok(drive.charge > 95 && drive.charge <= drive.maxCharge,
+     'solar alignment recharges the propulsion reserve without exceeding capacity',
+     `reserve=${drive.charge.toFixed(1)}%`);
+
+  const safe = SCENES.lunar(ST).world;
+  safe.lander.pos.set(0, safe.lander.radius + 0.001);
+  safe.lander.vel.set(0.4, -1.2);
+  safe.lander.angle = 0;
+  safe.step(safe.DT);
+  ok(safe.mission.status === 'landed' && safe.lander.fixed && safe.lander.vel.len2() === 0,
+     'upright, low-speed contact inside the pad is a successful landing',
+     safe.mission.message);
+
+  const missed = SCENES.lunar(ST).world;
+  missed.lander.pos.set(4, missed.lander.radius + 0.001);
+  missed.lander.vel.set(0, -1);
+  missed.step(missed.DT);
+  ok(missed.mission.status === 'crashed' && /missed the landing pad/.test(missed.mission.message),
+     'a soft touchdown outside the pad is a crash');
+
+  const fast = SCENES.lunar(ST).world;
+  fast.lander.pos.set(0, fast.lander.radius + 0.001);
+  fast.lander.vel.set(0, -3);
+  fast.lander.angle = 0;
+  fast.lander.angle = 0;
+  fast.step(fast.DT);
+  ok(fast.mission.status === 'crashed' && /speed was too high/.test(fast.mission.message),
+     'a high-speed touchdown on the pad is a crash');
+
+  const isolated = new World({ dt: ST.dt, integrator: 'verlet' });
+  Body.resetIds();
+  const testBody = isolated.add(new Body({
+    pos: new Vec2(0, 10000), vel: new Vec2(2, -3), mass: 1, radius: 0.1
+  }));
+  isolated.addForce(new LanderDrive(testBody));
+  isolated.markReference();
+  for (let i = 0; i < 60 / isolated.DT; i++) isolated.step(isolated.DT);
+  const energyDrift = Math.abs(isolated.driftE());
+  console.log(`         unpowered 60 s lunar free fall: |dE/E0| = ${energyDrift.toExponential(3)}`);
+  ok(energyDrift < 1e-8,
+     'closed-system lunar free fall keeps mechanical energy within 1e-8 over 60 s',
+     `|dE/E0|=${energyDrift.toExponential(3)}`);
 }
 
 console.log(`\n${'='.repeat(58)}\n  ${pass} passed, ${fail} failed\n${'='.repeat(58)}`);

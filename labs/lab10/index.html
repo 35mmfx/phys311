@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Week 10 Reference — Interactive Physics Simulation</title>
+<title>Physics 311 — Lunar Lander</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header>
-  <h1>Physics 311 &middot; Week 10 Reference</h1>
-  <span class="sub">Interactivity, UI &amp; Publishing &mdash; drag a body, change a slider, share the link</span>
+  <h1>Physics 311 &middot; Lunar Lander</h1>
+  <span class="sub">A fixed-step physics challenge: steer, harvest sunlight, and land softly.</span>
 </header>
 
 <div class="layout">
@@ -18,21 +18,44 @@
   <main class="stage">
     <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
     <canvas id="sim" tabindex="0" role="img"
-            aria-label="Interactive physics simulation"
+            aria-label="Lunar lander game. Rotate and thrust to reach the green landing pad."
             aria-describedby="canvas-help">
-      Interactive physics simulation. Use the controls and keyboard instructions below to explore bodies, motion, and forces.
+      Lunar lander simulation. Use left and right arrows to rotate, and hold up to thrust. Land upright and gently on the green pad.
     </canvas>
     <p id="canvas-help" class="sr-only">
-      Focus the simulation canvas to use keyboard controls. Use the left and right bracket keys to select a body,
-      the arrow keys to drag it, and enable Slingshot launch then press L, use arrow keys to aim, and press Enter to launch.
+      Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
+      Solar reflectors collect sunlight most efficiently when the lander points upward. Land on the green pad with low speed and nearly upright.
     </p>
+    <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
 
-  <aside class="panel" aria-label="Simulation controls">
+  <aside class="panel" aria-label="Lunar lander controls">
 
+    <h2>Mission</h2>
+    <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+    <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+    <p class="keys">
+      Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
+      hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+      <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
+    </p>
+    <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+    </div>
+    <div class="btns">
+      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-reset">&#8635; Restart</button>
+      <button id="btn-step">&#9197; Step</button>
+      <button id="btn-link">&#128279; Copy link</button>
+    </div>
+
+    <details class="advanced">
+      <summary>Other scenes and simulation settings</summary>
     <h2>Scene</h2>
     <div class="row">
       <label for="scene">Preset</label>
@@ -42,6 +65,7 @@
         <option value="orbits">3 &mdash; N-body orbits</option>
         <option value="projectile">4 &mdash; Projectile (control case)</option>
         <option value="pendulums">5 &mdash; Pendulum row</option>
+        <option value="lunar">6 &mdash; Lunar lander</option>
       </select>
     </div>
     <div class="row">
@@ -88,30 +112,16 @@
     <div class="check"><input type="checkbox" id="slingshot"><label for="slingshot">Slingshot launch (drag opposite the launch direction)</label></div>
     <div class="check"><input type="checkbox" id="spawn"><label for="spawn">Click adds a body</label></div>
 
-    <div class="btns">
-      <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
-      <button id="btn-step">&#9197; Step</button>
-      <button id="btn-reset">&#8635; Reset</button>
-      <button id="btn-link">&#128279; Copy link</button>
-    </div>
-
-    <h2>Keyboard</h2>
     <p class="keys">
       <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
-      <kbd>Tab</kbd> move between controls; arrows adjust a focused slider or select<br>
-      Focus the canvas: <kbd>[</kbd>/<kbd>]</kbd> select &middot; arrows drag / aim<br>
-      <kbd>L</kbd> place a slingshot body &middot; <kbd>Enter</kbd> launch<br>
-      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
+      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> scene
     </p>
+    </details>
   </aside>
 </div>
 
 <footer>
-  <strong>Reading the HUD.</strong> &Delta;E/E&#8320; is measured against a reference captured
-  once when the scene was built &mdash; it turns red past 1&nbsp;%. &Delta;p/p&#8320; reads
-  <em>n/a</em> unless the system is genuinely isolated; walls, gravity and your own
-  finger are all external forces. Try scene&nbsp;4 with each integrator: nothing changes,
-  because a constant force cannot tell them apart. Then try scene&nbsp;2.
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, and a steerable thrust force. The energy readout remains visible, but is marked <em>open</em> because solar charging and thrust exchange energy with the lander; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
 </footer>
 
 <script type="module" src="src/main.js"></script>

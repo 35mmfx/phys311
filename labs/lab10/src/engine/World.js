@@ -27,6 +27,9 @@ export class World {
     // Is this an ISOLATED system? Only then must total momentum be conserved.
     // Walls, uniform gravity and the pointer spring are all EXTERNAL.
     this.momentumConserved = false;
+    this.energyMode = 'closed';
+    this.beforeCollisions = null;
+    this.afterStep = null;
     this._E0     = null;                 // reference energy, set ONCE
   }
 
@@ -45,6 +48,7 @@ export class World {
     if (drag) this.dissipated += drag.dissipation(this.bodies) * dt;
 
     this.integrator.step(this, dt);
+    if (this.beforeCollisions) this.beforeCollisions(dt);
 
     // Energy ledger: an inelastic impact removes REAL energy. Book it, so the
     // HUD's drift readout measures the INTEGRATOR and not the physics. Without
@@ -65,6 +69,7 @@ export class World {
 
     this.time  += dt;
     this.steps += 1;
+    if (this.afterStep) this.afterStep(dt);
   }
 
   // Fixed-timestep accumulator. Returns alpha in [0,1) for render interpolation.

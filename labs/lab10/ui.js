@@ -71,6 +71,12 @@ export class Controls {
     this.$('force').checked  = s.forceVectors;
     this.$('slingshot').checked = s.slingshotMode;
     this.$('spawn').checked  = s.spawnMode;
+    const lander = s.scene === 'lunar';
+    for (const id of ['count', 'rest', 'grav', 'drag', 'slingshot', 'spawn']) {
+      const el = this.$(id);
+      const row = el.closest('.row') || el.closest('.check');
+      if (row) row.hidden = lander;
+    }
     const put = (id, t) => { const e = this.$(id + '-out'); if (e) e.textContent = t; };
     put('dt', `1/${Math.round(1 / s.dt)} s`);
     put('rest', s.restitution.toFixed(2));

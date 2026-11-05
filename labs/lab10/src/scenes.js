@@ -3,7 +3,7 @@
 // "Reset" reproduces the identical run and a permalink reproduces it on
 // someone else's machine. (Math.random() here would break both.)
 import { World, Body, Vec2 } from './engine/World.js';
-import { UniformGravity, QuadraticDrag, Spring, NewtonGravity, PointerSpring }
+import { UniformGravity, QuadraticDrag, Spring, NewtonGravity, PointerSpring, LanderDrive }
   from './engine/Forces.js';
 
 function mulberry32(seed) {                 // 8-line deterministic PRNG
@@ -136,6 +136,81 @@ export const SCENES = {
     attachCommon(w, state, { gravity: true });
     w.markReference();
     return { world: w, view: [-6.5, 6.5, -2.5, 4.5] };
+  },
+
+  lunar(state) {
+    Body.resetIds();
+    const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 18 };
+    const w = base(state, { bounds, restitution: 0.25 });
+    const lander = w.add(new Body({
+      pos: new Vec2(-5.5, 12.5),
+      vel: new Vec2(1.7, -1.8),
+      mass: 1,
+      radius: 0.42,
+      color: '#e6edf3',
+      tag: 'lander',
+      angle: 0.28
+    }));
+    const drive = w.addForce(new LanderDrive(lander));
+    w.lander = lander;
+    w.landerDrive = drive;
+    w.pointer = w.addForce(new PointerSpring());
+    w.pointer.enabled = false;
+    w.energyMode = 'open';
+    w.momentumConserved = false;
+    w.mission = {
+      status: 'flying',
+      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake.',
+      padCenter: 0,
+      padHalfWidth: 1.45
+    };
+    w.beforeCollisions = () => {
+      if (w.mission.status !== 'flying') return;
+      const { xmin, xmax, ymin, ymax } = w.bounds;
+      const r = lander.radius;
+      if (lander.pos.x - r < xmin || lander.pos.x + r > xmax ||
+          lander.pos.y + r > ymax) {
+        w.mission.status = 'crashed';
+        w.mission.message = 'Crash: the lander struck the canyon wall.';
+        return;
+      }
+      if (lander.pos.y - r >= ymin) return;
+
+      w.mission.impact = {
+        verticalSpeed: lander.vel.y,
+        horizontalSpeed: lander.vel.x,
+        angle: lander.angle
+      };
+      const onPad = Math.abs(lander.pos.x - w.mission.padCenter) <= w.mission.padHalfWidth;
+      const softVerticalSpeed = Math.abs(lander.vel.y) <= 1.8;
+      const softHorizontalSpeed = Math.abs(lander.vel.x) <= 1.1;
+      const upright = Math.abs(Math.atan2(Math.sin(lander.angle), Math.cos(lander.angle)))
+        <= 15 * Math.PI / 180;
+      if (onPad && softVerticalSpeed && softHorizontalSpeed && upright) {
+        w.mission.status = 'landed';
+        w.mission.message = 'Touchdown! The lander is safely on the pad.';
+      } else {
+        w.mission.status = 'crashed';
+        if (!onPad) w.mission.message = 'Crash: you missed the landing pad.';
+        else if (!upright) w.mission.message = 'Crash: the lander was tilted at touchdown.';
+        else w.mission.message = 'Crash: touchdown speed was too high.';
+      }
+    };
+    w.afterStep = dt => {
+      if (w.mission.status === 'flying') {
+        drive.update(dt);
+        return;
+      }
+      if (lander.fixed) return;
+      w.inelastic += lander.kinetic();
+      lander.vel.set(0, 0);
+      lander.fixed = true;
+      lander.invMass = 0;
+      drive.thrusting = false;
+      drive.rotation = 0;
+    };
+    w.markReference();
+    return { world: w, view: [-11, 11, -1, 19] };
   }
 };
 
@@ -144,7 +219,8 @@ export const SCENE_LIST = [
   ['chain',      'Spring chain'],
   ['orbits',     'N-body orbits'],
   ['projectile', 'Projectile (control case)'],
-  ['pendulums',  'Pendulum row']
+  ['pendulums',  'Pendulum row'],
+  ['lunar',      'Lunar lander']
 ];
 
 export { mulberry32 };

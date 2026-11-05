@@ -11,7 +11,8 @@ function el(id) {
     id, value: '', checked: false, textContent: '', innerHTML: '', style: {},
     classList: { add: noop, remove: noop },
     addEventListener: (t, f) => (listeners[t] = f),
-    setAttribute: noop, getAttribute: () => null, matches: () => false,
+    setAttribute: noop, removeAttribute: noop, getAttribute: () => null, matches: () => false,
+    closest: () => ({ hidden: false }),
     getBoundingClientRect: () => ({ width: 900, height: 520, left: 0, top: 0 }),
     getContext: () => ctxStub,
     setPointerCapture: noop, releasePointerCapture: noop, hasPointerCapture: () => false,
@@ -99,6 +100,41 @@ windowListeners.keydown(keyEvent('ArrowLeft'));
 windowListeners.keydown(keyEvent('Enter'));
 checks.push([/^Launched with speed/.test(document.getElementById('live').textContent),
   'keyboard slingshot places, aims, and launches']);
+
+document.getElementById('scene').value = 'lunar';
+document.getElementById('scene')._fire('change', { target: { value: 'lunar' } });
+document.getElementById('btn-play')._fire('click', {});
+const readOrientation = () => Number(document.getElementById('hud').innerHTML
+  .match(/orientation<\/span><span class="v">(-?\d+)°/)[1]);
+const orientationBefore = readOrientation();
+windowListeners.keydown(keyEvent('ArrowLeft'));
+for (let i = 0; i < 15; i++) { frames++; cb(performance.now()); }
+windowListeners.keyup(keyEvent('ArrowLeft'));
+checks.push([readOrientation() > orientationBefore,
+  'left arrow rotates the lander while the mission is running']);
+const reserveBefore = Number(document.getElementById('hud').innerHTML
+  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+windowListeners.keydown(keyEvent('ArrowUp'));
+for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
+windowListeners.keyup(keyEvent('ArrowUp'));
+const reserveAfter = Number(document.getElementById('hud').innerHTML
+  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+checks.push([reserveAfter < reserveBefore,
+  'up arrow thrusts and reduces the propulsion reserve']);
+const touchReserveBefore = reserveAfter;
+document.getElementById('lander-thrust')._fire('pointerdown', {
+  pointerId: 7, cancelable: true, preventDefault: noop
+});
+for (let i = 0; i < 10; i++) { frames++; cb(performance.now()); }
+document.getElementById('lander-thrust')._fire('pointerup', { pointerId: 7 });
+const touchReserveAfter = Number(document.getElementById('hud').innerHTML
+  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+checks.push([touchReserveAfter < touchReserveBefore,
+  'touch thrust button applies force while pressed and releases cleanly']);
+checks.push([/open\)/.test(document.getElementById('hud').innerHTML),
+  'powered lander marks energy change as an open-system diagnostic']);
+checks.push([/Find the pad/.test(document.getElementById('mission-status').textContent),
+  'mission instructions are visible to visitors']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }

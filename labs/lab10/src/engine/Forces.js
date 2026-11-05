@@ -108,6 +108,7 @@ export class PointerSpring {
     this.target  = new Vec2(0, 0);       // WORLD coordinates, set by ui/Pointer.js
     this.enabled = true;
   }
+
   grab(body, worldX, worldY) { this.grabbed = body; this.target.set(worldX, worldY); }
   moveTo(worldX, worldY)     { this.target.set(worldX, worldY); }
   release()                  { this.grabbed = null; }
@@ -124,5 +125,48 @@ export class PointerSpring {
   energy() {
     if (!this.active) return 0;
     return 0.5 * this.k * this.target.sub(this.grabbed.pos).len2();
+  }
+}
+
+export class LanderDrive {
+  constructor(body, { gravity = 1.62, thrust = 12, maxCharge = 100,
+                      initialCharge = 62, burnRate = 8, chargeRate = 7,
+                      rotationRate = 1.7 } = {}) {
+    this.body = body;
+    this.g = gravity;
+    this.thrust = thrust;
+    this.maxCharge = maxCharge;
+    this.charge = initialCharge;
+    this.burnRate = burnRate;
+    this.chargeRate = chargeRate;
+    this.rotationRate = rotationRate;
+    this.thrusting = false;
+    this.rotation = 0;
+  }
+
+  apply() {
+    const b = this.body;
+    if (b.fixed) return;
+    b.applyForce(new Vec2(0, -b.mass * this.g));
+    if (this.thrusting && this.charge > 0) {
+      const direction = new Vec2(-Math.sin(b.angle), Math.cos(b.angle));
+      b.applyForce(direction.mul(this.thrust));
+    }
+  }
+
+  energy(bodies) {
+    return this.g * bodies.reduce((sum, b) => sum + b.mass * b.pos.y, 0);
+  }
+
+  update(dt) {
+    const b = this.body;
+    if (b.fixed) return;
+    b.angle = (b.angle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
+    if (this.thrusting && this.charge > 0)
+      this.charge = Math.max(0, this.charge - this.burnRate * dt);
+    else {
+      const sunlight = Math.max(0, Math.cos(b.angle));
+      this.charge = Math.min(this.maxCharge, this.charge + this.chargeRate * sunlight * dt);
+    }
   }
 }

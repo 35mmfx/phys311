@@ -5,7 +5,7 @@ let _nextId = 1;
 
 export class Body {
   constructor({ pos, vel = Vec2.zero(), mass = 1, radius = 0.25,
-                fixed = false, color = '#ff8200', tag = '' } = {}) {
+                fixed = false, color = '#ff8200', tag = '', angle = 0 } = {}) {
     this.id      = _nextId++;
     this.pos     = pos.clone();
     this.vel     = vel.clone();
@@ -17,6 +17,7 @@ export class Body {
     this.fixed   = fixed;
     this.color   = color;
     this.tag     = tag;
+    this.angle   = angle;
   }
 
   clearForce()      { this.force.set(0, 0); }
