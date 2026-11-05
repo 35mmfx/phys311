@@ -57,7 +57,8 @@ export class Controls {
     });
 
     for (const [id, act] of [['btn-play','togglePause'], ['btn-step','stepOnce'],
-                             ['btn-reset','reset'], ['btn-link','copyLink']])
+                             ['btn-reset','reset'], ['btn-link','copyLink'],
+                             ['btn-csv','downloadCSV']])
       this.$(id).addEventListener('click', () => this.onAction(act));
   }
 
@@ -72,6 +73,8 @@ export class Controls {
     this.$('slingshot').checked = s.slingshotMode;
     this.$('spawn').checked  = s.spawnMode;
     const lander = s.scene === 'lunar';
+    set('race-left-integrator', s.raceA);
+    set('race-right-integrator', s.raceB);
     for (const id of ['count', 'rest', 'grav', 'drag', 'slingshot', 'spawn']) {
       const el = this.$(id);
       const row = el.closest('.row') || el.closest('.check');

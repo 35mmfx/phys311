@@ -39,6 +39,23 @@ canvas:focus-visible{outline:3px solid var(--ut-orange);outline-offset:2px}
 #hud .v.ok{color:var(--ok)}
 #hud .v.bad{color:var(--bad)}
 #hud .v.na{color:var(--dim);font-weight:400}
+.race-details{margin-top:.7rem;padding:.65rem .8rem;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px}
+.race-details summary{cursor:pointer;color:var(--ut-orange);font-weight:650}
+.race-details summary:focus-visible{outline:3px solid var(--ut-orange);outline-offset:3px}
+.race{margin-top:.7rem}
+.race h2{font-size:.92rem;margin:.5rem 0}
+.race-description,.race-axis{color:var(--dim);font-size:.8rem;margin:.35rem 0}
+.race-canvases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.race-canvases>div{min-width:0}
+.race-canvases label{display:block;color:var(--dim);font-size:.78rem}
+.race-canvases select{margin:.25rem 0}
+canvas.race-canvas{height:240px;cursor:default}
+canvas.race-plot{height:190px;cursor:default}
+.race-readout{font-size:.82rem;font-variant-numeric:tabular-nums;margin:.45rem 0}
+.url-examples{margin:.75rem 0;padding:.6rem;border-top:1px solid var(--line)}
+.url-examples h2{font-size:.8rem;margin:.25rem 0}
+.url-examples p{font-size:.8rem;margin:.25rem 0}
 
 .panel{
   background:var(--panel); border:1px solid var(--line);

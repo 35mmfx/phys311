@@ -11,6 +11,10 @@ function el(id) {
     id, value: '', checked: false, textContent: '', innerHTML: '', style: {},
     classList: { add: noop, remove: noop },
     addEventListener: (t, f) => (listeners[t] = f),
+    replaceChildren: (...children) => { el.children = children; },
+    appendChild: child => child,
+    remove: noop,
+    click: noop,
     setAttribute: noop, removeAttribute: noop, getAttribute: () => null, matches: () => false,
     closest: () => ({ hidden: false }),
     getBoundingClientRect: () => ({ width: 900, height: 520, left: 0, top: 0 }),
@@ -21,9 +25,14 @@ function el(id) {
   };
 }
 const nodes = new Map();
+const raceDetails = el('race-details');
+raceDetails.open = false;
 const windowListeners = {};
 globalThis.document = {
   getElementById: id => { if (!nodes.has(id)) nodes.set(id, el(id)); return nodes.get(id); },
+  querySelector: selector => selector === '.race-details' ? raceDetails : null,
+  createElement: tag => el(tag),
+  body: { appendChild: noop },
   addEventListener: noop
 };
 let frames = 0, cb = null;
@@ -33,7 +42,7 @@ globalThis.window = {
 };
 globalThis.performance = { now: () => frames * 16.6667 };
 globalThis.requestAnimationFrame = f => { cb = f; };
-globalThis.location = { hash: '#scene=orbits&int=verlet&n=20', origin: 'x', pathname: '/y' };
+globalThis.location = { search: '?scene=orbits&int=verlet&n=20', hash: '', origin: 'x', pathname: '/y' };
 globalThis.history  = { replaceState: noop };
 Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: () => Promise.resolve() } }, configurable: true });
 
@@ -47,8 +56,8 @@ const checks = [
   [cb !== null || frames > 0,                'frame loop is running'],
   [/steps/.test(hud) && /&Delta;E/.test(hud),'HUD rendered energy drift'],
   [canvas.width === 1800,                    'canvas backed at 2x device pixels (1800 px)'],
-  [document.getElementById('scene').value === 'orbits', 'URL hash set the scene select'],
-  [document.getElementById('integrator').value === 'verlet', 'URL hash set the integrator'],
+  [document.getElementById('scene').value === 'orbits', 'query string set the scene select'],
+  [document.getElementById('integrator').value === 'verlet', 'query string set the integrator'],
 ];
 // simulate a drag: pointerdown on a body, move, up
 canvas._fire('pointerdown', { pointerId: 1, clientX: 450, clientY: 260 });
@@ -135,6 +144,14 @@ checks.push([/open\)/.test(document.getElementById('hud').innerHTML),
   'powered lander marks energy change as an open-system diagnostic']);
 checks.push([/Find the pad/.test(document.getElementById('mission-status').textContent),
   'mission instructions are visible to visitors']);
+checks.push([document.getElementById('race-left-integrator').value === 'euler' &&
+  document.getElementById('race-right-integrator').value === 'verlet',
+  'integrator race offers two independently selected solvers']);
+raceDetails.open = true;
+for (let i = 0; i < 120; i++) { frames++; cb(performance.now()); }
+checks.push([/RMS position difference/.test(document.getElementById('race-readout').textContent) &&
+  !/0\.000e\+0 m/.test(document.getElementById('race-readout').textContent),
+  'opening the race advances identical runs and updates the divergence plot']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }

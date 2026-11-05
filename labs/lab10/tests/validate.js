@@ -6,6 +6,7 @@ import { World, Body, Vec2 } from '../src/engine/World.js';
 import { UniformGravity, Spring, NewtonGravity, PointerSpring, LanderDrive } from '../src/engine/Forces.js';
 import { Camera }   from '../src/render/Camera.js';
 import { StateURL } from '../src/ui/StateURL.js';
+import { serializeSamples } from '../src/ui/CSVExport.js';
 import { eventToWorld, slingshotVelocity } from '../input.js';
 import { SCENES }   from '../src/scenes.js';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -166,20 +167,27 @@ H('7. Scene 4 is degenerate; scene 2 separates the integrators');
 H('8. Permalink: encode/decode round trip');
 {
   const s = { scene:'orbits', integrator:'ec', dt:1/180, restitution:0.37,
-              gravity:3.71, drag:0.012, speed:1.45, count:57 };
+              gravity:3.71, drag:0.012, speed:1.45, count:57,
+              raceA:'ec', raceB:'euler' };
   const back = StateURL.decode(StateURL.encode(s), ST);
   const same = Object.keys(s).every(k => Math.abs((back[k] ?? 0) - s[k]) < 1e-9 || back[k] === s[k]);
-  ok(same, 'every control survives the URL hash', StateURL.encode(s).slice(0, 72) + '...');
-  const partial = StateURL.decode('#scene=chain&int=verlet', ST);
+  ok(same && StateURL.encode(s).startsWith('?'),
+     'every control survives the shareable query string', StateURL.encode(s).slice(0, 72) + '...');
+  ok(back.raceA === 'ec' && back.raceB === 'euler',
+     'both integrator-race selections are included in shared URLs');
+  const partial = StateURL.decode('?scene=chain&int=verlet', ST);
   ok(partial.scene === 'chain' && partial.dt === ST.dt,
-     'a hand-edited or truncated hash falls back to defaults, no crash');
+     'a hand-edited or truncated query falls back to defaults, no crash');
+  const legacy = StateURL.decode('#scene=projectile&int=ec', ST);
+  ok(legacy.scene === 'projectile' && legacy.integrator === 'ec',
+     'previously published hash-based links remain readable');
   const clamped = StateURL.decode(
     '#dt=1&g=100&e=-1&drag=3&speed=0&n=900',
     ST
   );
   ok(clamped.dt === 0.02 && clamped.gravity === 25 && clamped.restitution === 0
      && clamped.drag === 0.2 && clamped.speed === 0.25 && clamped.count === 120,
-     'permalink parameters are clamped to the slider ranges');
+     'shareable URL parameters are clamped to the slider ranges');
 }
 
 // ---------------------------------------------------------------- 9
@@ -321,7 +329,6 @@ H('14. Lunar lander: steer, recharge, and classify touchdown');
   fast.lander.pos.set(0, fast.lander.radius + 0.001);
   fast.lander.vel.set(0, -3);
   fast.lander.angle = 0;
-  fast.lander.angle = 0;
   fast.step(fast.DT);
   ok(fast.mission.status === 'crashed' && /speed was too high/.test(fast.mission.message),
      'a high-speed touchdown on the pad is a crash');
@@ -339,6 +346,39 @@ H('14. Lunar lander: steer, recharge, and classify touchdown');
   ok(energyDrift < 1e-8,
      'closed-system lunar free fall keeps mechanical energy within 1e-8 over 60 s',
      `|dE/E0|=${energyDrift.toExponential(3)}`);
+}
+
+// --------------------------------------------------------------- 15
+H('15. Integrator race and CSV export');
+{
+  const left = SCENES.chain({ ...ST, count: 9, integrator: 'euler' }).world;
+  const right = SCENES.chain({ ...ST, count: 9, integrator: 'verlet' }).world;
+  ok(maxdiff(snap(left), snap(right)) === 0,
+     'race starts from bit-identical chain positions and velocities');
+  for (let i = 0; i < 1200; i++) {
+    left.step(left.DT);
+    right.step(right.DT);
+  }
+  const divergence = Math.sqrt(left.bodies.reduce((sum, body, i) =>
+    sum + body.pos.sub(right.bodies[i].pos).len2(), 0) / left.bodies.length);
+  ok(Number.isFinite(divergence) && divergence > 1e-5,
+     'Euler and Verlet produce measurable RMS position divergence',
+     `${divergence.toExponential(3)} m after ${left.time.toFixed(2)} s`);
+
+  const csv = serializeSamples([
+    { time: 0, bodies: [{ id: 1, x: -1, y: 2 }],
+      kinetic: 0, mechanical: 3, energy: 3, energyChangePct: 0, charge: 62, missionStatus: 'flying' },
+    { time: 0.1, bodies: [{ id: 1, x: -0.5, y: 1.8 }, { id: 2, x: 4, y: 5 }],
+      kinetic: 2, mechanical: 4, energy: 4, energyChangePct: 0.1, charge: 61, missionStatus: 'safe, flying' }
+  ]);
+  const [header, firstRow, secondRow] = csv.trimEnd().split('\r\n');
+  ok(header.startsWith('t_s,body_1_id,body_1_x_m,body_1_y_m') &&
+     header.includes('body_2_x_m') && header.endsWith('mission_status'),
+     'CSV includes time, positions, diagnostics and resource/game state');
+  ok(firstRow.split(',').length === header.split(',').length &&
+     secondRow.split(',').length === header.split(',').length &&
+     secondRow.endsWith('"safe, flying"'),
+     'CSV rows keep a stable shape and quote comma-containing values');
 }
 
 console.log(`\n${'='.repeat(58)}\n  ${pass} passed, ${fail} failed\n${'='.repeat(58)}`);

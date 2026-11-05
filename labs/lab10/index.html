@@ -28,34 +28,66 @@
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
+    <details class="race-details">
+      <summary>Open the side-by-side integrator race</summary>
+      <section class="race" aria-labelledby="race-heading">
+        <h2 id="race-heading">Same spring-chain start, different solvers</h2>
+        <p class="race-description">Both runs use identical initial conditions and timestep; only the integrator differs. The plot tracks their RMS position difference.</p>
+        <div class="race-canvases">
+          <div>
+            <label for="race-left-integrator">Left solver</label>
+            <select id="race-left-integrator" aria-label="Left race integrator"></select>
+            <canvas id="race-left" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the left integrator"></canvas>
+          </div>
+          <div>
+            <label for="race-right-integrator">Right solver</label>
+            <select id="race-right-integrator" aria-label="Right race integrator"></select>
+            <canvas id="race-right" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the right integrator"></canvas>
+          </div>
+        </div>
+        <p id="race-readout" class="race-readout" role="status" aria-live="off"></p>
+        <canvas id="race-plot" class="race-plot" role="img" aria-label="Live plot of RMS position difference between integrators"></canvas>
+        <p class="race-axis">RMS difference (m) vs simulated time (s), last 20 seconds</p>
+        <button id="race-reset" type="button">Reset race</button>
+      </section>
+    </details>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
 
   <aside class="panel" aria-label="Lunar lander controls">
 
-    <h2>Mission</h2>
-    <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
-    <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
-    <p class="keys">
-      Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
-      hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
-      <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
-    </p>
-    <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
-      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
-      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
-      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
-    </div>
+    <section id="lander-instructions" aria-labelledby="mission-heading">
+      <h2 id="mission-heading">Mission</h2>
+      <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+      <p class="keys">
+        Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
+        hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+        <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
+      </p>
+      <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+        <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+        <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+        <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+      </div>
+    </section>
     <div class="btns">
       <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
       <button id="btn-reset">&#8635; Restart</button>
       <button id="btn-step">&#9197; Step</button>
       <button id="btn-link">&#128279; Copy link</button>
+      <button id="btn-csv">Download CSV</button>
     </div>
 
     <details class="advanced">
       <summary>Other scenes and simulation settings</summary>
+      <section class="url-examples" aria-labelledby="url-heading">
+        <h2 id="url-heading">Example shareable configurations</h2>
+        <p><a href="?scene=chain&amp;int=euler&amp;dt=0.004166666666666667&amp;e=0.95&amp;g=9.81&amp;drag=0&amp;speed=1&amp;n=24">Spring chain — Euler</a></p>
+        <p><a href="?scene=projectile&amp;int=verlet&amp;dt=0.008333333333333333&amp;e=0.8&amp;g=3.71&amp;drag=0.01&amp;speed=1.5&amp;n=36">Projectile — Verlet, Mars gravity</a></p>
+      </section>
+
     <h2>Scene</h2>
     <div class="row">
       <label for="scene">Preset</label>

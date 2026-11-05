@@ -5,8 +5,10 @@ import re
 ORDER = ['src/engine/Vec2.js', 'src/engine/Body.js', 'src/engine/Integrators.js',
          'src/engine/Forces.js', 'src/engine/Collisions.js', 'src/engine/World.js',
          'src/render/Camera.js', 'src/render/Renderer.js', 'src/render/HUD.js',
+         'src/render/IntegratorRace.js',
          'ui.js', 'input.js',
-         'src/ui/StateURL.js', 'src/scenes.js', 'src/main.js']
+         'src/ui/StateURL.js', 'src/ui/CSVExport.js',
+         'src/scenes.js', 'src/main.js']
 
 parts = []
 for f in ORDER:

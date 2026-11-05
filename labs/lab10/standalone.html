@@ -46,6 +46,23 @@ canvas:focus-visible{outline:3px solid var(--ut-orange);outline-offset:2px}
 #hud .v.ok{color:var(--ok)}
 #hud .v.bad{color:var(--bad)}
 #hud .v.na{color:var(--dim);font-weight:400}
+.race-details{margin-top:.7rem;padding:.65rem .8rem;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px}
+.race-details summary{cursor:pointer;color:var(--ut-orange);font-weight:650}
+.race-details summary:focus-visible{outline:3px solid var(--ut-orange);outline-offset:3px}
+.race{margin-top:.7rem}
+.race h2{font-size:.92rem;margin:.5rem 0}
+.race-description,.race-axis{color:var(--dim);font-size:.8rem;margin:.35rem 0}
+.race-canvases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+.race-canvases>div{min-width:0}
+.race-canvases label{display:block;color:var(--dim);font-size:.78rem}
+.race-canvases select{margin:.25rem 0}
+canvas.race-canvas{height:240px;cursor:default}
+canvas.race-plot{height:190px;cursor:default}
+.race-readout{font-size:.82rem;font-variant-numeric:tabular-nums;margin:.45rem 0}
+.url-examples{margin:.75rem 0;padding:.6rem;border-top:1px solid var(--line)}
+.url-examples h2{font-size:.8rem;margin:.25rem 0}
+.url-examples p{font-size:.8rem;margin:.25rem 0}
 
 .panel{
   background:var(--panel); border:1px solid var(--line);
@@ -120,34 +137,66 @@ a{color:var(--ut-orange)}
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
+    <details class="race-details">
+      <summary>Open the side-by-side integrator race</summary>
+      <section class="race" aria-labelledby="race-heading">
+        <h2 id="race-heading">Same spring-chain start, different solvers</h2>
+        <p class="race-description">Both runs use identical initial conditions and timestep; only the integrator differs. The plot tracks their RMS position difference.</p>
+        <div class="race-canvases">
+          <div>
+            <label for="race-left-integrator">Left solver</label>
+            <select id="race-left-integrator" aria-label="Left race integrator"></select>
+            <canvas id="race-left" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the left integrator"></canvas>
+          </div>
+          <div>
+            <label for="race-right-integrator">Right solver</label>
+            <select id="race-right-integrator" aria-label="Right race integrator"></select>
+            <canvas id="race-right" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the right integrator"></canvas>
+          </div>
+        </div>
+        <p id="race-readout" class="race-readout" role="status" aria-live="off"></p>
+        <canvas id="race-plot" class="race-plot" role="img" aria-label="Live plot of RMS position difference between integrators"></canvas>
+        <p class="race-axis">RMS difference (m) vs simulated time (s), last 20 seconds</p>
+        <button id="race-reset" type="button">Reset race</button>
+      </section>
+    </details>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
 
   <aside class="panel" aria-label="Lunar lander controls">
 
-    <h2>Mission</h2>
-    <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
-    <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
-    <p class="keys">
-      Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
-      hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
-      <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
-    </p>
-    <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
-      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
-      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
-      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
-    </div>
+    <section id="lander-instructions" aria-labelledby="mission-heading">
+      <h2 id="mission-heading">Mission</h2>
+      <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+      <p class="keys">
+        Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
+        hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+        <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
+      </p>
+      <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+        <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+        <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+        <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+      </div>
+    </section>
     <div class="btns">
       <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
       <button id="btn-reset">&#8635; Restart</button>
       <button id="btn-step">&#9197; Step</button>
       <button id="btn-link">&#128279; Copy link</button>
+      <button id="btn-csv">Download CSV</button>
     </div>
 
     <details class="advanced">
       <summary>Other scenes and simulation settings</summary>
+      <section class="url-examples" aria-labelledby="url-heading">
+        <h2 id="url-heading">Example shareable configurations</h2>
+        <p><a href="?scene=chain&amp;int=euler&amp;dt=0.004166666666666667&amp;e=0.95&amp;g=9.81&amp;drag=0&amp;speed=1&amp;n=24">Spring chain — Euler</a></p>
+        <p><a href="?scene=projectile&amp;int=verlet&amp;dt=0.008333333333333333&amp;e=0.8&amp;g=3.71&amp;drag=0.01&amp;speed=1.5&amp;n=36">Projectile — Verlet, Mars gravity</a></p>
+      </section>
+
     <h2>Scene</h2>
     <div class="row">
       <label for="scene">Preset</label>
@@ -1117,6 +1166,193 @@ class HUD {
   }
 }
 
+/* ===== src/render/IntegratorRace.js ===== */
+const RACE_SOLVERS = [
+  ['euler', 'Euler'],
+  ['ec', 'Euler–Cromer'],
+  ['verlet', 'Velocity Verlet']
+];
+
+class IntegratorRace {
+  constructor({ leftCanvas, rightCanvas, plotCanvas, leftSelect, rightSelect,
+                readout, resetButton, onIntegratorsChange = () => {}, dt,
+                leftIntegrator = 'euler', rightIntegrator = 'verlet' }) {
+    this.canvases = [leftCanvas, rightCanvas];
+    this.plotCanvas = plotCanvas;
+    this.leftSelect = leftSelect;
+    this.rightSelect = rightSelect;
+    this.readout = readout;
+    this.onIntegratorsChange = onIntegratorsChange;
+    this.dt = dt;
+    this.integrators = [leftIntegrator, rightIntegrator];
+    this.worlds = [];
+    this.cameras = [new Camera(), new Camera()];
+    this.renderers = this.canvases.map((canvas, i) => new Renderer(canvas, this.cameras[i]));
+    this.samples = [];
+    this.accumulator = 0;
+    this.sampleLimit = 1600;
+    this.view = [-6, 6, -5, 4.5];
+    this.leftSelect.addEventListener('change', () => {
+      this.integrators[0] = this.leftSelect.value;
+      this.reset();
+      this.onIntegratorsChange(...this.integrators);
+    });
+    this.rightSelect.addEventListener('change', () => {
+      this.integrators[1] = this.rightSelect.value;
+      this.reset();
+      this.onIntegratorsChange(...this.integrators);
+    });
+    resetButton.addEventListener('click', () => this.reset());
+    this.populateSelects();
+    this.reset();
+  }
+
+  setIntegrators(left, right) {
+    if (left === this.integrators[0] && right === this.integrators[1]) return;
+    this.integrators = [left, right];
+    this.leftSelect.value = left;
+    this.rightSelect.value = right;
+    this.reset();
+  }
+
+  populateSelects() {
+    for (const select of [this.leftSelect, this.rightSelect]) {
+      select.replaceChildren(...RACE_SOLVERS.map(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        return option;
+      }));
+    }
+    this.leftSelect.value = this.integrators[0];
+    this.rightSelect.value = this.integrators[1];
+  }
+
+  reset() {
+    const state = {
+      dt: this.dt,
+      integrator: this.integrators[0],
+      restitution: 1,
+      gravity: 9.81,
+      drag: 0,
+      count: 9
+    };
+    this.worlds = this.integrators.map(integrator =>
+      SCENES.chain({ ...state, integrator }).world
+    );
+    this.cameras.forEach((camera, i) => {
+      const rect = this.canvases[i].getBoundingClientRect();
+      camera.resize(Math.max(1, rect.width), Math.max(1, rect.height));
+      camera.fit(...this.view);
+      this.renderers[i].resize();
+    });
+    this.accumulator = 0;
+    this.samples = [{ time: 0, divergence: 0 }];
+    this._drawPlot();
+    this.draw();
+  }
+
+  resize() {
+    this.cameras.forEach((camera, i) => {
+      this.renderers[i].resize();
+      camera.fit(...this.view);
+    });
+    this._resizePlot();
+    this.draw();
+  }
+
+  advance(seconds) {
+    this.accumulator += Math.min(seconds, this.dt * 64);
+    let steps = 0;
+    while (this.accumulator >= this.dt && steps < 64) {
+      for (const world of this.worlds) world.step(this.dt);
+      this.accumulator -= this.dt;
+      steps++;
+      const divergence = this.divergence();
+      if (!Number.isFinite(divergence)) {
+        this.readout.textContent = 'Divergence exceeded the numeric range; reset the race.';
+        return;
+      }
+      this.samples.push({ time: this.worlds[0].time, divergence });
+      if (this.samples.length > this.sampleLimit) this.samples.shift();
+    }
+  }
+
+  divergence() {
+    const [a, b] = this.worlds;
+    if (!a || !b || a.bodies.length !== b.bodies.length) return 0;
+    let sum = 0;
+    for (let i = 0; i < a.bodies.length; i++) {
+      const dx = a.bodies[i].pos.x - b.bodies[i].pos.x;
+      const dy = a.bodies[i].pos.y - b.bodies[i].pos.y;
+      sum += dx * dx + dy * dy;
+    }
+    return Math.sqrt(sum / a.bodies.length);
+  }
+
+  draw() {
+    this.renderers.forEach((renderer, i) => renderer.draw(this.worlds[i]));
+    this._drawPlot();
+  }
+
+  _resizePlot() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = this.plotCanvas.getBoundingClientRect();
+    this.plotCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+    this.plotCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+    this.plotCanvas.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  _drawPlot() {
+    const ctx = this.plotCanvas.getContext('2d');
+    const rect = this.plotCanvas.getBoundingClientRect();
+    const width = Math.max(1, rect.width), height = Math.max(1, rect.height);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (this.plotCanvas.width !== Math.round(width * dpr) ||
+        this.plotCanvas.height !== Math.round(height * dpr)) this._resizePlot();
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, width, height);
+
+    const pad = { left: 48, right: 12, top: 12, bottom: 28 };
+    const plotWidth = Math.max(1, width - pad.left - pad.right);
+    const plotHeight = Math.max(1, height - pad.top - pad.bottom);
+    const lastTime = this.samples.length ? this.samples[this.samples.length - 1].time : 0;
+    const firstTime = Math.max(0, lastTime - 20);
+    const visible = this.samples.filter(sample => sample.time >= firstTime);
+    const maxY = Math.max(0.01, ...visible.map(sample => sample.divergence));
+
+    ctx.strokeStyle = '#30363d';
+    ctx.fillStyle = '#9aa4af';
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (plotHeight * i) / 4;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke();
+      ctx.fillText((maxY * (1 - i / 4)).toPrecision(2), 3, y + 4);
+    }
+    ctx.fillText(`${firstTime.toFixed(1)} s`, pad.left, height - 7);
+    ctx.fillText(`${lastTime.toFixed(1)} s`, width - 48, height - 7);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pad.left, pad.top, plotWidth, plotHeight);
+    ctx.clip();
+    ctx.strokeStyle = '#ff8200';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    visible.forEach((sample, i) => {
+      const x = pad.left + ((sample.time - firstTime) / Math.max(1e-9, lastTime - firstTime || 1)) * plotWidth;
+      const y = pad.top + plotHeight * (1 - sample.divergence / maxY);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.restore();
+
+    const divergence = this.divergence();
+    this.readout.textContent = `Time ${lastTime.toFixed(2)} s · RMS position difference ${divergence.toExponential(3)} m`;
+  }
+}
+
 /* ===== ui.js ===== */
 // Binds the control panel to simulation state without manipulating the world.
 class Controls {
@@ -1177,7 +1413,8 @@ class Controls {
     });
 
     for (const [id, act] of [['btn-play','togglePause'], ['btn-step','stepOnce'],
-                             ['btn-reset','reset'], ['btn-link','copyLink']])
+                             ['btn-reset','reset'], ['btn-link','copyLink'],
+                             ['btn-csv','downloadCSV']])
       this.$(id).addEventListener('click', () => this.onAction(act));
   }
 
@@ -1192,6 +1429,8 @@ class Controls {
     this.$('slingshot').checked = s.slingshotMode;
     this.$('spawn').checked  = s.spawnMode;
     const lander = s.scene === 'lunar';
+    set('race-left-integrator', s.raceA);
+    set('race-right-integrator', s.raceB);
     for (const id of ['count', 'rest', 'grav', 'drag', 'slingshot', 'spawn']) {
       const el = this.$(id);
       const row = el.closest('.row') || el.closest('.check');
@@ -1502,7 +1741,7 @@ class KeyboardInput {
 }
 
 /* ===== src/ui/StateURL.js ===== */
-// StateURL.js — encode the control-panel state into the URL hash so a student
+// StateURL.js — encode the control-panel state into query parameters so a student
 // can send a link that reproduces the EXACT configuration they are asking about.
 // Deliberately tiny and human-readable: no base64, no JSON blob.
 const StateURL = {
@@ -1516,11 +1755,13 @@ const StateURL = {
     p.set('drag',  String(s.drag));
     p.set('speed', String(s.speed));
     p.set('n',     String(s.count));
-    return '#' + p.toString();
+    p.set('raceA', s.raceA || 'euler');
+    p.set('raceB', s.raceB || 'verlet');
+    return '?' + p.toString();
   },
 
-  decode(hash, defaults) {
-    const p = new URLSearchParams((hash || '').replace(/^#/, ''));
+  decode(search, defaults) {
+    const p = new URLSearchParams((search || '').replace(/^[?#]/, ''));
     const num = (k, d) => {
       const v = parseFloat(p.get(k));
       return Number.isFinite(v) ? v : d;
@@ -1534,7 +1775,9 @@ const StateURL = {
       gravity:     clamp(num('g',     defaults.gravity),     0,     25),
       drag:        clamp(num('drag',  defaults.drag),        0,     0.2),
       speed:       clamp(num('speed', defaults.speed),       0.25,  2),
-      count:       Math.round(clamp(num('n', defaults.count), 3,   120))
+      count:       Math.round(clamp(num('n', defaults.count), 3,   120)),
+      raceA:       ['euler', 'ec', 'verlet'].includes(p.get('raceA')) ? p.get('raceA') : (defaults.raceA || 'euler'),
+      raceB:       ['euler', 'ec', 'verlet'].includes(p.get('raceB')) ? p.get('raceB') : (defaults.raceB || 'verlet')
     };
   },
 
@@ -1544,6 +1787,32 @@ const StateURL = {
       history.replaceState(null, '', StateURL.encode(s));
   }
 };
+
+/* ===== src/ui/CSVExport.js ===== */
+function csvCell(value) {
+  const text = String(value ?? '');
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function serializeSamples(samples) {
+  const bodyCount = Math.max(0, ...samples.map(sample => sample.bodies.length));
+  const header = ['t_s'];
+  for (let i = 1; i <= bodyCount; i++)
+    header.push(`body_${i}_id`, `body_${i}_x_m`, `body_${i}_y_m`);
+  header.push('kinetic_J', 'mechanical_energy_J', 'energy_ledger_J',
+    'energy_change_pct', 'propulsion_reserve_pct', 'mission_status');
+  const rows = samples.map(sample => {
+    const row = [sample.time];
+    for (let i = 0; i < bodyCount; i++) {
+      const body = sample.bodies[i];
+      row.push(body ? body.id : '', body ? body.x : '', body ? body.y : '');
+    }
+    row.push(sample.kinetic, sample.mechanical, sample.energy,
+      sample.energyChangePct, sample.charge, sample.missionStatus);
+    return row.map(csvCell).join(',');
+  });
+  return [header.join(','), ...rows].join('\r\n') + '\r\n';
+}
 
 /* ===== src/scenes.js ===== */
 // scenes.js — every scene is a pure function (state) -> World.
@@ -1780,17 +2049,21 @@ const SCENE_LIST = [
 
 
 
+
+
 const DEFAULTS = {
   scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, trails: true, spawnMode: false,
-  velocityVectors: false, forceVectors: false, slingshotMode: false
+  velocityVectors: false, forceVectors: false, slingshotMode: false,
+  raceA: 'euler', raceB: 'verlet'
 };
 
 const canvas = document.getElementById('sim');
 const live   = document.getElementById('live');       // aria-live announcer
 const missionStatus = document.getElementById('mission-status');
 const landerControls = document.getElementById('lander-controls');
+const landerInstructions = document.getElementById('lander-instructions');
 const cam    = new Camera();
 const render = new Renderer(canvas, cam);
 const hud    = new HUD(document.getElementById('hud'));
@@ -1799,15 +2072,33 @@ const hud    = new HUD(document.getElementById('hud'));
 render.reducedMotion =
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
 
-// ---- state: URL hash wins over defaults, so a shared link reproduces a run ----
-const state = { ...DEFAULTS, ...StateURL.decode(location.hash, DEFAULTS) };
+// Query parameters are canonical; legacy hash links remain readable.
+const state = { ...DEFAULTS, ...StateURL.decode(location.search || location.hash, DEFAULTS) };
 
 let world = null, view = null, paused = false, lastSubsteps = 0;
 let pointer = null, keyboard = null;
 let cursor = null;
 let lastMissionStatus = null;
+let race = null;
+let samples = [];
+let nextSampleAt = 0;
 
 function announce(msg) { live.textContent = msg; }
+
+function recordSample(force = false) {
+  if (!world || (!force && world.time < nextSampleAt) || samples.length >= 50000) return;
+  samples.push({
+    time: world.time,
+    bodies: world.bodies.map(body => ({ id: body.id, x: body.pos.x, y: body.pos.y })),
+    kinetic: world.kinetic(),
+    mechanical: world.mechanical(),
+    energy: world.energy(),
+    energyChangePct: world.driftE() * 100,
+    charge: world.landerDrive ? world.landerDrive.charge : '',
+    missionStatus: world.mission ? world.mission.status : ''
+  });
+  nextSampleAt = world.time + 0.1;
+}
 
 function build() {
   const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
@@ -1823,6 +2114,14 @@ function build() {
                   keyboard.selected = null; }
   if (pointer) pointer.launch = null;
   if (keyboard) keyboard.launch = null;
+  samples = [];
+  nextSampleAt = 0;
+  recordSample(true);
+  if (race) {
+    race.dt = state.dt;
+    race.setIntegrators(state.raceA, state.raceB);
+    race.reset();
+  }
   controls.syncToDOM();
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
@@ -1833,6 +2132,7 @@ function build() {
 function applyLive(changed = null) {
   if (!world) return;
   world.setIntegrator(state.integrator);
+  if (race) race.setIntegrators(state.raceA, state.raceB);
   world.restitution = state.restitution;
   for (const f of world.forces) {
     if (f.constructor.name === 'UniformGravity')  f.g = state.gravity;
@@ -1886,6 +2186,7 @@ const actions = {
                   announce(paused ? 'Paused' : 'Running'); },
   stepOnce()    { if (!paused) actions.togglePause();
                   world.stepOnce(); render.recordTrails(world);
+                  recordSample(true);
                   announce(`Stepped to t = ${world.time.toFixed(3)} seconds`); },
   adjustSpeed(delta) {
     state.speed = Math.max(0.25, Math.min(2, parseFloat((state.speed + delta).toFixed(2))));
@@ -1899,9 +2200,29 @@ const actions = {
                   state.scene = s[0]; controls.syncToDOM(); build(); },
   copyLink() {
     const url = location.origin + location.pathname + StateURL.encode(state);
-    navigator.clipboard?.writeText(url)
+    if (!navigator.clipboard?.writeText) {
+      announce('Copy failed; the URL bar already holds the link');
+      return;
+    }
+    navigator.clipboard.writeText(url)
       .then(() => announce('Permalink copied to clipboard'))
       .catch(() => announce('Copy failed; the URL bar already holds the link'));
+  },
+  downloadCSV() {
+    if (!samples.length) {
+      announce('No simulation samples to export yet');
+      return;
+    }
+    const blob = new Blob([serializeSamples(samples)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lab10-${state.scene}-timeseries.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    announce(`Downloaded ${samples.length} samples as CSV`);
   },
   launch
 };
@@ -1924,7 +2245,26 @@ pointer.spawnMode = state.spawnMode;
 pointer.slingshotMode = state.slingshotMode;
 keyboard.slingshotMode = state.slingshotMode;
 
-window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
+race = new IntegratorRace({
+  leftCanvas: document.getElementById('race-left'),
+  rightCanvas: document.getElementById('race-right'),
+  plotCanvas: document.getElementById('race-plot'),
+  leftSelect: document.getElementById('race-left-integrator'),
+  rightSelect: document.getElementById('race-right-integrator'),
+  readout: document.getElementById('race-readout'),
+  resetButton: document.getElementById('race-reset'),
+  dt: state.dt,
+  leftIntegrator: state.raceA,
+  rightIntegrator: state.raceB,
+  onIntegratorsChange(left, right) {
+    state.raceA = left;
+    state.raceB = right;
+    StateURL.write(state);
+  }
+});
+const raceDetails = document.querySelector('.race-details');
+raceDetails.addEventListener('toggle', () => race.resize());
+window.addEventListener('resize', () => { render.resize(); cam.fit(...view); race.resize(); });
 
 // ---- the frame loop: fixed physics step, variable render rate ----
 let last = performance.now();
@@ -1941,9 +2281,13 @@ function frame(now) {
     const r = world.advance(frameSeconds * state.speed, maxSubsteps);
     lastSubsteps = r.substeps;
     render.recordTrails(world);
+    recordSample();
+    if (raceDetails.open) race.advance(frameSeconds * state.speed);
   } else lastSubsteps = 0;
+  if (raceDetails.open) race.draw();
 
   if (world.mission) {
+    landerInstructions.hidden = false;
     landerControls.hidden = false;
     missionStatus.textContent = world.mission.message;
     missionStatus.setAttribute('data-state', world.mission.status);
@@ -1951,6 +2295,7 @@ function frame(now) {
         world.mission.status !== 'flying') announce(world.mission.message);
     lastMissionStatus = world.mission.status;
   } else {
+    landerInstructions.hidden = true;
     landerControls.hidden = true;
     missionStatus.textContent = '';
     missionStatus.removeAttribute('data-state');
@@ -1972,10 +2317,12 @@ requestAnimationFrame(frame);
 // Pause when the tab is hidden, so returning does not dump a huge dt in.
 document.addEventListener('visibilitychange', () => { last = performance.now(); });
 
-window.addEventListener('hashchange', () => {
-  Object.assign(state, StateURL.decode(location.hash, DEFAULTS));
+function restoreURLState() {
+  Object.assign(state, StateURL.decode(location.search || location.hash, DEFAULTS));
   controls.syncToDOM(); build();
-});
+}
+window.addEventListener('popstate', restoreURLState);
+window.addEventListener('hashchange', restoreURLState);
 
 </script>
 </body>

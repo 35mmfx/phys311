@@ -181,6 +181,23 @@ This is a simplified educational model; it does not simulate propellant mass,
 orbital mechanics, terrain geometry, or the physical efficiency of solar-electric
 propulsion.
 
+### Share, compare, and export
+
+- **Shareable query URLs:** the current scene and slider values are encoded in
+  the address-bar query string; **Copy link** copies the exact configuration.
+  Two distinct examples:
+  - [Spring chain with Euler](https://35mmfx.github.io/phys311/labs/lab10/?scene=chain&int=euler&dt=0.004166666666666667&e=0.95&g=9.81&drag=0&speed=1&n=24)
+  - [Projectile with Verlet and Mars gravity](https://35mmfx.github.io/phys311/labs/lab10/?scene=projectile&int=verlet&dt=0.008333333333333333&e=0.8&g=3.71&drag=0.01&speed=1.5&n=36)
+  Previous hash-style links continue to load for compatibility.
+- **Integrator race:** open the side-by-side exhibit below the main HUD. Both
+  spring chains start from identical positions and velocities; choose different
+  integrators and watch the live RMS position-divergence plot. It runs only
+  while open and the main simulation is unpaused.
+- **CSV export:** **Download CSV** saves recorded samples (initial state and then
+  approximately every 0.1 simulated seconds) with time, each body's ID and
+  position, kinetic/mechanical/ledger energy, energy change, propulsion reserve,
+  and mission status. Resetting or changing the scene starts a fresh recording.
+
 ---
 
 ## 4. Verified numbers (`node tests/validate.js`)
@@ -201,6 +218,9 @@ propulsion.
 | Energy ledger at e = 1 / 0.95 / 0.5 / 0 | drift **≤ 8e-16** in every case |
 | Lunar free fall, Verlet, 60 s | \|ΔE/E₀\| = **2.32e-13** (unpowered, closed-system test) |
 | Lunar mission impact checks | safe pad touchdown succeeds; a miss and a 3 m/s touchdown crash |
+| Query permalink round trip | slider state restored from search parameters; legacy hashes accepted |
+| CSV schema | consistent time/position/energy columns; quoted text retained |
+| Integrator race | identical initial state, measurable Euler/Verlet divergence |
 | Permalink round trip | every control survives |
 | DOM identifiers in `engine/` | **none** |
 | Absolute paths in `index.html` | **none** |
