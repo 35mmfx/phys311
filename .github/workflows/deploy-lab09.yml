@@ -1,0 +1,40 @@
+name: Deploy Lab 9 to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "labs/lab09/**"
+      - ".github/workflows/deploy-lab09.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Lab 9 site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: labs/lab09
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
