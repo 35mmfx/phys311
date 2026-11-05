@@ -13,16 +13,33 @@ export function eventToWorld(event, canvas, camera) {
   );
 }
 
+export function slingshotVelocity(origin, current) {
+  const scale = 5.5;
+  const maxSpeed = 30;
+  let x = (origin.x - current.x) * scale;
+  let y = (origin.y - current.y) * scale;
+  const speed = Math.hypot(x, y);
+  if (speed > maxSpeed) {
+    x *= maxSpeed / speed;
+    y *= maxSpeed / speed;
+  }
+  return { x, y };
+}
+
 export class PointerInput {
-  constructor(canvas, camera, world, spring, { onSpawn = null, onCursor = () => {}, slingshotMode = false } = {}) {
+  constructor(canvas, camera, world, spring, {
+    onSpawn = null, onLaunch = () => {}, onCursor = () => {}, slingshotMode = false
+  } = {}) {
     this.canvas = canvas; this.cam = camera;
     this.world = world; this.spring = spring;
     this.onSpawn = onSpawn;
+    this.onLaunch = onLaunch;
     this.onCursor = onCursor;
     this.spawnMode = false;
     this.slingshotMode = slingshotMode;
     this.cursor = null;
     this.launch = null;
+    this.activePointerId = null;
     this._bind();
   }
 
@@ -40,47 +57,56 @@ export class PointerInput {
   _bind() {
     const c = this.canvas;
     c.addEventListener('pointerdown', (ev) => {
+      if (this.activePointerId !== null) return;
       c.setPointerCapture(ev.pointerId);
+      this.activePointerId = ev.pointerId;
       const [x, y] = this._updateCursor(ev);
+      if (this.slingshotMode) {
+        if (this.world.pick(x, y, 0.15)) return;
+        const origin = { x, y };
+        this.launch = { body: null, origin, current: { x, y }, velocity: { x: 0, y: 0 } };
+        return;
+      }
       if (this.spawnMode) { this.onSpawn && this.onSpawn(x, y); return; }
       const b = this.world.pick(x, y, 0.15);
       if (!b) return;
-      if (this.slingshotMode) {
-        this.launch = { body: b, current: { x, y } };
-        return;
-      }
       this.spring.grab(b, x, y); c.classList.add('grabbing');
     });
     c.addEventListener('pointermove', (ev) => {
       const [x, y] = this._updateCursor(ev);
       if (this.launch) {
         this.launch.current = { x, y };
+        this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
         return;
       }
       if (this.spring.active) this.spring.moveTo(x, y);
       else c.style.cursor = this.world.pick(x, y, 0.15) ? 'grab' : 'crosshair';
     });
-    const end = (ev) => {
-      if (this.launch) {
-        const { body, current } = this.launch;
-        const dx = body.pos.x - current.x;
-        const dy = body.pos.y - current.y;
-        body.vel.x += dx * 5.5;
-        body.vel.y += dy * 5.5;
-        this.launch = null;
+    const end = (ev, shouldLaunch) => {
+      if (ev.pointerId !== this.activePointerId) return;
+      if (this.launch && shouldLaunch) {
+        this._updateCursor(ev);
+        this.launch.current = { x: this.cursor[0], y: this.cursor[1] };
+        this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
+        this.onLaunch({
+          ...this.launch
+        });
       }
+      this.launch = null;
       if (this.spring.active) { this.spring.release(); c.classList.remove('grabbing'); }
       if (c.hasPointerCapture?.(ev.pointerId)) c.releasePointerCapture(ev.pointerId);
+      this.activePointerId = null;
       if (ev.pointerType && ev.pointerType !== 'mouse') this._clearCursor();
     };
-    c.addEventListener('pointerup', end);
-    c.addEventListener('pointercancel', end);
+    c.addEventListener('pointerup', ev => end(ev, true));
+    c.addEventListener('pointercancel', ev => end(ev, false));
     c.addEventListener('pointerleave', () => {
       if (!this.spring.active && !this.launch) this._clearCursor();
     });
     window.addEventListener('blur', () => {
       this.launch = null;
       this.spring.release();
+      this.activePointerId = null;
     });
   }
 }
@@ -91,6 +117,8 @@ export class KeyboardInput {
     this.actions = actions;
     this.selected = null;
     this._held = null;
+    this.slingshotMode = false;
+    this.launch = null;
     window.addEventListener('keydown', (e) => this._down(e));
     window.addEventListener('keyup',   (e) => this._up(e));
   }
@@ -106,17 +134,66 @@ export class KeyboardInput {
       case 't': case 'T': A.toggleTrails(); e.preventDefault(); break;
       case '+': case '=': A.adjustSpeed(0.25); e.preventDefault(); break;
       case '-': case '_': A.adjustSpeed(-0.25); e.preventDefault(); break;
-      case 'Tab':    this._cycle(e.shiftKey ? -1 : 1); e.preventDefault(); break;
+      case '[':      this._cycle(-1); e.preventDefault(); break;
+      case ']':      this._cycle(1); e.preventDefault(); break;
+      case 'l': case 'L':
+        if (this.slingshotMode && !this.launch) {
+          const [x, y] = this._emptyLaunchOrigin();
+          this.launch = {
+            body: null, origin: { x, y }, current: { x, y }, velocity: { x: 0, y: 0 }
+          };
+          this.actions.announce('Slingshot placed near the canvas center; use arrow keys to aim, then Enter to launch');
+          e.preventDefault();
+        }
+        break;
+      case 'Enter':
+        if (this.launch) {
+          this.actions.launch({
+            ...this.launch
+          });
+          this.launch = null;
+          e.preventDefault();
+        }
+        break;
       case 'ArrowUp': case 'ArrowDown':
       case 'ArrowLeft': case 'ArrowRight':
-        this._nudge(e.key); e.preventDefault(); break;
+        if (this.launch) {
+          const d = 0.35;
+          if (e.key === 'ArrowUp') this.launch.current.y -= d;
+          if (e.key === 'ArrowDown') this.launch.current.y += d;
+          if (e.key === 'ArrowLeft') this.launch.current.x += d;
+          if (e.key === 'ArrowRight') this.launch.current.x -= d;
+          this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
+        } else this._nudge(e.key);
+        e.preventDefault(); break;
       default:
         if ('12345'.includes(e.key)) A.preset(Number(e.key) - 1);
     }
   }
 
   _up(e) {
-    if (e.key.startsWith('Arrow')) { this.spring.release(); this._held = null; }
+    if (e.key.startsWith('Arrow') && !this.launch) {
+      this.spring.release(); this._held = null;
+    }
+  }
+
+  _emptyLaunchOrigin() {
+    const spacing = 24;
+    const points = [];
+    for (let y = spacing / 2; y < this.cam.h; y += spacing) {
+      for (let x = spacing / 2; x < this.cam.w; x += spacing) {
+        points.push({
+          x, y,
+          distance: (x - this.cam.w / 2) ** 2 + (y - this.cam.h / 2) ** 2
+        });
+      }
+    }
+    points.sort((a, b) => a.distance - b.distance);
+    for (const point of points) {
+      const [x, y] = this.cam.toWorld(point.x, point.y);
+      if (!this.world.pick(x, y, 0.3)) return [x, y];
+    }
+    return this.cam.toWorld(this.cam.w / 2, this.cam.h / 2);
   }
 
   _cycle(dir) {

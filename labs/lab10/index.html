@@ -18,7 +18,14 @@
   <main class="stage">
     <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
     <canvas id="sim" tabindex="0" role="img"
-            aria-label="Physics simulation. Use Tab to select a body and the arrow keys to drag it."></canvas>
+            aria-label="Interactive physics simulation"
+            aria-describedby="canvas-help">
+      Interactive physics simulation. Use the controls and keyboard instructions below to explore bodies, motion, and forces.
+    </canvas>
+    <p id="canvas-help" class="sr-only">
+      Focus the simulation canvas to use keyboard controls. Use the left and right bracket keys to select a body,
+      the arrow keys to drag it, and enable Slingshot launch then press L, use arrow keys to aim, and press Enter to launch.
+    </p>
     <div id="hud" role="status" aria-live="off"></div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
@@ -75,11 +82,11 @@
     </div>
 
     <h2>Display</h2>
-    <label class="check"><input type="checkbox" id="trails" checked> Show trails</label>
-    <label class="check"><input type="checkbox" id="vel"> Show velocity vectors</label>
-    <label class="check"><input type="checkbox" id="force"> Show force vectors</label>
-    <label class="check"><input type="checkbox" id="slingshot"> Slingshot launch</label>
-    <label class="check"><input type="checkbox" id="spawn"> Click adds a body</label>
+    <div class="check"><input type="checkbox" id="trails" checked><label for="trails">Show motion trails</label></div>
+    <div class="check"><input type="checkbox" id="vel"><label for="vel">Show velocity vectors</label></div>
+    <div class="check"><input type="checkbox" id="force"><label for="force">Show force vectors</label></div>
+    <div class="check"><input type="checkbox" id="slingshot"><label for="slingshot">Slingshot launch (drag opposite the launch direction)</label></div>
+    <div class="check"><input type="checkbox" id="spawn"><label for="spawn">Click adds a body</label></div>
 
     <div class="btns">
       <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
@@ -91,7 +98,8 @@
     <h2>Keyboard</h2>
     <p class="keys">
       <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
-      <kbd>Tab</kbd> select body &middot; <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag it<br>
+      <kbd>Tab</kbd> move between controls &middot; <kbd>[</kbd>/<kbd>]</kbd> select body<br>
+      <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag / aim &middot; <kbd>L</kbd> place &middot; <kbd>Enter</kbd> launch<br>
       <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
     </p>
   </aside>

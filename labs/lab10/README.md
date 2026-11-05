@@ -94,6 +94,51 @@ frame time without changing the fixed timestep; the frame loop raises its
 bounded substep budget when a smaller timestep requires it. Press `.` for one
 fixed step, Space to pause/resume, R to reset, and `+`/`-` to change speed.
 
+### Part B — direct manipulation and visual physics
+
+- **Grab and drag:** hold a body to pull it with the `PointerSpring` force. It
+  remains in the collision solver, and releasing lets its acquired velocity
+  carry it onward.
+- **Slingshot:** turn on **Slingshot launch**, press on empty canvas space to
+  place a body, drag opposite the desired direction, then release. The preview
+  uses the same capped launch velocity and current uniform gravity; it is an
+  ideal path that ignores drag and does not predict collisions or interactions
+  with other bodies.
+- **Keyboard:** Tab keeps its normal job of moving through controls. Use `[` and
+  `]` to select a body, arrows to pull it, and release the arrows to let it go.
+  With Slingshot launch enabled, press `L` to place at the canvas center, use
+  arrows to aim, and press Enter to launch.
+- **Visuals:** each is independently switchable: alpha-fading motion trails,
+  scaled velocity arrows, and net-force arrows.
+
+#### Part B write-up
+
+Teleporting a body by assigning its position bypasses the force/integration and
+collision steps: it can jump through another body or a wall without a collision
+impulse, and it can create overlap or change energy without corresponding work
+or a physically acquired velocity. In the two-body direct-position experiment
+in `tests/validate.js`, moving one body from x = −2 m to x = +2 m in one step
+placed it beyond a stationary body at x = 0 m; the collision count stayed zero
+and its velocity stayed zero. That demonstrates tunneling and the missing
+collision impulse.
+
+The three visuals communicate:
+
+- The fading trail reveals the path and recent direction of travel, making
+  orbital shape and periodic motion easier to recognize.
+- Velocity arrows reveal each body's instantaneous direction and relative
+  speed, which position snapshots alone cannot show.
+- Force arrows reveal the direction and relative magnitude of the net force
+  acting on each body at that step.
+
+The canvas resizes with the window and uses a device-pixel-ratio-scaled backing
+buffer. Inputs have associated labels, the canvas includes fallback text, and
+the canvas/control focus indicators remain visible. **Unplugged-mouse test:**
+a keyboard-only browser check passed: Space paused the simulation, R reset it,
+Tab moved focus to controls, the integrator changed to Euler-Cromer, and the
+gravity slider changed from 9.81 to 9.82 m/s² with an arrow key. The physical
+unplugged-mouse check still needs to be confirmed on the user's computer.
+
 ---
 
 ## 4. Verified numbers (`node tests/validate.js`)
@@ -173,5 +218,3 @@ python3 build_standalone.py
 - `prefers-reduced-motion` stops trails but does not stop the simulation.
 
 ---
-
-

@@ -1,8 +1,9 @@
 // smoke-dom.js — boots src/main.js against a stub DOM to prove the browser
 // entry point actually wires up and renders frames. Run: node tests/smoke-dom.js
 const noop = () => {};
+let lineToCalls = 0;
 const ctxStub = new Proxy({}, { get: (t, k) =>
-  (k === 'canvas' ? {} : (k === 'setTransform' ? noop : noop)) });
+  (k === 'canvas' ? {} : (k === 'lineTo' ? () => { lineToCalls++; } : noop)) });
 
 function el(id) {
   const listeners = {};
@@ -58,15 +59,23 @@ checks.push([/cursor/.test(document.getElementById('hud').innerHTML)
   && !/outside canvas/.test(document.getElementById('hud').innerHTML),
   'pointer position appears in the live HUD']);
 const beforeStep = Number(document.getElementById('hud').innerHTML.match(/<span class="v">(\d+)<\/span>\s*<span class="k">bodies/)[1]);
-const keyEvent = (key) => ({
-  key, target: { matches: () => false }, preventDefault: noop
-});
+const keyEvent = (key) => {
+  let defaultPrevented = false;
+  return {
+    key, target: { matches: () => false },
+    preventDefault: () => { defaultPrevented = true; },
+    get defaultPrevented() { return defaultPrevented; }
+  };
+};
 windowListeners.keydown(keyEvent(' '));
 windowListeners.keydown(keyEvent('.'));
 frames++; cb(performance.now());
 const afterStep = Number(document.getElementById('hud').innerHTML.match(/<span class="v">(\d+)<\/span>\s*<span class="k">bodies/)[1]);
 checks.push([afterStep === beforeStep + 1,
   'keyboard period advances exactly one fixed step while paused']);
+const tab = keyEvent('Tab');
+windowListeners.keydown(tab);
+checks.push([!tab.defaultPrevented, 'Tab keeps its native control-navigation behavior']);
 windowListeners.keydown(keyEvent('+'));
 checks.push([document.getElementById('speed').value === '1.25',
   'keyboard plus increases simulation speed by 0.25x']);
@@ -74,6 +83,22 @@ document.getElementById('btn-play')._fire('click', {});
 document.getElementById('btn-step')._fire('click', {});
 document.getElementById('btn-reset')._fire('click', {});
 checks.push([true, 'Play / Step / Reset buttons handled without throwing']);
+
+document.getElementById('slingshot')._fire('change', { target: { checked: true } });
+canvas._fire('pointerdown', { pointerId: 2, clientX: 50, clientY: 50 });
+canvas._fire('pointermove', { pointerId: 2, clientX: 90, clientY: 30 });
+const beforePreview = lineToCalls;
+frames++; cb(performance.now());
+checks.push([lineToCalls >= beforePreview + 20,
+  'slingshot aim draws a live trajectory preview']);
+canvas._fire('pointerup', { pointerId: 2, clientX: 90, clientY: 30, pointerType: 'mouse' });
+checks.push([/^Launched with speed/.test(document.getElementById('live').textContent),
+  'slingshot can place, aim, and launch a new body']);
+windowListeners.keydown(keyEvent('l'));
+windowListeners.keydown(keyEvent('ArrowLeft'));
+windowListeners.keydown(keyEvent('Enter'));
+checks.push([/^Launched with speed/.test(document.getElementById('live').textContent),
+  'keyboard slingshot places, aims, and launches']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }

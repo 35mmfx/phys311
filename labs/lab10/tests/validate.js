@@ -6,7 +6,7 @@ import { World, Body, Vec2 } from '../src/engine/World.js';
 import { UniformGravity, Spring, NewtonGravity, PointerSpring } from '../src/engine/Forces.js';
 import { Camera }   from '../src/render/Camera.js';
 import { StateURL } from '../src/ui/StateURL.js';
-import { eventToWorld } from '../input.js';
+import { eventToWorld, slingshotVelocity } from '../input.js';
 import { SCENES }   from '../src/scenes.js';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -213,6 +213,14 @@ H('10. Publishing audit: safe for GitHub Pages');
   ok(missing.length === 0, 'every referenced file exists with EXACT case',
      missing.join(', ') || refs.join(', '));
 
+  const inputIds = [...html.matchAll(/<input\b[^>]*\bid="([^"]+)"/g)].map(m => m[1]);
+  const labelIds = [...html.matchAll(/<label\b[^>]*\bfor="([^"]+)"/g)].map(m => m[1]);
+  const unlabeled = inputIds.filter(id => !labelIds.includes(id));
+  ok(unlabeled.length === 0, 'every input has an explicit label association',
+     unlabeled.join(', ') || `${inputIds.length} inputs labeled`);
+  ok(/<canvas\b[^>]*>[\s\S]*?\S[\s\S]*?<\/canvas>/.test(html),
+     'canvas contains fallback text for unsupported rendering');
+
   let nojekyll = true;
   try { readFileSync(join(ROOT, '.nojekyll')); } catch { nojekyll = false; }
   ok(nojekyll, '.nojekyll present (Jekyll otherwise hides folders beginning with _)');
@@ -240,6 +248,34 @@ H('11. Energy ledger: inelastic loss is booked, not blamed on the solver');
   ok(Math.abs(eul.driftE()) < 1e-12,
      'billiards is force-free between impacts, so Euler is exact there too',
      `Euler dE/E0 = ${eul.driftE().toExponential(2)} -- use scene 2 to judge a solver`);
+}
+
+// --------------------------------------------------------------- 12
+H('12. Slingshot: aim opposite the launch direction and cap speed');
+{
+  const v = slingshotVelocity({ x: 2, y: 1 }, { x: 1, y: 3 });
+  ok(v.x > 0 && v.y < 0, 'pulling left and down launches right and up',
+     `velocity = (${v.x.toFixed(1)}, ${v.y.toFixed(1)}) m/s`);
+  const fast = slingshotVelocity({ x: 0, y: 0 }, { x: -100, y: -100 });
+  ok(Math.abs(Math.hypot(fast.x, fast.y) - 30) < 1e-12,
+     'extreme pointer drags are capped at 30 m/s',
+     `speed = ${Math.hypot(fast.x, fast.y).toFixed(1)} m/s`);
+}
+
+// --------------------------------------------------------------- 13
+H('13. Teleporting: direct position edits can tunnel through collisions');
+{
+  const world = new World({ dt: ST.dt, restitution: 1 });
+  Body.resetIds();
+  const moved = world.add(new Body({ pos: new Vec2(-2, 0), radius: 0.5 }));
+  const obstacle = world.add(new Body({ pos: new Vec2(0, 0), radius: 0.5 }));
+  moved.pos.set(2, 0);
+  world.step(world.DT);
+  ok(moved.pos.x > obstacle.pos.x && world.collisions === 0,
+     'a direct move from x=-2 to x=+2 passes the stationary body unseen',
+     `final x = ${moved.pos.x.toFixed(1)}, collisions = ${world.collisions}`);
+  ok(moved.vel.len2() === 0,
+     'teleporting changes position without providing a physical collision impulse');
 }
 
 console.log(`\n${'='.repeat(58)}\n  ${pass} passed, ${fail} failed\n${'='.repeat(58)}`);

@@ -62,6 +62,8 @@ input[type=range]{width:100%;accent-color:var(--ut-orange)}
 select{width:100%;padding:.35rem;background:#0d1117;color:var(--ink);
   border:1px solid var(--line);border-radius:5px}
 .check{display:flex;align-items:center;gap:.45rem;font-size:.85rem;margin-bottom:.35rem}
+.check label{cursor:pointer}
+input:focus-visible,select:focus-visible{outline:3px solid var(--ut-orange);outline-offset:2px}
 .btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.5rem}
 button{
   padding:.45rem .5rem;border:1px solid var(--line);border-radius:6px;
@@ -94,7 +96,14 @@ a{color:var(--ut-orange)}
   <main class="stage">
     <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
     <canvas id="sim" tabindex="0" role="img"
-            aria-label="Physics simulation. Use Tab to select a body and the arrow keys to drag it."></canvas>
+            aria-label="Interactive physics simulation"
+            aria-describedby="canvas-help">
+      Interactive physics simulation. Use the controls and keyboard instructions below to explore bodies, motion, and forces.
+    </canvas>
+    <p id="canvas-help" class="sr-only">
+      Focus the simulation canvas to use keyboard controls. Use the left and right bracket keys to select a body,
+      the arrow keys to drag it, and enable Slingshot launch then press L, use arrow keys to aim, and press Enter to launch.
+    </p>
     <div id="hud" role="status" aria-live="off"></div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
@@ -151,8 +160,11 @@ a{color:var(--ut-orange)}
     </div>
 
     <h2>Display</h2>
-    <label class="check"><input type="checkbox" id="trails" checked> Show trails</label>
-    <label class="check"><input type="checkbox" id="spawn"> Click adds a body</label>
+    <div class="check"><input type="checkbox" id="trails" checked><label for="trails">Show motion trails</label></div>
+    <div class="check"><input type="checkbox" id="vel"><label for="vel">Show velocity vectors</label></div>
+    <div class="check"><input type="checkbox" id="force"><label for="force">Show force vectors</label></div>
+    <div class="check"><input type="checkbox" id="slingshot"><label for="slingshot">Slingshot launch (drag opposite the launch direction)</label></div>
+    <div class="check"><input type="checkbox" id="spawn"><label for="spawn">Click adds a body</label></div>
 
     <div class="btns">
       <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
@@ -164,7 +176,8 @@ a{color:var(--ut-orange)}
     <h2>Keyboard</h2>
     <p class="keys">
       <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
-      <kbd>Tab</kbd> select body &middot; <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag it<br>
+      <kbd>Tab</kbd> move between controls &middot; <kbd>[</kbd>/<kbd>]</kbd> select body<br>
+      <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag / aim &middot; <kbd>L</kbd> place &middot; <kbd>Enter</kbd> launch<br>
       <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
     </p>
   </aside>
@@ -676,6 +689,8 @@ class Renderer {
     this.cam    = camera;
     this.dpr    = 1;
     this.showTrails = true;
+    this.showVelocity = false;
+    this.showForceVectors = false;
     this.trails = new Map();             // body.id -> array of [x,y]
     this.maxTrail = 160;
     this.reducedMotion = false;
@@ -707,7 +722,7 @@ class Renderer {
     }
   }
 
-  draw(world, { grabbed = null, target = null, cursor = null } = {}) {
+  draw(world, { grabbed = null, target = null, cursor = null, slingshot = null } = {}) {
     const ctx = this.ctx, cam = this.cam;
     ctx.clearRect(0, 0, cam.w, cam.h);
 
@@ -715,18 +730,20 @@ class Renderer {
     if (world.bounds) this._bounds(world.bounds);
 
     if (this.showTrails && !this.reducedMotion) {
+      ctx.save();
       ctx.lineWidth = 1.5;
       for (const b of world.bodies) {
         const t = this.trails.get(b.id);
         if (!t || t.length < 2) continue;
-        ctx.strokeStyle = b.color + '66';
-        ctx.beginPath();
-        t.forEach(([x, y], i) => {
-          const [px, py] = cam.toScreen(x, y);
-          i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-        });
-        ctx.stroke();
+        ctx.strokeStyle = b.color;
+        for (let i = 1; i < t.length; i++) {
+          const [x0, y0] = cam.toScreen(...t[i - 1]);
+          const [x1, y1] = cam.toScreen(...t[i]);
+          ctx.globalAlpha = 0.06 + 0.72 * (i / (t.length - 1));
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        }
       }
+      ctx.restore();
     }
 
     for (const f of world.forces)
@@ -736,6 +753,9 @@ class Renderer {
         ctx.strokeStyle = '#8a8a8a'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
       }
+
+    if (this.showVelocity) this._velocityVectors(world);
+    if (this.showForceVectors) this._forceVectors(world);
 
     for (const b of world.bodies) {
       const [px, py] = cam.toScreen(b.pos.x, b.pos.y);
@@ -755,7 +775,101 @@ class Renderer {
       ctx.restore();
     }
 
+    if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+  }
+
+  _velocityVectors(world) {
+    const ctx = this.ctx, cam = this.cam;
+    ctx.save();
+    ctx.strokeStyle = '#7ee787';
+    ctx.fillStyle = '#7ee787';
+    ctx.lineWidth = 1.5;
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      const [x, y] = cam.toScreen(b.pos.x, b.pos.y);
+      const vx = b.vel.x * 0.35;
+      const vy = b.vel.y * 0.35;
+      const [tx, ty] = cam.toScreen(b.pos.x + vx, b.pos.y + vy);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
+      const angle = Math.atan2(ty - y, tx - x);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - 5 * Math.cos(angle - Math.PI / 6), ty - 5 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(tx - 5 * Math.cos(angle + Math.PI / 6), ty - 5 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  _forceVectors(world) {
+    const ctx = this.ctx, cam = this.cam;
+    ctx.save();
+    ctx.strokeStyle = '#ffd866';
+    ctx.fillStyle = '#ffd866';
+    ctx.lineWidth = 1.25;
+    for (const b of world.bodies) {
+      if (b.fixed || !b.force) continue;
+      const len = Math.hypot(b.force.x, b.force.y);
+      if (len < 1e-8) continue;
+      const sx = b.pos.x + b.force.x * 0.08;
+      const sy = b.pos.y + b.force.y * 0.08;
+      const [x, y] = cam.toScreen(b.pos.x, b.pos.y);
+      const [tx, ty] = cam.toScreen(sx, sy);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
+      const angle = Math.atan2(ty - y, tx - x);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(tx - 5 * Math.cos(angle - Math.PI / 6), ty - 5 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(tx - 5 * Math.cos(angle + Math.PI / 6), ty - 5 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  _slingshot(slingshot, world) {
+    const ctx = this.ctx, cam = this.cam;
+    const { origin, current } = slingshot;
+    const launchVelocity = slingshot.velocity || {
+      x: (origin.x - current.x) * 5.5,
+      y: (origin.y - current.y) * 5.5
+    };
+    let velocity = {
+      x: launchVelocity.x + (slingshot.body ? slingshot.body.vel.x : 0),
+      y: launchVelocity.y + (slingshot.body ? slingshot.body.vel.y : 0)
+    };
+    const speed = Math.hypot(velocity.x, velocity.y);
+    if (speed > 30) velocity = { x: velocity.x * 30 / speed, y: velocity.y * 30 / speed };
+    const [bx, by] = cam.toScreen(origin.x, origin.y);
+    const [ax, ay] = cam.toScreen(current.x, current.y);
+    const gravity = world.forces.find(f => f.constructor.name === 'UniformGravity')?.g || 0;
+    ctx.save();
+    ctx.setLineDash([6, 5]);
+    ctx.strokeStyle = '#ffd866';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ax, ay); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(bx, by, Math.max(3, 0.26 * cam.scale), 0, Math.PI * 2);
+    ctx.fillStyle = '#58a6ff';
+    ctx.globalAlpha = 0.65;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#ffd866';
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffd866';
+    ctx.beginPath();
+    for (let i = 0; i <= 24; i++) {
+      const time = i * 0.08;
+      const px = origin.x + velocity.x * time;
+      const py = origin.y + velocity.y * time - 0.5 * gravity * time * time;
+      const [sx, sy] = cam.toScreen(px, py);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   _crosshair(position) {
@@ -884,8 +998,23 @@ class Controls {
     this.$('trails').addEventListener('change', e => {
       s.trails = e.target.checked; this.onChange('trails');
     });
+    this.$('vel').addEventListener('change', e => {
+      s.velocityVectors = e.target.checked; this.onChange('velocityVectors');
+    });
+    this.$('force').addEventListener('change', e => {
+      s.forceVectors = e.target.checked; this.onChange('forceVectors');
+    });
+    this.$('slingshot').addEventListener('change', e => {
+      s.slingshotMode = e.target.checked;
+      if (s.slingshotMode) s.spawnMode = false;
+      this.syncToDOM();
+      this.onChange('slingshotMode');
+    });
     this.$('spawn').addEventListener('change', e => {
-      s.spawnMode = e.target.checked; this.onChange('spawnMode');
+      s.spawnMode = e.target.checked;
+      if (s.spawnMode) s.slingshotMode = false;
+      this.syncToDOM();
+      this.onChange('spawnMode');
     });
 
     for (const [id, act] of [['btn-play','togglePause'], ['btn-step','stepOnce'],
@@ -899,6 +1028,9 @@ class Controls {
     set('drag', s.drag); set('speed', s.speed); set('count', s.count);
     set('integrator', s.integrator); set('scene', s.scene);
     this.$('trails').checked = s.trails;
+    this.$('vel').checked    = s.velocityVectors;
+    this.$('force').checked  = s.forceVectors;
+    this.$('slingshot').checked = s.slingshotMode;
     this.$('spawn').checked  = s.spawnMode;
     const put = (id, t) => { const e = this.$(id + '-out'); if (e) e.textContent = t; };
     put('dt', `1/${Math.round(1 / s.dt)} s`);
@@ -932,14 +1064,33 @@ function eventToWorld(event, canvas, camera) {
   );
 }
 
+function slingshotVelocity(origin, current) {
+  const scale = 5.5;
+  const maxSpeed = 30;
+  let x = (origin.x - current.x) * scale;
+  let y = (origin.y - current.y) * scale;
+  const speed = Math.hypot(x, y);
+  if (speed > maxSpeed) {
+    x *= maxSpeed / speed;
+    y *= maxSpeed / speed;
+  }
+  return { x, y };
+}
+
 class PointerInput {
-  constructor(canvas, camera, world, spring, { onSpawn = null, onCursor = () => {} } = {}) {
+  constructor(canvas, camera, world, spring, {
+    onSpawn = null, onLaunch = () => {}, onCursor = () => {}, slingshotMode = false
+  } = {}) {
     this.canvas = canvas; this.cam = camera;
     this.world = world; this.spring = spring;
     this.onSpawn = onSpawn;
+    this.onLaunch = onLaunch;
     this.onCursor = onCursor;
     this.spawnMode = false;
+    this.slingshotMode = slingshotMode;
     this.cursor = null;
+    this.launch = null;
+    this.activePointerId = null;
     this._bind();
   }
 
@@ -957,28 +1108,57 @@ class PointerInput {
   _bind() {
     const c = this.canvas;
     c.addEventListener('pointerdown', (ev) => {
+      if (this.activePointerId !== null) return;
       c.setPointerCapture(ev.pointerId);
+      this.activePointerId = ev.pointerId;
       const [x, y] = this._updateCursor(ev);
+      if (this.slingshotMode) {
+        if (this.world.pick(x, y, 0.15)) return;
+        const origin = { x, y };
+        this.launch = { body: null, origin, current: { x, y }, velocity: { x: 0, y: 0 } };
+        return;
+      }
       if (this.spawnMode) { this.onSpawn && this.onSpawn(x, y); return; }
       const b = this.world.pick(x, y, 0.15);
-      if (b) { this.spring.grab(b, x, y); c.classList.add('grabbing'); }
+      if (!b) return;
+      this.spring.grab(b, x, y); c.classList.add('grabbing');
     });
     c.addEventListener('pointermove', (ev) => {
       const [x, y] = this._updateCursor(ev);
+      if (this.launch) {
+        this.launch.current = { x, y };
+        this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
+        return;
+      }
       if (this.spring.active) this.spring.moveTo(x, y);
       else c.style.cursor = this.world.pick(x, y, 0.15) ? 'grab' : 'crosshair';
     });
-    const end = (ev) => {
+    const end = (ev, shouldLaunch) => {
+      if (ev.pointerId !== this.activePointerId) return;
+      if (this.launch && shouldLaunch) {
+        this._updateCursor(ev);
+        this.launch.current = { x: this.cursor[0], y: this.cursor[1] };
+        this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
+        this.onLaunch({
+          ...this.launch
+        });
+      }
+      this.launch = null;
       if (this.spring.active) { this.spring.release(); c.classList.remove('grabbing'); }
       if (c.hasPointerCapture?.(ev.pointerId)) c.releasePointerCapture(ev.pointerId);
+      this.activePointerId = null;
       if (ev.pointerType && ev.pointerType !== 'mouse') this._clearCursor();
     };
-    c.addEventListener('pointerup', end);
-    c.addEventListener('pointercancel', end);
+    c.addEventListener('pointerup', ev => end(ev, true));
+    c.addEventListener('pointercancel', ev => end(ev, false));
     c.addEventListener('pointerleave', () => {
-      if (!this.spring.active) this._clearCursor();
+      if (!this.spring.active && !this.launch) this._clearCursor();
     });
-    window.addEventListener('blur', () => this.spring.release());
+    window.addEventListener('blur', () => {
+      this.launch = null;
+      this.spring.release();
+      this.activePointerId = null;
+    });
   }
 }
 
@@ -988,6 +1168,8 @@ class KeyboardInput {
     this.actions = actions;
     this.selected = null;
     this._held = null;
+    this.slingshotMode = false;
+    this.launch = null;
     window.addEventListener('keydown', (e) => this._down(e));
     window.addEventListener('keyup',   (e) => this._up(e));
   }
@@ -1003,17 +1185,66 @@ class KeyboardInput {
       case 't': case 'T': A.toggleTrails(); e.preventDefault(); break;
       case '+': case '=': A.adjustSpeed(0.25); e.preventDefault(); break;
       case '-': case '_': A.adjustSpeed(-0.25); e.preventDefault(); break;
-      case 'Tab':    this._cycle(e.shiftKey ? -1 : 1); e.preventDefault(); break;
+      case '[':      this._cycle(-1); e.preventDefault(); break;
+      case ']':      this._cycle(1); e.preventDefault(); break;
+      case 'l': case 'L':
+        if (this.slingshotMode && !this.launch) {
+          const [x, y] = this._emptyLaunchOrigin();
+          this.launch = {
+            body: null, origin: { x, y }, current: { x, y }, velocity: { x: 0, y: 0 }
+          };
+          this.actions.announce('Slingshot placed near the canvas center; use arrow keys to aim, then Enter to launch');
+          e.preventDefault();
+        }
+        break;
+      case 'Enter':
+        if (this.launch) {
+          this.actions.launch({
+            ...this.launch
+          });
+          this.launch = null;
+          e.preventDefault();
+        }
+        break;
       case 'ArrowUp': case 'ArrowDown':
       case 'ArrowLeft': case 'ArrowRight':
-        this._nudge(e.key); e.preventDefault(); break;
+        if (this.launch) {
+          const d = 0.35;
+          if (e.key === 'ArrowUp') this.launch.current.y -= d;
+          if (e.key === 'ArrowDown') this.launch.current.y += d;
+          if (e.key === 'ArrowLeft') this.launch.current.x += d;
+          if (e.key === 'ArrowRight') this.launch.current.x -= d;
+          this.launch.velocity = slingshotVelocity(this.launch.origin, this.launch.current);
+        } else this._nudge(e.key);
+        e.preventDefault(); break;
       default:
         if ('12345'.includes(e.key)) A.preset(Number(e.key) - 1);
     }
   }
 
   _up(e) {
-    if (e.key.startsWith('Arrow')) { this.spring.release(); this._held = null; }
+    if (e.key.startsWith('Arrow') && !this.launch) {
+      this.spring.release(); this._held = null;
+    }
+  }
+
+  _emptyLaunchOrigin() {
+    const spacing = 24;
+    const points = [];
+    for (let y = spacing / 2; y < this.cam.h; y += spacing) {
+      for (let x = spacing / 2; x < this.cam.w; x += spacing) {
+        points.push({
+          x, y,
+          distance: (x - this.cam.w / 2) ** 2 + (y - this.cam.h / 2) ** 2
+        });
+      }
+    }
+    points.sort((a, b) => a.distance - b.distance);
+    for (const point of points) {
+      const [x, y] = this.cam.toWorld(point.x, point.y);
+      if (!this.world.pick(x, y, 0.3)) return [x, y];
+    }
+    return this.cam.toWorld(this.cam.w / 2, this.cam.h / 2);
   }
 
   _cycle(dir) {
@@ -1245,7 +1476,8 @@ const SCENE_LIST = [
 const DEFAULTS = {
   scene: 'billiards', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
-  speed: 1.0, count: 24, trails: true, spawnMode: false
+  speed: 1.0, count: 24, trails: true, spawnMode: false,
+  velocityVectors: false, forceVectors: false, slingshotMode: false
 };
 
 const canvas = document.getElementById('sim');
@@ -1278,6 +1510,8 @@ function build() {
   if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
   if (keyboard) { keyboard.world = world; keyboard.spring = world.pointer;
                   keyboard.selected = null; }
+  if (pointer) pointer.launch = null;
+  if (keyboard) keyboard.launch = null;
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
            `integrator ${state.integrator}`);
@@ -1293,8 +1527,14 @@ function applyLive(changed = null) {
     if (f.constructor.name === 'QuadraticDrag')   f.c = state.drag;
   }
   render.showTrails = state.trails;
+  render.showVelocity = state.velocityVectors;
+  render.showForceVectors = state.forceVectors;
   if (!state.trails) render.clearTrails();
-  if (pointer) pointer.spawnMode = state.spawnMode;
+  if (pointer) {
+    pointer.spawnMode = state.spawnMode;
+    pointer.slingshotMode = state.slingshotMode;
+  }
+  if (keyboard) keyboard.slingshotMode = state.slingshotMode;
   if (['integrator', 'restitution', 'gravity', 'drag'].includes(changed)) {
     world.markReference();
   }
@@ -1307,6 +1547,26 @@ function spawn(x, y) {
                        mass: 1, radius: 0.26, color: '#58a6ff' }));
   world.markReference();          // new body => new reference energy, honestly
   announce(`Body added at ${x.toFixed(1)}, ${y.toFixed(1)} metres`);
+}
+
+function launch({ body, origin, velocity }) {
+  let vx = velocity.x + (body ? body.vel.x : 0);
+  let vy = velocity.y + (body ? body.vel.y : 0);
+  const speed = Math.hypot(vx, vy);
+  if (speed > 30) { vx *= 30 / speed; vy *= 30 / speed; }
+  if (body) {
+    body.vel.x = vx;
+    body.vel.y = vy;
+  } else {
+    if (world.bodies.length >= 400) { announce('Body limit reached'); return; }
+    world.add(new Body({
+      pos: new Vec2(origin.x, origin.y),
+      vel: new Vec2(vx, vy),
+      mass: 1, radius: 0.26, color: '#58a6ff'
+    }));
+  }
+  world.markReference();
+  announce(`Launched with speed ${Math.hypot(vx, vy).toFixed(1)} metres per second`);
 }
 
 const actions = {
@@ -1330,7 +1590,8 @@ const actions = {
     navigator.clipboard?.writeText(url)
       .then(() => announce('Permalink copied to clipboard'))
       .catch(() => announce('Copy failed; the URL bar already holds the link'));
-  }
+  },
+  launch
 };
 
 const controls = new Controls(state, {
@@ -1342,10 +1603,14 @@ const controls = new Controls(state, {
 build();
 pointer  = new PointerInput(canvas, cam, world, world.pointer, {
   onSpawn: spawn,
-  onCursor: position => { cursor = position; }
+  onLaunch: launch,
+  onCursor: position => { cursor = position; },
+  slingshotMode: state.slingshotMode
 });
 keyboard = new KeyboardInput(world, world.pointer, cam, { ...actions, announce });
 pointer.spawnMode = state.spawnMode;
+pointer.slingshotMode = state.slingshotMode;
+keyboard.slingshotMode = state.slingshotMode;
 
 window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
 
@@ -1369,7 +1634,9 @@ function frame(now) {
   render.draw(world, {
     grabbed: world.pointer.grabbed,
     target : world.pointer.active ? world.pointer.target : null,
-    cursor
+    cursor,
+    slingshot: pointer && pointer.launch ? pointer.launch
+      : keyboard && keyboard.launch ? keyboard.launch : null
   });
   hud.update(world, { substeps: lastSubsteps, paused, cursor });
   requestAnimationFrame(frame);

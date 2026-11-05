@@ -46,6 +46,8 @@ function build() {
   if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
   if (keyboard) { keyboard.world = world; keyboard.spring = world.pointer;
                   keyboard.selected = null; }
+  if (pointer) pointer.launch = null;
+  if (keyboard) keyboard.launch = null;
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
            `integrator ${state.integrator}`);
@@ -68,6 +70,7 @@ function applyLive(changed = null) {
     pointer.spawnMode = state.spawnMode;
     pointer.slingshotMode = state.slingshotMode;
   }
+  if (keyboard) keyboard.slingshotMode = state.slingshotMode;
   if (['integrator', 'restitution', 'gravity', 'drag'].includes(changed)) {
     world.markReference();
   }
@@ -80,6 +83,26 @@ function spawn(x, y) {
                        mass: 1, radius: 0.26, color: '#58a6ff' }));
   world.markReference();          // new body => new reference energy, honestly
   announce(`Body added at ${x.toFixed(1)}, ${y.toFixed(1)} metres`);
+}
+
+function launch({ body, origin, velocity }) {
+  let vx = velocity.x + (body ? body.vel.x : 0);
+  let vy = velocity.y + (body ? body.vel.y : 0);
+  const speed = Math.hypot(vx, vy);
+  if (speed > 30) { vx *= 30 / speed; vy *= 30 / speed; }
+  if (body) {
+    body.vel.x = vx;
+    body.vel.y = vy;
+  } else {
+    if (world.bodies.length >= 400) { announce('Body limit reached'); return; }
+    world.add(new Body({
+      pos: new Vec2(origin.x, origin.y),
+      vel: new Vec2(vx, vy),
+      mass: 1, radius: 0.26, color: '#58a6ff'
+    }));
+  }
+  world.markReference();
+  announce(`Launched with speed ${Math.hypot(vx, vy).toFixed(1)} metres per second`);
 }
 
 const actions = {
@@ -103,7 +126,8 @@ const actions = {
     navigator.clipboard?.writeText(url)
       .then(() => announce('Permalink copied to clipboard'))
       .catch(() => announce('Copy failed; the URL bar already holds the link'));
-  }
+  },
+  launch
 };
 
 const controls = new Controls(state, {
@@ -115,12 +139,14 @@ const controls = new Controls(state, {
 build();
 pointer  = new PointerInput(canvas, cam, world, world.pointer, {
   onSpawn: spawn,
+  onLaunch: launch,
   onCursor: position => { cursor = position; },
   slingshotMode: state.slingshotMode
 });
 keyboard = new KeyboardInput(world, world.pointer, cam, { ...actions, announce });
 pointer.spawnMode = state.spawnMode;
 pointer.slingshotMode = state.slingshotMode;
+keyboard.slingshotMode = state.slingshotMode;
 
 window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
 
@@ -145,7 +171,8 @@ function frame(now) {
     grabbed: world.pointer.grabbed,
     target : world.pointer.active ? world.pointer.target : null,
     cursor,
-    slingshot: pointer && pointer.launch ? pointer.launch : null
+    slingshot: pointer && pointer.launch ? pointer.launch
+      : keyboard && keyboard.launch ? keyboard.launch : null
   });
   hud.update(world, { substeps: lastSubsteps, paused, cursor });
   requestAnimationFrame(frame);

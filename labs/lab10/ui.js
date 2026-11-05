@@ -44,10 +44,16 @@ export class Controls {
       s.forceVectors = e.target.checked; this.onChange('forceVectors');
     });
     this.$('slingshot').addEventListener('change', e => {
-      s.slingshotMode = e.target.checked; this.onChange('slingshotMode');
+      s.slingshotMode = e.target.checked;
+      if (s.slingshotMode) s.spawnMode = false;
+      this.syncToDOM();
+      this.onChange('slingshotMode');
     });
     this.$('spawn').addEventListener('change', e => {
-      s.spawnMode = e.target.checked; this.onChange('spawnMode');
+      s.spawnMode = e.target.checked;
+      if (s.spawnMode) s.slingshotMode = false;
+      this.syncToDOM();
+      this.onChange('spawnMode');
     });
 
     for (const [id, act] of [['btn-play','togglePause'], ['btn-step','stepOnce'],

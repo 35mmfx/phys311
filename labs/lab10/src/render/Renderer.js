@@ -47,18 +47,20 @@ export class Renderer {
     if (world.bounds) this._bounds(world.bounds);
 
     if (this.showTrails && !this.reducedMotion) {
+      ctx.save();
       ctx.lineWidth = 1.5;
       for (const b of world.bodies) {
         const t = this.trails.get(b.id);
         if (!t || t.length < 2) continue;
-        ctx.strokeStyle = b.color + '66';
-        ctx.beginPath();
-        t.forEach(([x, y], i) => {
-          const [px, py] = cam.toScreen(x, y);
-          i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-        });
-        ctx.stroke();
+        ctx.strokeStyle = b.color;
+        for (let i = 1; i < t.length; i++) {
+          const [x0, y0] = cam.toScreen(...t[i - 1]);
+          const [x1, y1] = cam.toScreen(...t[i]);
+          ctx.globalAlpha = 0.06 + 0.72 * (i / (t.length - 1));
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        }
       }
+      ctx.restore();
     }
 
     for (const f of world.forces)
@@ -90,7 +92,7 @@ export class Renderer {
       ctx.restore();
     }
 
-    if (slingshot && slingshot.body) this._slingshot(slingshot, world);
+    if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
   }
 
@@ -144,10 +146,19 @@ export class Renderer {
 
   _slingshot(slingshot, world) {
     const ctx = this.ctx, cam = this.cam;
-    const body = slingshot.body; if (!body) return;
-    const aim = slingshot.current;
-    const [bx, by] = cam.toScreen(body.pos.x, body.pos.y);
-    const [ax, ay] = cam.toScreen(aim.x, aim.y);
+    const { origin, current } = slingshot;
+    const launchVelocity = slingshot.velocity || {
+      x: (origin.x - current.x) * 5.5,
+      y: (origin.y - current.y) * 5.5
+    };
+    let velocity = {
+      x: launchVelocity.x + (slingshot.body ? slingshot.body.vel.x : 0),
+      y: launchVelocity.y + (slingshot.body ? slingshot.body.vel.y : 0)
+    };
+    const speed = Math.hypot(velocity.x, velocity.y);
+    if (speed > 30) velocity = { x: velocity.x * 30 / speed, y: velocity.y * 30 / speed };
+    const [bx, by] = cam.toScreen(origin.x, origin.y);
+    const [ax, ay] = cam.toScreen(current.x, current.y);
     const gravity = world.forces.find(f => f.constructor.name === 'UniformGravity')?.g || 0;
     ctx.save();
     ctx.setLineDash([6, 5]);
@@ -156,17 +167,23 @@ export class Renderer {
     ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ax, ay); ctx.stroke();
     ctx.setLineDash([]);
 
-    let px = body.pos.x;
-    let py = body.pos.y;
-    let vx = (body.pos.x - aim.x) * 5.5;
-    let vy = (body.pos.y - aim.y) * 5.5;
     ctx.beginPath();
-    for (let i = 0; i < 18; i++) {
+    ctx.arc(bx, by, Math.max(3, 0.26 * cam.scale), 0, Math.PI * 2);
+    ctx.fillStyle = '#58a6ff';
+    ctx.globalAlpha = 0.65;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#ffd866';
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffd866';
+    ctx.beginPath();
+    for (let i = 0; i <= 24; i++) {
+      const time = i * 0.08;
+      const px = origin.x + velocity.x * time;
+      const py = origin.y + velocity.y * time - 0.5 * gravity * time * time;
       const [sx, sy] = cam.toScreen(px, py);
       if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
-      px += vx * 0.08;
-      py += vy * 0.08;
-      vy -= gravity * 0.08;
     }
     ctx.stroke();
     ctx.restore();
