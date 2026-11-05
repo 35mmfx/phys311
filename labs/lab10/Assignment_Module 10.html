@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lab 10 -- Interactive Simulation</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .checkpoint-box { background-color: #fff0e6; border: 2px solid #ff8200; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610  "; font-size: 1.15em; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Code lab 10 — Interactive Simulation</h1>
+
+<div class="concept-box">
+  <strong>📋 Lab Overview</strong><br>
+  <strong>Due:</strong> End of Week 10 (see Canvas calendar for exact date/time)<br>
+  <strong>Submit:</strong> Live GitHub Pages link + write-up via Canvas<br>
+  <strong>Also:</strong> Commit and push to <code style="font-size: 12pt;">labs/lab10/</code>; complete <strong>2 peer reviews</strong><br>
+  <strong>Points:</strong> 100 (+ up to 10 bonus) &nbsp;—&nbsp; this lab doubles as the Block 3 Checkpoint<br>
+  <strong>Estimated time:</strong> 6–7 hours
+</div>
+
+<p>Your engine works and it's public. This week you give it a user. You'll add mouse and keyboard interaction, a real control panel, visual design that communicates physics, and the accessibility and documentation that turn a lab into publishable work.</p>
+
+<div class="key-idea">
+  <strong>💡 The big idea this week:</strong> Interactivity isn't decoration — it's a form of physics communication. A slider that lets someone sweep restitution from 1 to 0 and watch energy drain teaches inelastic collisions faster than a paragraph can. Every control you add should let a user discover something. Controls that don't reveal physics are clutter.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Lab 9 — Multi-Body Browser Simulation (this lab builds directly on it)</li>
+  <li>Week 10 Lesson: Interactivity, UI &amp; Publishing</li>
+  <li>GitHub Pages enabled on your repo and confirmed working</li>
+  <li>Your three project ideas from the lesson's final "Try it" — Part C is a natural prototype for one</li>
+</ul>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Getting Started</h3>
+<ol>
+  <li>Create <code style="font-size: 12pt;">labs/lab10/</code> and copy your Lab 9 <code style="font-size: 12pt;">engine/</code> and <code style="font-size: 12pt;">render/</code> folders in unchanged</li>
+  <li>Add <code style="font-size: 12pt;">input.js</code> (event handling) and <code style="font-size: 12pt;">ui.js</code> (control wiring) as new modules — keep them outside <code style="font-size: 12pt;">engine/</code></li>
+  <li>Verify the Lab 9 simulation still runs before adding anything</li>
+</ol>
+
+<div class="physics-note">
+  <strong>🔬 The layering rule still applies.</strong> Input and UI are presentation concerns. Nothing in <code style="font-size: 12pt;">engine/</code> may reference <code style="font-size: 12pt;">document</code>, an event, or a DOM element. User input reaches the physics as a <code style="font-size: 12pt;">Force</code> object or as a plain parameter change — exactly as the lesson's <code style="font-size: 12pt;">ThrustForce</code> and <code style="font-size: 12pt;">MouseSpring</code> do.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A — Input &amp; Control Panel (30 points)</h2>
+<span class="part-label part-a" style="font-size: 12pt;">GUIDED — Follow the Lesson</span>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A1 — Coordinate-correct input (10 pts)</h3>
+<ol>
+  <li><strong>Implement <code style="font-size: 12pt;">eventToWorld()</code></strong> with the <code style="font-size: 12pt;">getBoundingClientRect</code> ratio correction from the lesson.</li>
+  <li><strong>Prove it's correct:</strong> display the cursor's physics coordinates live on the HUD, and draw a crosshair at that world position. Click each of the four canvas corners and confirm the readouts match your world bounds. Include a screenshot.</li>
+  <li><strong>Use <code style="font-size: 12pt;">pointer*</code> events</strong> so touch works. Verify on a phone if you can.</li>
+</ol>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A2 — Simulation controls (12 pts)</h3>
+<p>Implement all of the following as real HTML elements, each with a working keyboard equivalent:</p>
+<table><caption>Keyboard controls for simulation playback, reset, speed, and integrator selection</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Control</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Behavior</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Suggested key</th></tr></thead>
+  <tbody>
+    <tr><td>Pause / Resume</td><td>Freezes physics; rendering continues</td><td>Space</td></tr>
+    <tr><td>Single step</td><td>Advances exactly one DT while paused</td><td>.</td></tr>
+    <tr><td>Reset</td><td>Rebuilds the scene from initial conditions; re-baselines E₀</td><td>R</td></tr>
+    <tr><td>Speed</td><td>0.25× to 2× — scales the accumulator, <strong>not</strong> DT</td><td>− / +</td></tr>
+    <tr><td>Integrator select</td><td>Euler-Cromer / Velocity Verlet / Euler</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A3 — Parameter sliders (8 pts)</h3>
+<ol>
+  <li><strong>At least three sliders</strong> that change physics live, each with a numeric readout that updates as you drag (e.g. gravity, restitution, drag coefficient, spring stiffness, mass).</li>
+  <li><strong>Clamp every range to stable values</strong> and state in your write-up how you chose the upper bound for at least one slider — referencing the stability condition from the lesson.</li>
+  <li><strong>Parse all values</strong> with <code style="font-size: 12pt;">parseFloat</code>.</li>
+</ol>
+
+<div class="warning-box">
+  <strong>⚠️ Single-step is the control graders check most carefully.</strong> Pressing it must advance exactly one DT — not one frame, not "a little bit." If <code style="font-size: 12pt;">t</code> on your HUD doesn't increase by precisely your DT each press, your accumulator handling is wrong, and that same bug is silently affecting your normal runs too.
+</div>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B — Direct Manipulation &amp; Visual Physics (35 points)</h2>
+<span class="part-label part-b" style="font-size: 12pt;">GUIDED → INDEPENDENT</span>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B1 — Manipulate bodies (15 pts)</h3>
+<p>Implement <strong>both</strong>:</p>
+<ol>
+  <li><strong>Grab and drag</strong> using the <code style="font-size: 12pt;">MouseSpring</code> approach — a damped spring toward the cursor, added as a <code style="font-size: 12pt;">Force</code>. Bodies must still collide correctly while held, and releasing must impart a physical velocity.</li>
+  <li><strong>Slingshot launch</strong> — press to place, drag to aim, release to launch, with a live trajectory preview drawn while aiming.</li>
+</ol>
+<p><strong>Then answer in your write-up:</strong> Why does teleport-dragging (setting <code style="font-size: 12pt;">pos</code> directly) break the physics? Name two specific things that go wrong. Try it briefly and describe what you observed.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B2 — Visuals that reveal physics (12 pts)</h3>
+<p>Implement <strong>at least three</strong>, each individually toggleable:</p>
+<ul>
+  <li>Motion trails with alpha fade</li>
+  <li>Velocity vectors (scaled arrows)</li>
+  <li>Force vectors (drawn before forces are cleared)</li>
+  <li>Color mapped to speed or kinetic energy, with a legend</li>
+  <li>Collision flash / contact-point markers</li>
+  <li>Live energy strip chart on a secondary canvas</li>
+</ul>
+<p><strong>For each one, write one sentence</strong> in your write-up naming what a viewer can now understand that they couldn't before. A visual that doesn't earn that sentence doesn't earn the points.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B3 — Responsive &amp; accessible (8 pts)</h3>
+<ol>
+  <li><strong>Canvas resizes</strong> with the window, handles <code style="font-size: 12pt;">devicePixelRatio</code>, and keeps the world in view.</li>
+  <li><strong>Fully keyboard operable</strong> — every control reachable by Tab and activatable without a mouse.</li>
+  <li><strong>Proper <code style="font-size: 12pt;">&lt;label for&gt;</code></strong> on every input; meaning never conveyed by color alone; fallback text inside the <code style="font-size: 12pt;">&lt;canvas&gt;</code> element.</li>
+  <li><strong>Run the unplugged-mouse test</strong> from the lesson and report the result honestly.</li>
+</ol>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C — Make It Worth Visiting (35 points)</h2>
+<span class="part-label part-c" style="font-size: 12pt;">INDEPENDENT</span>
+
+<p>Turn your engine into <strong>one focused experience</strong> a stranger would find worthwhile. Choose a lane:</p>
+
+<table><caption>Examples of interactive physics experiences and the criteria for success in each direction</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Direction</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Examples</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What "good" means</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Teaching tool</strong></td><td>Orbit sandbox with adjustable v₀; resonance explorer; collision lab with an adjustable e; integrator comparison side-by-side</td><td>A visitor learns a specific physics concept without instruction</td></tr>
+    <tr><td><strong>Physics game</strong></td><td>Angry-Birds-style launcher; lunar lander; billiards with aiming; gravity-slingshot navigation puzzle</td><td>The challenge itself comes from real mechanics, not scripted behavior</td></tr>
+    <tr><td><strong>Explorable phenomenon</strong></td><td>N-body chaos with sensitivity-to-initial-conditions demo; particle gas approaching equilibrium; pendulum chain</td><td>The visitor can perturb it and see something genuinely surprising</td></tr>
+  </tbody>
+</table>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Requirements</h3>
+<ol>
+  <li><strong>A clear purpose,</strong> stated on the page itself in one or two sentences — a visitor should know what they're looking at in under 15 seconds.</li>
+  <li><strong>Physics from at least two different weeks</strong> of Blocks 1–2. Name them in your write-up.</li>
+  <li><strong>Conservation diagnostics remain visible</strong> (a "show diagnostics" toggle is fine, but the honesty must be available).</li>
+  <li><strong>Validated:</strong> report one quantitative conservation result for your final scene — energy drift over 60 s, or momentum conservation through N collisions.</li>
+  <li><strong>Robust:</strong> it must survive aggressive use. Spam every button, max every slider, drag bodies into walls at speed, resize mid-run. Nothing should produce <code style="font-size: 12pt;">NaN</code>, a frozen frame, or a Console error.</li>
+  <li><strong>Deployed and working on GitHub Pages</strong>, tested on both a laptop and a phone.</li>
+</ol>
+
+<div class="warning-box">
+  <strong>⚠️ Scope discipline.</strong> One polished, robust interaction beats five half-finished ones every time — in this rubric and in the final project rubric. If you're running out of time, cut features and polish what remains. "It has a lot of buttons but three of them crash it" scores far below "it does one thing flawlessly."
+</div>
+
+<div class="physics-note">
+  <strong>🔬 Treat this as your final-project prototype.</strong> Week 11 is proposals. Students who build something here that they actually enjoy spend Weeks 11–14 refining instead of restarting — and their final projects are consistently stronger. Pick a Part C direction you'd be happy to live with for four more weeks.
+</div>
+
+<!-- ============================ CHECKPOINT ============================ -->
+<div class="checkpoint-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #fff0e6 !important;">🏁 Block 3 Checkpoint (embedded in this lab)</h3>
+  <p>Lab 10 is the Block 3 Checkpoint. Beyond the lab deliverables, you must also:</p>
+  <ol>
+    <li><strong>Post your live link</strong> to the Gallery Walk discussion by the initial-post deadline, with a two-sentence description and one thing you'd like feedback on.</li>
+    <li><strong>Review two classmates' projects</strong> using the structure below.</li>
+  </ol>
+
+  <h4>Peer review structure (required for full credit)</h4>
+  <p>Open their link cold — no questions first. Then answer:</p>
+  <ul>
+    <li><strong>15-second test:</strong> Could you tell what it does and how to interact, without being told? Quote what tipped you off, or what was missing.</li>
+    <li><strong>Do the controls do what they say?</strong> Try each one. Note any mismatch between label and behavior.</li>
+    <li><strong>Try to break it.</strong> Max every slider, spam reset, drag a body into a wall as fast as you can, resize the window while running. Report exactly what you did and what happened.</li>
+    <li><strong>Physics check:</strong> Does it look right? Do the diagnostics support the claim? Does anything violate a conservation law you can see?</li>
+    <li><strong>One specific strength</strong> and <strong>one specific, actionable improvement.</strong> "Nice work" and "add more features" earn no credit; "the velocity arrows made the collision suddenly legible" and "the restitution slider goes to 1.2, which injects energy — clamp it at 1.0" do.</li>
+  </ul>
+  <p style="margin-bottom:0">Peer reviews are worth 10 of this assignment's 100 points and are graded on specificity.</p>
+</div>
+
+<!-- ============================ BONUS ============================ -->
+<div class="bonus-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #fff8e1 !important;">⭐ Bonus — Choose One (up to 10 points)</h3>
+  <ul>
+    <li><strong>Shareable state URLs (10 pts).</strong> Encode the current scene parameters into the URL query string and restore from it on load, so a user can share an exact configuration. Include a "copy link" button and demonstrate with two distinct URLs.</li>
+    <li><strong>Side-by-side integrator race (10 pts).</strong> Two canvases running identical initial conditions with different integrators, plus a live plot of the divergence between them. This is your Week 2 lesson as a public exhibit.</li>
+    <li><strong>Data export (10 pts).</strong> A "download CSV" button dumping the recorded time series (t, positions, energies) so a visitor can analyze your simulation in Python — closing the loop back to Block 1.</li>
+  </ul>
+</div>
+
+<!-- ============================ DELIVERABLES ============================ -->
+<div class="deliverable-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #e8f5e9 !important;">📦 What to Submit</h3>
+  <p><strong>1. Code, pushed to <code style="font-size: 12pt;">labs/lab10/</code>:</strong></p>
+  <ul class="checklist">
+    <li><code style="font-size: 12pt;">index.html</code> (with on-page description), <code style="font-size: 12pt;">style.css</code>, <code style="font-size: 12pt;">main.js</code></li>
+    <li><code style="font-size: 12pt;">engine/</code>, <code style="font-size: 12pt;">render/</code> — layering rule still enforced</li>
+    <li><code style="font-size: 12pt;">input.js</code>, <code style="font-size: 12pt;">ui.js</code></li>
+    <li><code style="font-size: 12pt;">README.md</code> with all five sections: what it is, what physics, how to use (controls table), how you know it's right, known limitations</li>
+  </ul>
+  <p><strong>2. Write-up (PDF or Markdown) via Canvas:</strong></p>
+  <ul class="checklist">
+    <li>Coordinate-verification screenshot (A1)</li>
+    <li>Slider clamp justification citing the stability condition (A3)</li>
+    <li>Teleport-drag analysis — two specific failures (B1)</li>
+    <li>Your three visuals, each with its "what this reveals" sentence (B2)</li>
+    <li>Accessibility report, including the unplugged-mouse test (B3)</li>
+    <li>Part C purpose statement + the two physics topics used + your quantitative validation result</li>
+    <li>Robustness log: what you tried to break, and what happened</li>
+  </ul>
+  <p><strong>3. Live GitHub Pages URL</strong> — required.</p>
+  <p style="margin-bottom:0"><strong>4. Two peer reviews</strong> posted in the Gallery Walk discussion by the response deadline.</p>
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ Final check before submitting.</strong> Open your deployed link in a <strong>private window on a phone</strong>. Does it load? Is the text readable? Do the controls work by touch? Is the Console clean? A project that only works on your own laptop, in your own browser, with your own cache, is not published work.
+</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #f0f7ff !important;">📋 Grading Rubric (100 points + 10 bonus)</h3>
+  <table><caption>Assessment rubric for the interactive physics project, covering implementation, usability, physics validation, robustness, peer reviews, deductions, and bonus features.</caption>
+    <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Component</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Points</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What earns full credit</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A1.</strong> Coordinate-correct pointer input</td><td>10</td><td>Rect-ratio correction present; corner verification shown; pointer events used</td></tr>
+      <tr><td><strong>A2.</strong> Pause / step / reset / speed / integrator</td><td>12</td><td>All five work; single-step advances exactly one DT; speed scales the accumulator; reset re-baselines E₀; keyboard equivalents present</td></tr>
+      <tr><td><strong>A3.</strong> Parameter sliders</td><td>8</td><td>≥3 live sliders with readouts; ranges clamped; stability reasoning given</td></tr>
+      <tr><td><strong>B1.</strong> Grab-drag + slingshot</td><td>15</td><td>Spring-based drag preserves collisions &amp; release velocity; slingshot with live preview; teleport analysis correct</td></tr>
+      <tr><td><strong>B2.</strong> Physics-revealing visuals</td><td>12</td><td>≥3 toggleable visuals, each justified by what it reveals</td></tr>
+      <tr><td><strong>B3.</strong> Responsive &amp; accessible</td><td>8</td><td>DPR-aware resize; full keyboard operation; labels; canvas fallback text</td></tr>
+      <tr><td><strong>C1.</strong> Clear purpose &amp; focused experience</td><td>10</td><td>Passes the 15-second test; on-page description; scope is coherent</td></tr>
+      <tr><td><strong>C2.</strong> Physics depth &amp; validation</td><td>10</td><td>≥2 topics from Blocks 1–2; diagnostics visible; a quantitative conservation result reported</td></tr>
+      <tr><td><strong>C3.</strong> Robustness</td><td>5</td><td>Survives the abuse log; no <code style="font-size: 12pt;">NaN</code>, freeze, or Console error</td></tr>
+      <tr><td><strong>Peer reviews (2)</strong></td><td>10</td><td>Specific, actionable, evidence-based; generic praise scores zero</td></tr>
+      <tr><td colspan="3" style="background:#f0f7ff"><strong>Deductions</strong></td></tr>
+      <tr><td>Live link broken or errors on load</td><td>−15</td><td>Tested in a fresh private window</td></tr>
+      <tr><td>README missing required sections</td><td>−0 to −8</td><td>Especially "how do I know it's right?"</td></tr>
+      <tr><td>Layering violation in <code style="font-size: 12pt;">engine/</code></td><td>−5</td><td>DOM or canvas references inside engine modules</td></tr>
+      <tr><td><strong>Bonus.</strong> URLs / race / CSV export</td><td>+10</td><td>Working and demonstrated in the write-up</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="key-idea">
+  <strong>💡 Block 3 is complete.</strong> Ten weeks ago you wrote a loop that dropped a ball and compared it to ½gt². You now have a validated, modular, interactive physics engine deployed on the public web, with conservation diagnostics anyone can inspect. Week 11 opens Block 4: you'll propose a final project and spend four weeks making something you'll want to link to on a résumé. <strong>Bring your Part C.</strong>
+</div>
+
+
+
+</body></html>

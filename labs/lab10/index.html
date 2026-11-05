@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 10 Reference — Interactive Physics Simulation</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Physics 311 &middot; Week 10 Reference</h1>
+  <span class="sub">Interactivity, UI &amp; Publishing &mdash; drag a body, change a slider, share the link</span>
+</header>
+
+<div class="layout">
+
+  <main class="stage">
+    <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
+    <canvas id="sim" tabindex="0" role="img"
+            aria-label="Physics simulation. Use Tab to select a body and the arrow keys to drag it."></canvas>
+    <div id="hud" role="status" aria-live="off"></div>
+    <!-- polite live region: announces state changes without stealing focus -->
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+
+  <aside class="panel" aria-label="Simulation controls">
+
+    <h2>Scene</h2>
+    <div class="row">
+      <label for="scene">Preset</label>
+      <select id="scene">
+        <option value="billiards">1 &mdash; Billiards in a box</option>
+        <option value="chain">2 &mdash; Spring chain</option>
+        <option value="orbits">3 &mdash; N-body orbits</option>
+        <option value="projectile">4 &mdash; Projectile (control case)</option>
+        <option value="pendulums">5 &mdash; Pendulum row</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="count">Bodies <output id="count-out"></output></label>
+      <input type="range" id="count" min="3" max="120" step="1" value="24">
+    </div>
+
+    <h2>Solver</h2>
+    <div class="row">
+      <label for="integrator">Integrator</label>
+      <select id="integrator">
+        <option value="euler">Euler (explicit)</option>
+        <option value="ec">Euler&ndash;Cromer</option>
+        <option value="verlet">Velocity Verlet</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="dt">Timestep <output id="dt-out"></output></label>
+      <input type="range" id="dt" min="0.001" max="0.02" step="0.001" value="0.004">
+    </div>
+
+    <h2>Physics</h2>
+    <div class="row">
+      <label for="grav">Gravity <output id="grav-out"></output></label>
+      <input type="range" id="grav" min="0" max="25" step="0.01" value="9.81">
+    </div>
+    <div class="row">
+      <label for="rest">Restitution <output id="rest-out"></output></label>
+      <input type="range" id="rest" min="0" max="1" step="0.01" value="0.95">
+    </div>
+    <div class="row">
+      <label for="drag">Drag coefficient <output id="drag-out"></output></label>
+      <input type="range" id="drag" min="0" max="0.2" step="0.001" value="0">
+    </div>
+    <div class="row">
+      <label for="speed">Time scale <output id="speed-out"></output></label>
+      <input type="range" id="speed" min="0.25" max="2" step="0.25" value="1">
+    </div>
+
+    <h2>Display</h2>
+    <label class="check"><input type="checkbox" id="trails" checked> Show trails</label>
+    <label class="check"><input type="checkbox" id="vel"> Show velocity vectors</label>
+    <label class="check"><input type="checkbox" id="force"> Show force vectors</label>
+    <label class="check"><input type="checkbox" id="slingshot"> Slingshot launch</label>
+    <label class="check"><input type="checkbox" id="spawn"> Click adds a body</label>
+
+    <div class="btns">
+      <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-step">&#9197; Step</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <button id="btn-link">&#128279; Copy link</button>
+    </div>
+
+    <h2>Keyboard</h2>
+    <p class="keys">
+      <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
+      <kbd>Tab</kbd> select body &middot; <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag it<br>
+      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
+    </p>
+  </aside>
+</div>
+
+<footer>
+  <strong>Reading the HUD.</strong> &Delta;E/E&#8320; is measured against a reference captured
+  once when the scene was built &mdash; it turns red past 1&nbsp;%. &Delta;p/p&#8320; reads
+  <em>n/a</em> unless the system is genuinely isolated; walls, gravity and your own
+  finger are all external forces. Try scene&nbsp;4 with each integrator: nothing changes,
+  because a constant force cannot tell them apart. Then try scene&nbsp;2.
+</footer>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

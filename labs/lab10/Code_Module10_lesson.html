@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 10 Lesson — Interactivity, UI &amp; Publishing</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .checkpoint-box { background-color: #fff0e6; border: 2px solid #ff8200; padding: 20px; margin: 25px 0; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 10 -- Interactivity, UI &amp; Publishing</h1>
+
+<div class="objectives">
+  <strong>🎯 By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Handle mouse and keyboard events and convert screen coordinates back into physics coordinates</li>
+    <li>Build HTML control panels (sliders, buttons, dropdowns) wired to live simulation parameters</li>
+    <li>Implement pause, step, reset, and speed control without breaking the fixed timestep</li>
+    <li>Apply visual polish — trails, vectors, highlights — that communicates physics rather than decorating</li>
+    <li>Make your simulation responsive and accessible</li>
+    <li>Deploy to GitHub Pages and write documentation someone else can use</li>
+  </ul>
+</div>
+
+<div class="key-idea">
+  <strong>💡 The last gap.</strong> You have a correct, validated, live physics engine. What it doesn't have is a user. This week closes that gap — and the distinction matters more than it sounds. A simulation you watch demonstrates physics. A simulation someone can manipulate lets them <strong>discover</strong> physics. That's the difference between a lab submission and something worth putting your name on publicly.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; Events: How the Browser Talks to You</h2>
+
+<p>Python code you wrote ran top to bottom. Browser code is <strong>event-driven</strong>: you register callbacks and the browser calls them when something happens.</p>
+
+<pre style="font-size: 12pt;">canvas.addEventListener(<span class="string" style="font-size: 12pt;">"pointerdown"</span>, (event) =&gt; {
+  console.log(<span class="string" style="font-size: 12pt;">"clicked at"</span>, event.clientX, event.clientY);
+});
+</pre>
+
+<table><caption>Pointer, keyboard, form, button, and window resize events, their triggers, and typical uses</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Event</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Fires when</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Typical use</th></tr></thead>
+  <tbody>
+    <tr><td><code style="font-size: 12pt;">pointerdown</code></td><td>Mouse press or finger touch</td><td>Grab a body, start a slingshot</td></tr>
+    <tr><td><code style="font-size: 12pt;">pointermove</code></td><td>Pointer moves</td><td>Drag, aim, hover highlight</td></tr>
+    <tr><td><code style="font-size: 12pt;">pointerup</code></td><td>Release</td><td>Launch, drop</td></tr>
+    <tr><td><code style="font-size: 12pt;">keydown</code> / <code style="font-size: 12pt;">keyup</code></td><td>Key pressed / released</td><td>Continuous thrust, hotkeys</td></tr>
+    <tr><td><code style="font-size: 12pt;">input</code></td><td>Slider dragged, field typed in</td><td>Live parameter changes</td></tr>
+    <tr><td><code style="font-size: 12pt;">click</code></td><td>Button activated</td><td>Reset, pause, scene switch</td></tr>
+    <tr><td><code style="font-size: 12pt;">resize</code> (on <code style="font-size: 12pt;">window</code>)</td><td>Window size changes</td><td>Responsive canvas</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Use <code style="font-size: 12pt;">pointer*</code> events, not <code style="font-size: 12pt;">mouse*</code>.</strong> Pointer events unify mouse, touch, and stylus in a single API. Write them once and your simulation works on a phone with no extra code. Since your project will be shared publicly — and a good fraction of visitors will be on phones — this is a five-character decision with a big payoff.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.1 &nbsp; Getting the click into physics coordinates</h3>
+
+<p>Event coordinates are relative to the browser viewport, not your canvas. Two conversions are needed:</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">eventToWorld</span>(event, canvas, camera) {
+  <span class="keyword" style="font-size: 12pt;">const</span> rect = canvas.getBoundingClientRect();
+
+  <span class="comment" style="font-size: 12pt;">// 1. viewport → canvas pixels (the ratio handles CSS scaling)</span>
+  <span class="keyword" style="font-size: 12pt;">const</span> px = (event.clientX - rect.left) * (canvas.width  / rect.width);
+  <span class="keyword" style="font-size: 12pt;">const</span> py = (event.clientY - rect.top ) * (canvas.height / rect.height);
+
+  <span class="comment" style="font-size: 12pt;">// 2. canvas pixels → physics meters (this is your Lab 8 camera, inverted)</span>
+  <span class="keyword" style="font-size: 12pt;">return</span> camera.toWorld(px, py);
+}
+</pre>
+
+<div class="warning-box">
+  <strong>⚠️ Skip the <code style="font-size: 12pt;">rect.width</code> ratio and your clicks will be offset.</strong> If CSS ever displays your canvas at a size different from its drawing buffer — which responsive layouts do constantly — raw <code style="font-size: 12pt;">clientX</code> lands in the wrong place, and the error grows with distance from the top-left. Symptom: "grabbing works near the corner but not across the screen." This ratio is the fix.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.2 &nbsp; Keyboard: track state, don't act on the event</h3>
+
+<p>For continuous input like thrust, don't apply force inside the event handler — the OS key-repeat rate is not your physics rate. Record which keys are down, and read that state inside the fixed step:</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">const</span> keys = <span class="keyword" style="font-size: 12pt;">new</span> Set();
+window.addEventListener(<span class="string" style="font-size: 12pt;">"keydown"</span>, e =&gt; {
+  keys.add(e.code);
+  <span class="keyword" style="font-size: 12pt;">if</span> ([<span class="string" style="font-size: 12pt;">"Space"</span>, <span class="string" style="font-size: 12pt;">"ArrowUp"</span>, <span class="string" style="font-size: 12pt;">"ArrowDown"</span>].includes(e.code)) e.preventDefault();
+});
+window.addEventListener(<span class="string" style="font-size: 12pt;">"keyup"</span>, e =&gt; keys.delete(e.code));
+
+<span class="comment" style="font-size: 12pt;">// Inside world.step() — a Force like any other</span>
+<span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">ThrustForce</span> {
+  <span class="function" style="font-size: 12pt;">constructor</span>(body, keys, magnitude) { <span class="comment" style="font-size: 12pt;">/* ... */</span> }
+  <span class="function" style="font-size: 12pt;">apply</span>(world) {
+    <span class="keyword" style="font-size: 12pt;">if</span> (<span class="keyword" style="font-size: 12pt;">this</span>.keys.has(<span class="string" style="font-size: 12pt;">"ArrowUp"</span>))    <span class="keyword" style="font-size: 12pt;">this</span>.body.force.y += <span class="keyword" style="font-size: 12pt;">this</span>.mag;
+    <span class="keyword" style="font-size: 12pt;">if</span> (<span class="keyword" style="font-size: 12pt;">this</span>.keys.has(<span class="string" style="font-size: 12pt;">"ArrowLeft"</span>))  <span class="keyword" style="font-size: 12pt;">this</span>.body.force.x -= <span class="keyword" style="font-size: 12pt;">this</span>.mag;
+    <span class="keyword" style="font-size: 12pt;">if</span> (<span class="keyword" style="font-size: 12pt;">this</span>.keys.has(<span class="string" style="font-size: 12pt;">"ArrowRight"</span>)) <span class="keyword" style="font-size: 12pt;">this</span>.body.force.x += <span class="keyword" style="font-size: 12pt;">this</span>.mag;
+  }
+}
+</pre>
+
+<div class="physics-note">
+  <strong>🔬 Notice what just happened.</strong> User input became a <code style="font-size: 12pt;">Force</code> object — same interface as <code style="font-size: 12pt;">Gravity</code> and <code style="font-size: 12pt;">Drag</code>, registered the same way, consumed by the same accumulator. Your Week 7 architecture absorbed interactivity without a single structural change. That is what good design buys you.
+</div>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; Manipulating Bodies with the Mouse</h2>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.1 &nbsp; Picking</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">bodyAt</span>(world, worldPos) {
+  <span class="keyword" style="font-size: 12pt;">for</span> (<span class="keyword" style="font-size: 12pt;">let</span> i = world.bodies.length - <span class="number" style="font-size: 12pt;">1</span>; i &gt;= <span class="number" style="font-size: 12pt;">0</span>; i--) {   <span class="comment" style="font-size: 12pt;">// topmost first</span>
+    <span class="keyword" style="font-size: 12pt;">const</span> b = world.bodies[i];
+    <span class="keyword" style="font-size: 12pt;">const</span> pick = Math.max(b.radius, <span class="number" style="font-size: 12pt;">0.25</span>);   <span class="comment" style="font-size: 12pt;">// generous target for touch</span>
+    <span class="keyword" style="font-size: 12pt;">if</span> (b.pos.sub(worldPos).lengthSq() &lt;= pick * pick) <span class="keyword" style="font-size: 12pt;">return</span> b;
+  }
+  <span class="keyword" style="font-size: 12pt;">return</span> <span class="keyword" style="font-size: 12pt;">null</span>;
+}
+</pre>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.2 &nbsp; Two ways to drag — and why one is much better</h3>
+
+<table><caption>Comparison of teleporting and spring-based cursor control for a body, including implementation and physical consequences.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Approach</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">How</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Consequence</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Teleport</strong></td><td>Set <code style="font-size: 12pt;">body.pos</code> to the cursor each frame</td><td>Bodies pass through walls; releasing gives zero or absurd velocity; energy meaningless</td></tr>
+    <tr><td><strong>Spring to cursor</strong> ✓</td><td>Add a damped spring force pulling the body toward the cursor</td><td>Collisions still work, release velocity is physical, and it feels right</td></tr>
+  </tbody>
+</table>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">class</span> <span class="class" style="font-size: 12pt;">MouseSpring</span> {
+  <span class="function" style="font-size: 12pt;">constructor</span>() { <span class="keyword" style="font-size: 12pt;">this</span>.body = <span class="keyword" style="font-size: 12pt;">null</span>; <span class="keyword" style="font-size: 12pt;">this</span>.target = <span class="keyword" style="font-size: 12pt;">null</span>; <span class="keyword" style="font-size: 12pt;">this</span>.k = <span class="number" style="font-size: 12pt;">200</span>; <span class="keyword" style="font-size: 12pt;">this</span>.c = <span class="number" style="font-size: 12pt;">20</span>; }
+
+  <span class="function" style="font-size: 12pt;">apply</span>(world) {
+    <span class="keyword" style="font-size: 12pt;">if</span> (!<span class="keyword" style="font-size: 12pt;">this</span>.body || !<span class="keyword" style="font-size: 12pt;">this</span>.target) <span class="keyword" style="font-size: 12pt;">return</span>;
+    <span class="keyword" style="font-size: 12pt;">const</span> d = <span class="keyword" style="font-size: 12pt;">this</span>.target.sub(<span class="keyword" style="font-size: 12pt;">this</span>.body.pos);
+    <span class="keyword" style="font-size: 12pt;">this</span>.body.force.addScaled(d, <span class="keyword" style="font-size: 12pt;">this</span>.k * <span class="keyword" style="font-size: 12pt;">this</span>.body.m);        <span class="comment" style="font-size: 12pt;">// spring</span>
+    <span class="keyword" style="font-size: 12pt;">this</span>.body.force.addScaled(<span class="keyword" style="font-size: 12pt;">this</span>.body.vel, -<span class="keyword" style="font-size: 12pt;">this</span>.c * <span class="keyword" style="font-size: 12pt;">this</span>.body.m); <span class="comment" style="font-size: 12pt;">// damping</span>
+  }
+}
+</pre>
+
+<div class="warning-box">
+  <strong>⚠️ A stiff spring plus a large DT explodes.</strong> Stability requires roughly Δt &lt; 2/√(k/m). With <code style="font-size: 12pt;">k = 200</code> that means DT below about 0.14 s — fine at 1/120, but if you let users crank a stiffness slider without bounding it, they'll launch bodies to infinity. <strong>Always clamp slider ranges to stable values</strong>, and mention the stability limit in your write-up. This is your Week 1–3 step-size analysis showing up as a UI design constraint.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.3 &nbsp; Slingshot launching</h3>
+
+<p>The most satisfying interaction you can build in an afternoon: press to place, drag to aim, release to launch.</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">let</span> aimStart = <span class="keyword" style="font-size: 12pt;">null</span>;
+
+canvas.addEventListener(<span class="string" style="font-size: 12pt;">"pointerdown"</span>, e =&gt; { aimStart = eventToWorld(e, canvas, camera); });
+canvas.addEventListener(<span class="string" style="font-size: 12pt;">"pointerup"</span>, e =&gt; {
+  <span class="keyword" style="font-size: 12pt;">if</span> (!aimStart) <span class="keyword" style="font-size: 12pt;">return</span>;
+  <span class="keyword" style="font-size: 12pt;">const</span> end = eventToWorld(e, canvas, camera);
+  <span class="keyword" style="font-size: 12pt;">const</span> v = aimStart.sub(end).mul(<span class="number" style="font-size: 12pt;">2.0</span>);       <span class="comment" style="font-size: 12pt;">// pull back = launch forward</span>
+  world.add(<span class="keyword" style="font-size: 12pt;">new</span> <span class="class" style="font-size: 12pt;">Body</span>({ pos: aimStart, vel: v, m: <span class="number" style="font-size: 12pt;">1</span>, radius: <span class="number" style="font-size: 12pt;">0.2</span> }));
+  aimStart = <span class="keyword" style="font-size: 12pt;">null</span>;
+});
+</pre>
+
+<p>While aiming, draw the predicted trajectory — run a copy of the physics forward without committing it:</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">predictPath</span>(pos, vel, g, steps = <span class="number" style="font-size: 12pt;">60</span>, dt = <span class="number" style="font-size: 12pt;">1</span>/<span class="number" style="font-size: 12pt;">30</span>) {
+  <span class="keyword" style="font-size: 12pt;">const</span> path = [];
+  <span class="keyword" style="font-size: 12pt;">let</span> p = pos.clone(), v = vel.clone();
+  <span class="keyword" style="font-size: 12pt;">for</span> (<span class="keyword" style="font-size: 12pt;">let</span> i = <span class="number" style="font-size: 12pt;">0</span>; i &lt; steps; i++) {
+    v.y -= g * dt;  p.addScaled(v, dt);        <span class="comment" style="font-size: 12pt;">// Euler-Cromer, on a copy</span>
+    path.push(p.clone());
+  }
+  <span class="keyword" style="font-size: 12pt;">return</span> path;
+}
+</pre>
+
+<div class="physics-note">
+  <strong>🔬 A trajectory preview is physics education embedded in a UI.</strong> The user drags, sees the parabola change, and builds intuition about launch angle and range without reading a word. If you add drag to the real simulation but not the preview, the ball will miss the predicted path — which is itself a beautiful teaching moment. Consider making it a toggle: "preview with / without air resistance."
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; Control Panels</h2>
+
+<p>Don't draw buttons on the canvas. Use real HTML elements next to it — they're keyboard accessible, screen-reader friendly, and free.</p>
+
+<pre style="font-size: 12pt;">&lt;div class=<span class="string" style="font-size: 12pt;">"controls"</span>&gt;
+  &lt;button id=<span class="string" style="font-size: 12pt;">"pause"</span>&gt;Pause&lt;/button&gt;
+  &lt;button id=<span class="string" style="font-size: 12pt;">"stepBtn"</span>&gt;Step&lt;/button&gt;
+  &lt;button id=<span class="string" style="font-size: 12pt;">"reset"</span>&gt;Reset&lt;/button&gt;
+
+  &lt;label for=<span class="string" style="font-size: 12pt;">"grav"</span>&gt;Gravity: &lt;span id=<span class="string" style="font-size: 12pt;">"gravVal"</span>&gt;9.81&lt;/span&gt; m/s²&lt;/label&gt;
+  &lt;input type=<span class="string" style="font-size: 12pt;">"range"</span> id=<span class="string" style="font-size: 12pt;">"grav"</span> min=<span class="string" style="font-size: 12pt;">"0"</span> max=<span class="string" style="font-size: 12pt;">"25"</span> step=<span class="string" style="font-size: 12pt;">"0.1"</span> value=<span class="string" style="font-size: 12pt;">"9.81"</span>&gt;
+
+  &lt;label for=<span class="string" style="font-size: 12pt;">"rest"</span>&gt;Restitution: &lt;span id=<span class="string" style="font-size: 12pt;">"restVal"</span>&gt;0.90&lt;/span&gt;&lt;/label&gt;
+  &lt;input type=<span class="string" style="font-size: 12pt;">"range"</span> id=<span class="string" style="font-size: 12pt;">"rest"</span> min=<span class="string" style="font-size: 12pt;">"0"</span> max=<span class="string" style="font-size: 12pt;">"1"</span> step=<span class="string" style="font-size: 12pt;">"0.01"</span> value=<span class="string" style="font-size: 12pt;">"0.9"</span>&gt;
+
+  &lt;label for=<span class="string" style="font-size: 12pt;">"integ"</span>&gt;Integrator&lt;/label&gt;
+  &lt;select id=<span class="string" style="font-size: 12pt;">"integ"</span>&gt;
+    &lt;option value=<span class="string" style="font-size: 12pt;">"ec"</span>&gt;Euler-Cromer&lt;/option&gt;
+    &lt;option value=<span class="string" style="font-size: 12pt;">"vv"</span>&gt;Velocity Verlet&lt;/option&gt;
+    &lt;option value=<span class="string" style="font-size: 12pt;">"euler"</span>&gt;Euler (watch it fail!)&lt;/option&gt;
+  &lt;/select&gt;
+&lt;/div&gt;
+</pre>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">const</span> gravSlider = document.getElementById(<span class="string" style="font-size: 12pt;">"grav"</span>);
+gravSlider.addEventListener(<span class="string" style="font-size: 12pt;">"input"</span>, () =&gt; {
+  <span class="keyword" style="font-size: 12pt;">const</span> g = parseFloat(gravSlider.value);      <span class="comment" style="font-size: 12pt;">// ALWAYS parse — .value is a string!</span>
+  gravity.g = g;
+  document.getElementById(<span class="string" style="font-size: 12pt;">"gravVal"</span>).textContent = g.toFixed(<span class="number" style="font-size: 12pt;">2</span>);
+});
+</pre>
+
+<div class="warning-box">
+  <strong>⚠️ <code style="font-size: 12pt;">input.value</code> is always a string.</strong> Forget <code style="font-size: 12pt;">parseFloat</code> and <code style="font-size: 12pt;">"9.81" * 2</code> gives <code style="font-size: 12pt;">19.62</code> (JS coerces) but <code style="font-size: 12pt;">"9.81" + 2</code> gives <code style="font-size: 12pt;">"9.812"</code> (string concatenation). That mixed behavior produces bizarre, hard-to-trace physics bugs. Parse at the boundary, every time.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.1 &nbsp; Pause, step, and reset — done correctly</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">let</span> paused = <span class="keyword" style="font-size: 12pt;">false</span>;
+<span class="keyword" style="font-size: 12pt;">let</span> stepOnce = <span class="keyword" style="font-size: 12pt;">false</span>;
+<span class="keyword" style="font-size: 12pt;">let</span> speed = <span class="number" style="font-size: 12pt;">1</span>;               <span class="comment" style="font-size: 12pt;">// 0.25 = slow-mo, 2 = fast-forward</span>
+
+<span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">loop</span>(ts) {
+  <span class="keyword" style="font-size: 12pt;">if</span> (!last) last = ts;
+  <span class="keyword" style="font-size: 12pt;">const</span> frame = Math.min((ts - last) / <span class="number" style="font-size: 12pt;">1000</span>, <span class="number" style="font-size: 12pt;">0.25</span>);
+  last = ts;
+
+  <span class="keyword" style="font-size: 12pt;">if</span> (!paused) {
+    acc += frame * speed;                <span class="comment" style="font-size: 12pt;">// speed scales TIME, never DT</span>
+  } <span class="keyword" style="font-size: 12pt;">else if</span> (stepOnce) {
+    acc += DT;  stepOnce = <span class="keyword" style="font-size: 12pt;">false</span>;         <span class="comment" style="font-size: 12pt;">// advance exactly one step</span>
+  }
+
+  <span class="keyword" style="font-size: 12pt;">while</span> (acc &gt;= DT) { world.step(DT); acc -= DT; }
+  renderer.draw(world);
+  requestAnimationFrame(loop);
+}
+</pre>
+
+<div class="key-idea">
+  <strong>💡 Speed control scales the accumulator, never DT.</strong> The tempting shortcut — <code style="font-size: 12pt;">world.step(DT * speed)</code> — destroys the fixed timestep and everything it guarantees. Feeding the accumulator faster or slower means physics still advances in identical DT slices; you're just running more or fewer of them per real second. Slow-motion becomes a legitimate scientific instrument: you can watch a collision resolve step by step and still trust the numbers.
+</div>
+
+<p><strong>Reset</strong> must rebuild the scene from stored initial conditions, not from current state. Keep a scene factory:</p>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">buildScene</span>(name) { <span class="comment" style="font-size: 12pt;">/* returns a brand-new World */</span> }
+
+<span class="keyword" style="font-size: 12pt;">let</span> world = buildScene(<span class="string" style="font-size: 12pt;">"billiards"</span>);
+document.getElementById(<span class="string" style="font-size: 12pt;">"reset"</span>).addEventListener(<span class="string" style="font-size: 12pt;">"click"</span>, () =&gt; {
+  world = buildScene(currentScene);
+  E0 = world.totalEnergy();     <span class="comment" style="font-size: 12pt;">// re-baseline the drift readout!</span>
+  acc = <span class="number" style="font-size: 12pt;">0</span>;  last = <span class="number" style="font-size: 12pt;">0</span>;
+});
+</pre>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; Visual Design That Teaches</h2>
+
+<div class="key-idea">
+  <strong>💡 The rule for every visual choice: does it reveal physics?</strong> A drop shadow doesn't. A velocity arrow does. A gradient background doesn't. Coloring bodies by kinetic energy does. Polish in a physics simulation means legibility, not decoration. Ask of every effect: "what can a viewer now understand that they couldn't before?"
+</div>
+
+<table><caption>Visualization techniques for revealing motion, forces, energy, and collisions in a simulation</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Technique</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What it reveals</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Implementation</th></tr></thead>
+  <tbody>
+    <tr><td>Motion trails</td><td>Path history, orbital shape, periodicity</td><td>Buffer of past positions, alpha-faded</td></tr>
+    <tr><td>Velocity arrows</td><td>Speed and direction as vectors</td><td>Line from body along <code style="font-size: 12pt;">vel</code>, scaled</td></tr>
+    <tr><td>Force arrows</td><td>What's acting, and how strongly</td><td>Draw <code style="font-size: 12pt;">force</code> before it's cleared</td></tr>
+    <tr><td>Color by energy/speed</td><td>Energy distribution across many bodies</td><td>HSL hue mapped to KE</td></tr>
+    <tr><td>Collision flash</td><td>Exactly when contact happens</td><td>Brief highlight on contact frame</td></tr>
+    <tr><td>Live energy strip chart</td><td>Drift and conservation over time</td><td>Rolling buffer plotted on a second small canvas</td></tr>
+  </tbody>
+</table>
+
+<pre style="font-size: 12pt;"><span class="comment" style="font-size: 12pt;">// Color by speed — instantly shows energy distribution in a gas of particles</span>
+<span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">speedColor</span>(v, vMax) {
+  <span class="keyword" style="font-size: 12pt;">const</span> t = Math.min(v / vMax, <span class="number" style="font-size: 12pt;">1</span>);
+  <span class="keyword" style="font-size: 12pt;">const</span> hue = (<span class="number" style="font-size: 12pt;">1</span> - t) * <span class="number" style="font-size: 12pt;">220</span>;        <span class="comment" style="font-size: 12pt;">// 220 = blue (slow) → 0 = red (fast)</span>
+  <span class="keyword" style="font-size: 12pt;">return</span> `hsl(${hue}, 85%, 55%)`;
+}
+</pre>
+
+<div class="physics-note">
+  <strong>🔬 The strip chart is worth the effort.</strong> A small canvas below the main one, plotting E(t) over the last ~10 seconds, is your Lab 2 energy plot rendered live. Set e = 1 and it's flat; set e = 0.8 and it steps downward at every collision; switch to plain Euler and watch it curve upward. You've turned an abstract numerical-methods result into something a viewer sees happen.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.1 &nbsp; Responsive and accessible</h3>
+
+<pre style="font-size: 12pt;"><span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">resizeCanvas</span>() {
+  <span class="keyword" style="font-size: 12pt;">const</span> dpr = window.devicePixelRatio || <span class="number" style="font-size: 12pt;">1</span>;
+  <span class="keyword" style="font-size: 12pt;">const</span> w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width  = Math.round(w * dpr);      <span class="comment" style="font-size: 12pt;">// crisp on retina displays</span>
+  canvas.height = Math.round(h * dpr);
+  camera.scale = canvas.height / WORLD_HEIGHT_METERS;   <span class="comment" style="font-size: 12pt;">// keep world visible</span>
+}
+window.addEventListener(<span class="string" style="font-size: 12pt;">"resize"</span>, resizeCanvas);
+resizeCanvas();
+</pre>
+
+<table><caption>Accessibility requirements and implementation guidance for interactive simulations.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Accessibility requirement</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">How</th></tr></thead>
+  <tbody>
+    <tr><td>Keyboard equivalents for mouse actions</td><td>Hotkeys for pause/step/reset; every control reachable by Tab</td></tr>
+    <tr><td>Don't encode meaning by color alone</td><td>Pair color with shape, size, or a text label</td></tr>
+    <tr><td>Readable contrast</td><td>Dark text on light backgrounds; test at small sizes</td></tr>
+    <tr><td>Labeled controls</td><td>Real <code style="font-size: 12pt;">&lt;label for="..."&gt;</code> on every input</td></tr>
+    <tr><td>Canvas fallback</td><td>Text inside <code style="font-size: 12pt;">&lt;canvas&gt;</code> describing the simulation for screen readers</td></tr>
+    <tr><td>Respect motion sensitivity</td><td>Honor <code style="font-size: 12pt;">prefers-reduced-motion</code>; start paused if set</td></tr>
+  </tbody>
+</table>
+
+<div class="try-it">
+  <strong>✍️ Try it:</strong> Unplug your mouse. Can you pause, reset, change gravity, and switch integrators using only the keyboard? If not, your simulation excludes people who navigate that way — and this is public work now.
+</div>
+
+<!-- ============================================================ -->
+<h2>5 &nbsp; Publishing on GitHub Pages</h2>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">5.1 &nbsp; Turning it on</h3>
+
+<ol>
+  <li>In your <code style="font-size: 12pt;">phys311</code> repo: <strong>Settings → Pages</strong></li>
+  <li><strong>Source:</strong> Deploy from a branch → <code style="font-size: 12pt;">main</code> → <code style="font-size: 12pt;">/ (root)</code> → <strong>Save</strong></li>
+  <li>Wait 1–2 minutes for the first build</li>
+  <li>Visit <code style="font-size: 12pt;">https://&lt;username&gt;.github.io/phys311/labs/lab10/</code></li>
+</ol>
+
+<div class="warning-box">
+  <strong>⚠️ The four deployment failures, in order of frequency.</strong>
+  <ol>
+    <li><strong>Case sensitivity.</strong> GitHub Pages runs Linux; your laptop probably doesn't. <code style="font-size: 12pt;">import { Vec2 } from "./Vec2.js"</code> works locally and 404s in production if the file is <code style="font-size: 12pt;">vec2.js</code>. Pick all-lowercase filenames and never think about this again.</li>
+    <li><strong>Absolute paths.</strong> <code style="font-size: 12pt;">src="/engine/world.js"</code> resolves to the domain root, not your project folder. Use relative paths: <code style="font-size: 12pt;">./engine/world.js</code>.</li>
+    <li><strong>Forgot to push.</strong> It works locally because the files are on your disk. Run <code style="font-size: 12pt;">git status</code> — is everything committed and pushed?</li>
+    <li><strong>Browser cache.</strong> Your update is live but you're seeing the old version. Hard-refresh with <code style="font-size: 12pt;">Ctrl/Cmd+Shift+R</code>, or check in a private window.</li>
+  </ol>
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">5.2 &nbsp; Documentation is part of the deliverable</h3>
+
+<p>Someone will land on your page with no context. Your README (and a short blurb on the page itself) should answer:</p>
+
+<ul>
+  <li><strong>What is this?</strong> One sentence a non-physicist understands.</li>
+  <li><strong>What physics does it implement?</strong> Forces, integrator, collision model, restitution.</li>
+  <li><strong>How do I use it?</strong> Controls table — every key, button, and slider.</li>
+  <li><strong>How do I know it's right?</strong> Your validation evidence: conservation results, drift figures, tests you ran.</li>
+  <li><strong>What are its limits?</strong> 2D only, no rotation, tunneling above x m/s, whatever is true.</li>
+</ul>
+
+<div class="key-idea">
+  <strong>💡 The "how do I know it's right?" section is what makes this physics.</strong> Anyone can post a bouncing-ball animation. Stating that momentum is conserved to 10<sup style="font-size: 12pt;">−14</sup> over 10,000 collisions, and that energy drift stays under 0.01% for 60 s with Verlet, is the difference between a toy and a scientific artifact. Every graded project in this course is expected to make that claim — and back it up.
+</div>
+
+<!-- ============================================================ -->
+<h2>6 &nbsp; Block 3 Checkpoint</h2>
+
+<div class="checkpoint-box">
+  <h3 style="margin-top: 0; color: #000000 !important; background-color: #fff0e6 !important;">🏁 Block 3 Checkpoint — Deployed Interactive Simulation</h3>
+  <p><strong>Due:</strong> End of Week 10 &nbsp;|&nbsp; <strong>Weight:</strong> part of the 20% Checkpoints grade &nbsp;|&nbsp; <strong>Peer review required</strong></p>
+
+  <p>Submit a <strong>live, public URL</strong> to an interactive physics simulation running on GitHub Pages. It must:</p>
+  <ul>
+    <li>Run your own engine (Labs 8–9 lineage), with correct fixed-timestep physics</li>
+    <li>Offer meaningful interaction — a user can change something and learn from the result</li>
+    <li>Display live conservation diagnostics</li>
+    <li>Include a README with the five documentation sections from §5.2</li>
+    <li>Work on a phone as well as a laptop</li>
+  </ul>
+
+  <p><strong>Peer review (structured, 2 classmates):</strong> Open their link cold. Can you tell what it does within 15 seconds without asking? Do the controls behave as labeled? Does anything break if you interact aggressively — drag a body through a wall, spam reset, max out every slider? Does the physics look and measure right? Give one specific strength and one specific, actionable improvement.</p>
+
+  <p style="margin-bottom:0"><strong>Rough deadline reality:</strong> this checkpoint is your final-project prototype in all but name. Students who build something they genuinely like here spend Weeks 11–14 refining rather than restarting.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2>7 &nbsp; Where Block 3 Leaves You</h2>
+
+<table><caption>Skills and project milestones gained during Weeks 8–10</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Week</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">You gained</th></tr></thead>
+  <tbody>
+    <tr><td>8</td><td>JavaScript, Canvas, fixed-timestep accumulator, cross-language validation</td></tr>
+    <tr><td>9</td><td>Modular engine, collision pipeline, live conservation diagnostics, profiling</td></tr>
+    <tr><td>10</td><td>Interaction, UI, visual communication, accessibility, public deployment</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Ten weeks ago you wrote a <code style="font-size: 12pt;">for</code> loop that dropped a ball.</strong> You now have a validated, modular, interactive physics engine running publicly on the web, with conservation-law diagnostics anyone can inspect. Block 4 is about choosing what to say with it — a simulation that teaches something, or a game whose challenge comes from real mechanics. Start thinking now: what physics do you want a stranger to understand after two minutes with your project?
+</div>
+
+<div class="try-it">
+  <strong>✍️ Before Week 11:</strong> Write down three project ideas. For each, name the specific physics from Weeks 1–6 it depends on, and the one conservation law you'd use to prove it's correct. Bring the best one to the Week 11 proposal workshop.
+</div>
+
+<!-- ============================================================ -->
+<h2>Deliverables This Week</h2>
+
+<ul>
+  <li><strong>Lab 10 — Interactive Simulation:</strong> add input, controls, and polish; deploy publicly</li>
+  <li><strong>Block 3 Checkpoint:</strong> deployed interactive simulation + README (peer reviewed)</li>
+  <li><strong>Discussion:</strong> Gallery Walk — post your live link and give structured feedback to two peers</li>
+  <li><strong>Journal entry:</strong> What surprised you about designing for a user rather than for yourself? What's your final project going to be?</li>
+</ul>
+
+
+
+</body></html>

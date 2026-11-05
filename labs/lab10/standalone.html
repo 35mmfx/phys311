@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Week 10 Reference (standalone) — Interactive Physics Simulation</title>
+<style>
+:root{
+  --ut-orange:#ff8200; --bg:#15181c; --panel:#1e2228; --line:#30363d;
+  --ink:#e6edf3; --dim:#9aa4af; --ok:#7ee787; --bad:#ff6b6b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+header{
+  padding:.7rem 1rem; border-bottom:1px solid var(--line);
+  display:flex; align-items:baseline; gap:.8rem; flex-wrap:wrap;
+}
+header h1{font-size:1.05rem;margin:0;color:var(--ut-orange)}
+header .sub{color:var(--dim);font-size:.85rem}
+
+.layout{display:grid;grid-template-columns:1fr 290px;gap:1rem;padding:1rem;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+
+.stage{min-width:0}
+canvas{
+  width:100%; height:min(60vh,560px); display:block;
+  background:#0d1117; border:1px solid var(--line); border-radius:8px;
+  touch-action:none;            /* stop the page scrolling under a drag */
+  cursor:crosshair;
+}
+canvas.grabbing{cursor:grabbing}
+canvas:focus-visible{outline:3px solid var(--ut-orange);outline-offset:2px}
+
+#hud{
+  margin-top:.5rem; padding:.55rem .7rem; background:var(--panel);
+  border:1px solid var(--line); border-radius:8px;
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr));
+  gap:.15rem .7rem; font-variant-numeric:tabular-nums; font-size:.82rem;
+}
+#hud .k{color:var(--dim)}
+#hud .v{font-weight:600}
+#hud .v.ok{color:var(--ok)}
+#hud .v.bad{color:var(--bad)}
+#hud .v.na{color:var(--dim);font-weight:400}
+
+.panel{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:8px; padding:.85rem;
+}
+.panel h2{font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--dim);margin:.9rem 0 .45rem}
+.panel h2:first-child{margin-top:0}
+.row{margin-bottom:.6rem}
+.row label{display:flex;justify-content:space-between;font-size:.82rem;
+  color:var(--dim);margin-bottom:.2rem}
+.row output{color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ut-orange)}
+select{width:100%;padding:.35rem;background:#0d1117;color:var(--ink);
+  border:1px solid var(--line);border-radius:5px}
+.check{display:flex;align-items:center;gap:.45rem;font-size:.85rem;margin-bottom:.35rem}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.5rem}
+button{
+  padding:.45rem .5rem;border:1px solid var(--line);border-radius:6px;
+  background:#2b313a;color:var(--ink);font:inherit;font-size:.85rem;cursor:pointer;
+}
+button:hover{background:#39414c}
+button:focus-visible{outline:3px solid var(--ut-orange);outline-offset:2px}
+button[aria-pressed=true]{border-color:var(--ut-orange)}
+
+kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:4px;padding:0 .3rem;font:inherit;font-size:.78rem}
+.keys{font-size:.78rem;color:var(--dim);line-height:1.9}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+  white-space:nowrap}
+footer{padding:0 1rem 1.5rem;color:var(--dim);font-size:.8rem;max-width:70ch}
+a{color:var(--ut-orange)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Physics 311 &middot; Week 10 Reference</h1>
+  <span class="sub">STANDALONE single-file build &mdash; Interactivity, UI &amp; Publishing &mdash; drag a body, change a slider, share the link</span>
+</header>
+
+<div class="layout">
+
+  <main class="stage">
+    <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
+    <canvas id="sim" tabindex="0" role="img"
+            aria-label="Physics simulation. Use Tab to select a body and the arrow keys to drag it."></canvas>
+    <div id="hud" role="status" aria-live="off"></div>
+    <!-- polite live region: announces state changes without stealing focus -->
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+
+  <aside class="panel" aria-label="Simulation controls">
+
+    <h2>Scene</h2>
+    <div class="row">
+      <label for="scene">Preset</label>
+      <select id="scene">
+        <option value="billiards">1 &mdash; Billiards in a box</option>
+        <option value="chain">2 &mdash; Spring chain</option>
+        <option value="orbits">3 &mdash; N-body orbits</option>
+        <option value="projectile">4 &mdash; Projectile (control case)</option>
+        <option value="pendulums">5 &mdash; Pendulum row</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="count">Bodies <output id="count-out"></output></label>
+      <input type="range" id="count" min="3" max="120" step="1" value="24">
+    </div>
+
+    <h2>Solver</h2>
+    <div class="row">
+      <label for="integrator">Integrator</label>
+      <select id="integrator">
+        <option value="euler">Euler (explicit)</option>
+        <option value="ec">Euler&ndash;Cromer</option>
+        <option value="verlet">Velocity Verlet</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="dt">Timestep <output id="dt-out"></output></label>
+      <input type="range" id="dt" min="0.001" max="0.02" step="0.001" value="0.004">
+    </div>
+
+    <h2>Physics</h2>
+    <div class="row">
+      <label for="grav">Gravity <output id="grav-out"></output></label>
+      <input type="range" id="grav" min="0" max="25" step="0.01" value="9.81">
+    </div>
+    <div class="row">
+      <label for="rest">Restitution <output id="rest-out"></output></label>
+      <input type="range" id="rest" min="0" max="1" step="0.01" value="0.95">
+    </div>
+    <div class="row">
+      <label for="drag">Drag coefficient <output id="drag-out"></output></label>
+      <input type="range" id="drag" min="0" max="0.2" step="0.001" value="0">
+    </div>
+    <div class="row">
+      <label for="speed">Time scale <output id="speed-out"></output></label>
+      <input type="range" id="speed" min="0.25" max="2" step="0.25" value="1">
+    </div>
+
+    <h2>Display</h2>
+    <label class="check"><input type="checkbox" id="trails" checked> Show trails</label>
+    <label class="check"><input type="checkbox" id="spawn"> Click adds a body</label>
+
+    <div class="btns">
+      <button id="btn-play"  aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-step">&#9197; Step</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <button id="btn-link">&#128279; Copy link</button>
+    </div>
+
+    <h2>Keyboard</h2>
+    <p class="keys">
+      <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
+      <kbd>Tab</kbd> select body &middot; <kbd>&larr;&uarr;&darr;&rarr;</kbd> drag it<br>
+      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>5</kbd> scene
+    </p>
+  </aside>
+</div>
+
+<footer>
+  <strong>Reading the HUD.</strong> &Delta;E/E&#8320; is measured against a reference captured
+  once when the scene was built &mdash; it turns red past 1&nbsp;%. &Delta;p/p&#8320; reads
+  <em>n/a</em> unless the system is genuinely isolated; walls, gravity and your own
+  finger are all external forces. Try scene&nbsp;4 with each integrator: nothing changes,
+  because a constant force cannot tell them apart. Then try scene&nbsp;2.
+</footer>
+
+<script type="module">
+/* ===== src/engine/Vec2.js ===== */
+// Vec2.js — minimal 2D vector. Pure math: no DOM, no canvas.
+class Vec2 {
+  constructor(x = 0, y = 0) { this.x = x; this.y = y; }
+
+  clone()        { return new Vec2(this.x, this.y); }
+  set(x, y)      { this.x = x; this.y = y; return this; }
+  copy(v)        { this.x = v.x; this.y = v.y; return this; }
+
+  add(v)         { return new Vec2(this.x + v.x, this.y + v.y); }
+  sub(v)         { return new Vec2(this.x - v.x, this.y - v.y); }
+  mul(s)         { return new Vec2(this.x * s, this.y * s); }
+
+  addTo(v)       { this.x += v.x; this.y += v.y; return this; }   // in place
+  mulTo(s)       { this.x *= s;   this.y *= s;   return this; }   // in place
+
+  dot(v)         { return this.x * v.x + this.y * v.y; }
+  cross(v)       { return this.x * v.y - this.y * v.x; }          // scalar z-component
+  len()          { return Math.hypot(this.x, this.y); }
+  len2()         { return this.x * this.x + this.y * this.y; }
+
+  norm() {
+    const L = this.len();
+    return L > 1e-12 ? new Vec2(this.x / L, this.y / L) : new Vec2(0, 0);
+  }
+
+  static zero()  { return new Vec2(0, 0); }
+}
+
+/* ===== src/engine/Body.js ===== */
+// Body.js — one simulated object. Carries NO drawing information beyond a colour tag.
+
+let _nextId = 1;
+
+class Body {
+  constructor({ pos, vel = Vec2.zero(), mass = 1, radius = 0.25,
+                fixed = false, color = '#ff8200', tag = '' } = {}) {
+    this.id      = _nextId++;
+    this.pos     = pos.clone();
+    this.vel     = vel.clone();
+    this.acc     = Vec2.zero();
+    this.force   = Vec2.zero();
+    this.mass    = mass;
+    this.invMass = fixed ? 0 : 1 / mass;
+    this.radius  = radius;
+    this.fixed   = fixed;
+    this.color   = color;
+    this.tag     = tag;
+  }
+
+  clearForce()      { this.force.set(0, 0); }
+  applyForce(F)     { this.force.addTo(F); }
+
+  kinetic()         { return 0.5 * this.mass * this.vel.len2(); }
+  momentum()        { return this.vel.mul(this.mass); }
+
+  static resetIds() { _nextId = 1; }   // called by World.reset() for determinism
+}
+
+/* ===== src/engine/Integrators.js ===== */
+// Integrators.js — swappable time-steppers. Each takes (world, dt).
+// Contract: on entry every body's force is stale; the stepper calls
+// world.accumulateForces() whenever it needs fresh accelerations.
+
+function setAcc(bodies) {
+  for (const b of bodies) {
+    b.acc.set(b.force.x * b.invMass, b.force.y * b.invMass);
+  }
+}
+
+const Euler = {
+  name: 'euler',
+  label: 'Euler (explicit)',
+  step(world, dt) {
+    world.accumulateForces();
+    setAcc(world.bodies);
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.pos.x += b.vel.x * dt;          // old velocity
+      b.pos.y += b.vel.y * dt;
+      b.vel.x += b.acc.x * dt;
+      b.vel.y += b.acc.y * dt;
+    }
+  }
+};
+
+const EulerCromer = {
+  name: 'ec',
+  label: 'Euler-Cromer (symplectic)',
+  step(world, dt) {
+    world.accumulateForces();
+    setAcc(world.bodies);
+    for (const b of world.bodies) {
+      if (b.fixed) continue;
+      b.vel.x += b.acc.x * dt;
+      b.vel.y += b.acc.y * dt;
+      b.pos.x += b.vel.x * dt;          // NEW velocity
+      b.pos.y += b.vel.y * dt;
+    }
+  }
+};
+
+const Verlet = {
+  name: 'verlet',
+  label: 'Velocity Verlet (symplectic)',
+  step(world, dt) {
+    world.accumulateForces();
+    setAcc(world.bodies);
+    const half = [];
+    for (const b of world.bodies) {
+      if (b.fixed) { half.push(null); continue; }
+      const vhx = b.vel.x + 0.5 * b.acc.x * dt;
+      const vhy = b.vel.y + 0.5 * b.acc.y * dt;
+      b.pos.x += vhx * dt;
+      b.pos.y += vhy * dt;
+      half.push([vhx, vhy]);
+    }
+    world.accumulateForces();
+    setAcc(world.bodies);
+    world.bodies.forEach((b, i) => {
+      if (b.fixed) return;
+      b.vel.x = half[i][0] + 0.5 * b.acc.x * dt;
+      b.vel.y = half[i][1] + 0.5 * b.acc.y * dt;
+    });
+  }
+};
+
+const INTEGRATORS = { euler: Euler, ec: EulerCromer, verlet: Verlet };
+
+/* ===== src/engine/Forces.js ===== */
+// Forces.js — every force is an object with apply(bodies, t).
+// WEEK 10 KEY IDEA: user input is just another Force. PointerSpring lives
+// here, in engine/, and knows nothing about mice, pixels, or the DOM. The UI
+// layer only ever writes a world-coordinate target into it.
+
+class UniformGravity {
+  constructor(g = 9.81) { this.g = g; this.enabled = true; }
+  apply(bodies) {
+    if (!this.enabled) return;
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      b.applyForce(new Vec2(0, -b.mass * this.g));
+    }
+  }
+  energy(bodies) {                       // potential energy bookkeeping
+    if (!this.enabled) return 0;
+    let U = 0;
+    for (const b of bodies) U += b.mass * this.g * b.pos.y;
+    return U;
+  }
+}
+
+class QuadraticDrag {
+  constructor(c = 0.0) { this.c = c; this.enabled = true; }
+  apply(bodies) {
+    if (!this.enabled || this.c === 0) return;
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      const s = b.vel.len();
+      if (s < 1e-12) continue;
+      b.applyForce(b.vel.mul(-this.c * s));
+    }
+  }
+  energy() { return 0; }                 // dissipative: tracked as lost work
+  dissipation(bodies) {                  // power removed, for the energy ledger
+    let P = 0;
+    if (!this.enabled || this.c === 0) return 0;
+    for (const b of bodies) {
+      if (b.fixed) continue;
+      const s = b.vel.len();
+      P += this.c * s * s * s;
+    }
+    return P;
+  }
+}
+
+class Spring {
+  // Hookean link between two bodies. Equal and opposite by construction.
+  constructor(a, b, k = 40, rest = 1, damp = 0) {
+    this.a = a; this.b = b; this.k = k; this.rest = rest; this.damp = damp;
+    this.enabled = true;
+  }
+  apply() {
+    if (!this.enabled) return;
+    const d = this.b.pos.sub(this.a.pos);
+    const L = d.len();
+    if (L < 1e-12) return;
+    const n = d.mul(1 / L);
+    const relv = this.b.vel.sub(this.a.vel).dot(n);
+    const mag = this.k * (L - this.rest) + this.damp * relv;
+    const F = n.mul(mag);
+    this.a.applyForce(F);
+    this.b.applyForce(F.mul(-1));        // Newton's third law, structurally
+  }
+  energy() {
+    if (!this.enabled) return 0;
+    const L = this.b.pos.sub(this.a.pos).len();
+    return 0.5 * this.k * (L - this.rest) ** 2;
+  }
+}
+
+class NewtonGravity {
+  constructor(G = 1.0, soft = 0.02) { this.G = G; this.soft = soft; this.enabled = true; }
+  apply(bodies) {
+    if (!this.enabled) return;
+    for (let i = 0; i < bodies.length; i++) {
+      for (let j = i + 1; j < bodies.length; j++) {
+        const a = bodies[i], b = bodies[j];
+        const d = b.pos.sub(a.pos);
+        const r2 = d.len2() + this.soft * this.soft;
+        const F = d.mul(this.G * a.mass * b.mass / (r2 * Math.sqrt(r2)));
+        a.applyForce(F);
+        b.applyForce(F.mul(-1));
+      }
+    }
+  }
+  energy(bodies) {
+    if (!this.enabled) return 0;
+    let U = 0;
+    for (let i = 0; i < bodies.length; i++)
+      for (let j = i + 1; j < bodies.length; j++) {
+        const r = Math.sqrt(bodies[j].pos.sub(bodies[i].pos).len2() + this.soft ** 2);
+        U -= this.G * bodies[i].mass * bodies[j].mass / r;
+      }
+    return U;
+  }
+}
+
+class PointerSpring {
+  // The user's finger, modelled as a damped spring to a moving anchor.
+  // grabbed === null  -> contributes nothing at all.
+  // This is an EXTERNAL force: while active, momentum is NOT conserved.
+  // That is physics, not a bug, and validate.js asserts it both ways.
+  constructor({ k = 120, damp = 8 } = {}) {
+    this.k = k; this.damp = damp;
+    this.grabbed = null;                 // a Body, or null
+    this.target  = new Vec2(0, 0);       // WORLD coordinates, set by ui/Pointer.js
+    this.enabled = true;
+  }
+  grab(body, worldX, worldY) { this.grabbed = body; this.target.set(worldX, worldY); }
+  moveTo(worldX, worldY)     { this.target.set(worldX, worldY); }
+  release()                  { this.grabbed = null; }
+  get active()               { return this.enabled && this.grabbed !== null; }
+
+  apply() {
+    if (!this.active) return;
+    const b = this.grabbed;
+    if (b.fixed) return;
+    const d = this.target.sub(b.pos);
+    const F = d.mul(this.k).sub(b.vel.mul(this.damp));
+    b.applyForce(F);
+  }
+  energy() {
+    if (!this.active) return 0;
+    return 0.5 * this.k * this.target.sub(this.grabbed.pos).len2();
+  }
+}
+
+/* ===== src/engine/Collisions.js ===== */
+// Collisions.js — circle/circle detection + impulse response, and wall bounces.
+// Walls are EXTERNAL: they break momentum conservation on purpose.
+
+function resolvePair(a, b, e) {
+  const d  = b.pos.sub(a.pos);
+  const L  = d.len();
+  const R  = a.radius + b.radius;
+  if (L >= R || L < 1e-12) return false;
+
+  const n  = d.mul(1 / L);
+  const rv = b.vel.sub(a.vel).dot(n);
+  if (rv > 0) return false;              // already separating: do NOT re-resolve
+
+  const invSum = a.invMass + b.invMass;
+  if (invSum === 0) return false;
+
+  const j = -(1 + e) * rv / invSum;
+  const J = n.mul(j);
+  a.vel.addTo(J.mul(-a.invMass));
+  b.vel.addTo(J.mul( b.invMass));
+
+  const corr = n.mul((R - L) / invSum * 0.8);   // positional correction,
+  a.pos.addTo(corr.mul(-a.invMass));            // split by inverse mass so it
+  b.pos.addTo(corr.mul( b.invMass));            // injects no momentum
+  return true;
+}
+
+function resolveWalls(body, bounds, e) {
+  let hit = false;
+  const { xmin, xmax, ymin, ymax } = bounds;
+  const r = body.radius;
+  if (body.pos.x - r < xmin) { body.pos.x = xmin + r; body.vel.x = -body.vel.x * e; hit = true; }
+  if (body.pos.x + r > xmax) { body.pos.x = xmax - r; body.vel.x = -body.vel.x * e; hit = true; }
+  if (body.pos.y - r < ymin) { body.pos.y = ymin + r; body.vel.y = -body.vel.y * e; hit = true; }
+  if (body.pos.y + r > ymax) { body.pos.y = ymax - r; body.vel.y = -body.vel.y * e; hit = true; }
+  return hit;
+}
+
+class SpatialHash {
+  constructor(cell = 1.0) { this.cell = cell; this.map = new Map(); }
+  _key(ix, iy) { return ix + ',' + iy; }
+  rebuild(bodies) {
+    this.map.clear();
+    for (const b of bodies) {
+      const ix = Math.floor(b.pos.x / this.cell);
+      const iy = Math.floor(b.pos.y / this.cell);
+      const k = this._key(ix, iy);
+      if (!this.map.has(k)) this.map.set(k, []);
+      this.map.get(k).push(b);
+    }
+  }
+  candidatePairs(bodies) {
+    this.rebuild(bodies);
+    const pairs = [];
+    const seen = new Set();
+    for (const b of bodies) {
+      const ix = Math.floor(b.pos.x / this.cell);
+      const iy = Math.floor(b.pos.y / this.cell);
+      for (let dx = -1; dx <= 1; dx++)
+        for (let dy = -1; dy <= 1; dy++) {
+          const nb = this.map.get(this._key(ix + dx, iy + dy));
+          if (!nb) continue;
+          for (const o of nb) {
+            if (o.id <= b.id) continue;
+            const key = b.id * 100000 + o.id;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            pairs.push([b, o]);
+          }
+        }
+    }
+    return pairs;
+  }
+}
+
+/* ===== src/engine/World.js ===== */
+// World.js — owns bodies, forces, the integrator, and the fixed-timestep clock.
+// Contains NO reference to canvas, ctx, document, window, or pixels.
+
+
+
+
+class World {
+  constructor({ dt = 1 / 240, integrator = 'verlet', restitution = 1.0,
+                bounds = null, useHash = false, cell = 1.0 } = {}) {
+    this.DT          = dt;               // fixed physics timestep
+    this.integrator  = INTEGRATORS[integrator] || Verlet;
+    this.restitution = restitution;
+    this.bounds      = bounds;           // null = unbounded (isolated system)
+    this.useHash     = useHash;
+    this.hash        = new SpatialHash(cell);
+
+    this.bodies  = [];
+    this.forces  = [];
+    this.time    = 0;
+    this.steps   = 0;
+    this.collisions = 0;
+    this.wallHits   = 0;
+    this.dissipated = 0;                 // energy removed by drag, cumulative
+    this.inelastic  = 0;                 // energy removed by e<1 impacts, cumulative
+    this._acc    = 0;                    // leftover accumulator time
+    // Is this an ISOLATED system? Only then must total momentum be conserved.
+    // Walls, uniform gravity and the pointer spring are all EXTERNAL.
+    this.momentumConserved = false;
+    this._E0     = null;                 // reference energy, set ONCE
+  }
+
+  add(body)        { this.bodies.push(body); return body; }
+  addForce(f)      { this.forces.push(f);    return f; }
+  find(tag)        { return this.bodies.find(b => b.tag === tag); }
+  setIntegrator(n) { this.integrator = INTEGRATORS[n] || this.integrator; }
+
+  accumulateForces() {
+    for (const b of this.bodies) b.clearForce();
+    for (const f of this.forces) f.apply(this.bodies, this.time);
+  }
+
+  step(dt) {
+    const drag = this.forces.find(f => f instanceof Object && typeof f.dissipation === 'function');
+    if (drag) this.dissipated += drag.dissipation(this.bodies) * dt;
+
+    this.integrator.step(this, dt);
+
+    // Energy ledger: an inelastic impact removes REAL energy. Book it, so the
+    // HUD's drift readout measures the INTEGRATOR and not the physics. Without
+    // this, e = 0.95 looks identical to a broken solver.
+    const Ebefore = this.kinetic() + this.potential();
+
+    const pairs = this.useHash
+      ? this.hash.candidatePairs(this.bodies)
+      : allPairs(this.bodies);
+    for (const [a, b] of pairs)
+      if (resolvePair(a, b, this.restitution)) this.collisions++;
+
+    if (this.bounds)
+      for (const b of this.bodies)
+        if (resolveWalls(b, this.bounds, this.restitution)) this.wallHits++;
+
+    this.inelastic += Ebefore - (this.kinetic() + this.potential());
+
+    this.time  += dt;
+    this.steps += 1;
+  }
+
+  // Fixed-timestep accumulator. Returns alpha in [0,1) for render interpolation.
+  advance(frameSeconds, maxSteps = 8) {
+    this._acc += Math.min(frameSeconds, maxSteps * this.DT);  // clamp: no spiral of death
+    let n = 0;
+    while (this._acc >= this.DT && n < maxSteps) {
+      this.step(this.DT);
+      this._acc -= this.DT;
+      n++;
+    }
+    return { substeps: n, alpha: this._acc / this.DT };
+  }
+
+  // One deterministic substep, for the Step button while paused.
+  stepOnce() { this.step(this.DT); return 1; }
+
+  kinetic()   { return this.bodies.reduce((s, b) => s + b.kinetic(), 0); }
+  potential() { return this.forces.reduce((s, f) =>
+                  s + (typeof f.energy === 'function' ? f.energy(this.bodies) : 0), 0); }
+  energy()    { return this.kinetic() + this.potential()
+                     + this.dissipated + this.inelastic; }
+  mechanical(){ return this.kinetic() + this.potential(); }
+  momentum()  { return this.bodies.reduce((p, b) => p.add(b.momentum()), Vec2.zero()); }
+
+  markReference() { this._E0 = this.energy(); this._p0 = this.momentum(); }
+  get E0() { return this._E0; }
+  get p0() { return this._p0 || Vec2.zero(); }
+
+  driftE() {
+    if (this._E0 === null || Math.abs(this._E0) < 1e-12) return 0;
+    return (this.energy() - this._E0) / Math.abs(this._E0);
+  }
+  driftP() {
+    const p0 = this.p0.len();
+    if (p0 < 1e-12) return this.momentum().len();
+    return this.momentum().sub(this.p0).len() / p0;
+  }
+
+  // Pick the nearest body whose disc contains (x,y). Pure geometry: the UI
+  // layer converts pixels to world coordinates before calling this.
+  pick(x, y, slack = 0.0) {
+    let best = null, bestD = Infinity;
+    for (const b of this.bodies) {
+      const d = Math.hypot(b.pos.x - x, b.pos.y - y);
+      if (d <= b.radius + slack && d < bestD) { best = b; bestD = d; }
+    }
+    return best;
+  }
+}
+
+function allPairs(bodies) {
+  const out = [];
+  for (let i = 0; i < bodies.length; i++)
+    for (let j = i + 1; j < bodies.length; j++) out.push([bodies[i], bodies[j]]);
+  return out;
+}
+
+/* ===== src/render/Camera.js ===== */
+// Camera.js — the ONLY place that knows pixels exist.
+// World y points up; canvas y points down. The flip lives here and nowhere else.
+class Camera {
+  constructor({ cx = 0, cy = 0, scale = 30 } = {}) {
+    this.cx = cx; this.cy = cy;          // world point at canvas centre
+    this.scale = scale;                  // pixels per metre (CSS pixels)
+    this.w = 800; this.h = 500;          // CSS size, updated on resize
+  }
+  resize(w, h) { this.w = w; this.h = h; }
+
+  toScreen(x, y) {
+    return [ (x - this.cx) * this.scale + this.w / 2,
+             this.h / 2 - (y - this.cy) * this.scale ];     // <-- the flip
+  }
+  toWorld(px, py) {
+    return [ (px - this.w / 2) / this.scale + this.cx,
+             (this.h / 2 - py) / this.scale + this.cy ];    // <-- exact inverse
+  }
+  // Fit a world rectangle with margin. Used by Reset and by the resize handler.
+  fit(xmin, xmax, ymin, ymax, margin = 1.08) {
+    const sx = this.w / ((xmax - xmin) * margin);
+    const sy = this.h / ((ymax - ymin) * margin);
+    this.scale = Math.min(sx, sy);
+    this.cx = (xmin + xmax) / 2;
+    this.cy = (ymin + ymax) / 2;
+  }
+}
+
+/* ===== src/render/Renderer.js ===== */
+// Renderer.js — draws a World. Reads the world, never mutates it.
+class Renderer {
+  constructor(canvas, camera) {
+    this.canvas = canvas;
+    this.ctx    = canvas.getContext('2d');
+    this.cam    = camera;
+    this.dpr    = 1;
+    this.showTrails = true;
+    this.trails = new Map();             // body.id -> array of [x,y]
+    this.maxTrail = 160;
+    this.reducedMotion = false;
+  }
+
+  // Handle Retina / high-DPI screens: back the canvas with more device pixels
+  // than CSS pixels, then scale the context once so all drawing stays in CSS units.
+  resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = this.canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.round(rect.width));
+    const h = Math.max(1, Math.round(rect.height));
+    this.canvas.width  = Math.round(w * dpr);
+    this.canvas.height = Math.round(h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.dpr = dpr;
+    this.cam.resize(w, h);
+  }
+
+  clearTrails() { this.trails.clear(); }
+
+  recordTrails(world) {
+    if (!this.showTrails || this.reducedMotion) return;
+    for (const b of world.bodies) {
+      if (!this.trails.has(b.id)) this.trails.set(b.id, []);
+      const t = this.trails.get(b.id);
+      t.push([b.pos.x, b.pos.y]);
+      if (t.length > this.maxTrail) t.shift();
+    }
+  }
+
+  draw(world, { grabbed = null, target = null, cursor = null } = {}) {
+    const ctx = this.ctx, cam = this.cam;
+    ctx.clearRect(0, 0, cam.w, cam.h);
+
+    this._grid(world);
+    if (world.bounds) this._bounds(world.bounds);
+
+    if (this.showTrails && !this.reducedMotion) {
+      ctx.lineWidth = 1.5;
+      for (const b of world.bodies) {
+        const t = this.trails.get(b.id);
+        if (!t || t.length < 2) continue;
+        ctx.strokeStyle = b.color + '66';
+        ctx.beginPath();
+        t.forEach(([x, y], i) => {
+          const [px, py] = cam.toScreen(x, y);
+          i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+        });
+        ctx.stroke();
+      }
+    }
+
+    for (const f of world.forces)
+      if (f.constructor.name === 'Spring' && f.enabled) {
+        const [ax, ay] = cam.toScreen(f.a.pos.x, f.a.pos.y);
+        const [bx, by] = cam.toScreen(f.b.pos.x, f.b.pos.y);
+        ctx.strokeStyle = '#8a8a8a'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      }
+
+    for (const b of world.bodies) {
+      const [px, py] = cam.toScreen(b.pos.x, b.pos.y);
+      const r = Math.max(2.5, b.radius * cam.scale);
+      ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fillStyle = b.color; ctx.fill();
+      if (b === grabbed) { ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff'; ctx.stroke(); }
+      else if (b.fixed)  { ctx.lineWidth = 2; ctx.strokeStyle = '#333';    ctx.stroke(); }
+    }
+
+    if (grabbed && target) {              // the rubber band
+      const [gx, gy] = cam.toScreen(grabbed.pos.x, grabbed.pos.y);
+      const [tx, ty] = cam.toScreen(target.x, target.y);
+      ctx.save();
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.restore();
+    }
+
+    if (cursor) this._crosshair(cursor);
+  }
+
+  _crosshair(position) {
+    const [x, y] = this.cam.toScreen(position[0], position[1]);
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = '#d2a8ff';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x, this.cam.h);
+    ctx.moveTo(0, y); ctx.lineTo(this.cam.w, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  _grid(world) {
+    const ctx = this.ctx, cam = this.cam;
+    const [x0, y0] = cam.toWorld(0, cam.h);
+    const [x1, y1] = cam.toWorld(cam.w, 0);
+    let s = 1;
+    while ((x1 - x0) / s > 22) s *= 2;
+    ctx.strokeStyle = '#242424'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = Math.ceil(x0 / s) * s; x <= x1; x += s) {
+      const [px] = cam.toScreen(x, 0); ctx.moveTo(px, 0); ctx.lineTo(px, cam.h);
+    }
+    for (let y = Math.ceil(y0 / s) * s; y <= y1; y += s) {
+      const [, py] = cam.toScreen(0, y); ctx.moveTo(0, py); ctx.lineTo(cam.w, py);
+    }
+    ctx.stroke();
+  }
+
+  _bounds(bn) {
+    const ctx = this.ctx, cam = this.cam;
+    const [x0, y1] = cam.toScreen(bn.xmin, bn.ymax);
+    const [x1, y0] = cam.toScreen(bn.xmax, bn.ymin);
+    ctx.strokeStyle = '#ff8200'; ctx.lineWidth = 2;
+    ctx.strokeRect(x0, y1, x1 - x0, y0 - y1);
+  }
+}
+
+/* ===== src/render/HUD.js ===== */
+// HUD.js — the honesty instrument. Reports drift against a reference captured
+// ONCE at scene build time. If you recompute E0 every frame you will always
+// read 0.000% and learn nothing (see Exam Q22).
+class HUD {
+  constructor(el) { this.el = el; this.fps = 60; this._last = null; }
+
+  tick(now) {
+    if (this._last !== null) {
+      const inst = 1000 / Math.max(1e-6, now - this._last);
+      this.fps = this.fps * 0.9 + inst * 0.1;
+    }
+    this._last = now;
+  }
+
+  update(world, { substeps = 0, paused = false, cursor = null } = {}) {
+    const dE = world.driftE();
+    const dP = world.driftP();
+    const bad = Math.abs(dE) > 0.01;
+    const expectP = world.momentumConserved && !(world.pointer && world.pointer.active);
+    const badP = expectP && dP > 1e-6;
+    this.el.innerHTML = `
+      <span class="k">t</span><span class="v">${world.time.toFixed(2)} s</span>
+      <span class="k">steps</span><span class="v">${world.steps}</span>
+      <span class="k">bodies</span><span class="v">${world.bodies.length}</span>
+      <span class="k">KE</span><span class="v">${world.kinetic().toFixed(3)} J</span>
+      <span class="k">E mech</span><span class="v">${world.mechanical().toFixed(3)} J</span>
+      <span class="k">E lost</span><span class="v">${(world.inelastic + world.dissipated).toFixed(3)} J</span>
+      <span class="k">&Delta;E/E&#8320;</span>
+      <span class="v ${bad ? 'bad' : 'ok'}">${(dE * 100).toFixed(3)} %</span>
+      <span class="k">&Delta;p/p&#8320;</span>
+      <span class="v ${badP ? 'bad' : (expectP ? 'ok' : 'na')}" title="${expectP ? 'isolated system: must hold' : 'external forces present: not expected to hold'}">${dP.toExponential(2)}${expectP ? '' : ' n/a'}</span>
+      <span class="k">cursor</span>
+      <span class="v">${cursor ? `x ${cursor[0].toFixed(2)}, y ${cursor[1].toFixed(2)} m` : 'outside canvas'}</span>
+      <span class="k">fps</span><span class="v">${this.fps.toFixed(0)}</span>
+      <span class="k">sub/frame</span><span class="v">${substeps}${paused ? ' (paused)' : ''}</span>`;
+    // Screen readers: announce only the physics honesty numbers, not fps.
+    this.el.setAttribute('aria-label',
+      `time ${world.time.toFixed(1)} seconds, energy drift ${(dE*100).toFixed(2)} percent`);
+  }
+}
+
+/* ===== ui.js ===== */
+// Binds the control panel to simulation state without manipulating the world.
+class Controls {
+  constructor(state, { onChange, onRebuild, onAction }) {
+    this.state = state;
+    this.onChange = onChange; this.onRebuild = onRebuild; this.onAction = onAction;
+    this._wire();
+    this.syncToDOM();
+  }
+
+  $(id) { return document.getElementById(id); }
+
+  _wire() {
+    const s = this.state;
+    const slider = (id, key, fmt, rebuild = false) => {
+      const el = this.$(id), out = this.$(id + '-out');
+      el.addEventListener('input', () => {
+        s[key] = parseFloat(el.value);
+        out.textContent = fmt(s[key]);
+        el.setAttribute('aria-valuetext', fmt(s[key]));
+        rebuild ? this.onRebuild() : this.onChange(key);
+      });
+    };
+    slider('dt',    'dt',          v => `1/${Math.round(1 / v)} s`, true);
+    slider('rest',  'restitution', v => v.toFixed(2));
+    slider('grav',  'gravity',     v => `${v.toFixed(2)} m/s²`);
+    slider('drag',  'drag',        v => v.toFixed(3));
+    slider('speed', 'speed',       v => `${v.toFixed(2)}×`);
+    slider('count', 'count',       v => `${v} bodies`, true);
+
+    this.$('integrator').addEventListener('change', e => {
+      s.integrator = e.target.value; this.onChange('integrator');
+    });
+    this.$('scene').addEventListener('change', e => {
+      s.scene = e.target.value; this.onRebuild();
+    });
+
+    this.$('trails').addEventListener('change', e => {
+      s.trails = e.target.checked; this.onChange('trails');
+    });
+    this.$('spawn').addEventListener('change', e => {
+      s.spawnMode = e.target.checked; this.onChange('spawnMode');
+    });
+
+    for (const [id, act] of [['btn-play','togglePause'], ['btn-step','stepOnce'],
+                             ['btn-reset','reset'], ['btn-link','copyLink']])
+      this.$(id).addEventListener('click', () => this.onAction(act));
+  }
+
+  syncToDOM() {
+    const s = this.state, set = (id, v) => { const e = this.$(id); if (e) e.value = v; };
+    set('dt', s.dt); set('rest', s.restitution); set('grav', s.gravity);
+    set('drag', s.drag); set('speed', s.speed); set('count', s.count);
+    set('integrator', s.integrator); set('scene', s.scene);
+    this.$('trails').checked = s.trails;
+    this.$('spawn').checked  = s.spawnMode;
+    const put = (id, t) => { const e = this.$(id + '-out'); if (e) e.textContent = t; };
+    put('dt', `1/${Math.round(1 / s.dt)} s`);
+    put('rest', s.restitution.toFixed(2));
+    put('grav', `${s.gravity.toFixed(2)} m/s²`);
+    put('drag', s.drag.toFixed(3));
+    put('speed', `${s.speed.toFixed(2)}×`);
+    put('count', `${s.count} bodies`);
+  }
+
+  setPlayLabel(paused) {
+    const b = this.$('btn-play');
+    b.textContent = paused ? '▶ Play' : '⏸ Pause';
+    b.setAttribute('aria-pressed', String(!paused));
+  }
+}
+
+/* ===== input.js ===== */
+// Pointer and keyboard event handling for the simulation.
+function eventToWorld(event, canvas, camera) {
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0 || canvas.width <= 0 || canvas.height <= 0) {
+    throw new RangeError('Canvas must have a non-zero display and drawing-buffer size.');
+  }
+
+  const pixelX = (event.clientX - rect.left) * (canvas.width / rect.width);
+  const pixelY = (event.clientY - rect.top) * (canvas.height / rect.height);
+  return camera.toWorld(
+    pixelX * (camera.w / canvas.width),
+    pixelY * (camera.h / canvas.height)
+  );
+}
+
+class PointerInput {
+  constructor(canvas, camera, world, spring, { onSpawn = null, onCursor = () => {} } = {}) {
+    this.canvas = canvas; this.cam = camera;
+    this.world = world; this.spring = spring;
+    this.onSpawn = onSpawn;
+    this.onCursor = onCursor;
+    this.spawnMode = false;
+    this.cursor = null;
+    this._bind();
+  }
+
+  _updateCursor(ev) {
+    this.cursor = eventToWorld(ev, this.canvas, this.cam);
+    this.onCursor(this.cursor);
+    return this.cursor;
+  }
+
+  _clearCursor() {
+    this.cursor = null;
+    this.onCursor(null);
+  }
+
+  _bind() {
+    const c = this.canvas;
+    c.addEventListener('pointerdown', (ev) => {
+      c.setPointerCapture(ev.pointerId);
+      const [x, y] = this._updateCursor(ev);
+      if (this.spawnMode) { this.onSpawn && this.onSpawn(x, y); return; }
+      const b = this.world.pick(x, y, 0.15);
+      if (b) { this.spring.grab(b, x, y); c.classList.add('grabbing'); }
+    });
+    c.addEventListener('pointermove', (ev) => {
+      const [x, y] = this._updateCursor(ev);
+      if (this.spring.active) this.spring.moveTo(x, y);
+      else c.style.cursor = this.world.pick(x, y, 0.15) ? 'grab' : 'crosshair';
+    });
+    const end = (ev) => {
+      if (this.spring.active) { this.spring.release(); c.classList.remove('grabbing'); }
+      if (c.hasPointerCapture?.(ev.pointerId)) c.releasePointerCapture(ev.pointerId);
+      if (ev.pointerType && ev.pointerType !== 'mouse') this._clearCursor();
+    };
+    c.addEventListener('pointerup', end);
+    c.addEventListener('pointercancel', end);
+    c.addEventListener('pointerleave', () => {
+      if (!this.spring.active) this._clearCursor();
+    });
+    window.addEventListener('blur', () => this.spring.release());
+  }
+}
+
+class KeyboardInput {
+  constructor(world, spring, camera, actions) {
+    this.world = world; this.spring = spring; this.cam = camera;
+    this.actions = actions;
+    this.selected = null;
+    this._held = null;
+    window.addEventListener('keydown', (e) => this._down(e));
+    window.addEventListener('keyup',   (e) => this._up(e));
+  }
+
+  _down(e) {
+    if (e.target.matches('input, select, textarea, button, a, [contenteditable="true"]')) return;
+    const A = this.actions;
+    switch (e.key) {
+      case ' ':      A.togglePause(); e.preventDefault(); break;
+      case '.':      A.stepOnce(); e.preventDefault(); break;
+      case 's': case 'S': A.stepOnce(); e.preventDefault(); break;
+      case 'r': case 'R': A.reset(); e.preventDefault(); break;
+      case 't': case 'T': A.toggleTrails(); e.preventDefault(); break;
+      case '+': case '=': A.adjustSpeed(0.25); e.preventDefault(); break;
+      case '-': case '_': A.adjustSpeed(-0.25); e.preventDefault(); break;
+      case 'Tab':    this._cycle(e.shiftKey ? -1 : 1); e.preventDefault(); break;
+      case 'ArrowUp': case 'ArrowDown':
+      case 'ArrowLeft': case 'ArrowRight':
+        this._nudge(e.key); e.preventDefault(); break;
+      default:
+        if ('12345'.includes(e.key)) A.preset(Number(e.key) - 1);
+    }
+  }
+
+  _up(e) {
+    if (e.key.startsWith('Arrow')) { this.spring.release(); this._held = null; }
+  }
+
+  _cycle(dir) {
+    const bs = this.world.bodies.filter(b => !b.fixed);
+    if (!bs.length) return;
+    const i = bs.indexOf(this.selected);
+    this.selected = bs[(i + dir + bs.length) % bs.length];
+    this.actions.announce(`Selected body ${this.selected.id}, ` +
+      `position ${this.selected.pos.x.toFixed(1)}, ${this.selected.pos.y.toFixed(1)} metres`);
+  }
+
+  _nudge(key) {
+    if (!this.selected) this._cycle(1);
+    if (!this.selected) return;
+    const b = this.selected;
+    const d = 0.35;
+    if (this._held !== b) { this.spring.grab(b, b.pos.x, b.pos.y); this._held = b; }
+    const t = this.spring.target;
+    if (key === 'ArrowUp')    t.y += d;
+    if (key === 'ArrowDown')  t.y -= d;
+    if (key === 'ArrowLeft')  t.x -= d;
+    if (key === 'ArrowRight') t.x += d;
+  }
+}
+
+/* ===== src/ui/StateURL.js ===== */
+// StateURL.js — encode the control-panel state into the URL hash so a student
+// can send a link that reproduces the EXACT configuration they are asking about.
+// Deliberately tiny and human-readable: no base64, no JSON blob.
+const StateURL = {
+  encode(s) {
+    const p = new URLSearchParams();
+    p.set('scene', s.scene);
+    p.set('int',   s.integrator);
+    p.set('dt',    String(s.dt));
+    p.set('e',     String(s.restitution));
+    p.set('g',     String(s.gravity));
+    p.set('drag',  String(s.drag));
+    p.set('speed', String(s.speed));
+    p.set('n',     String(s.count));
+    return '#' + p.toString();
+  },
+
+  decode(hash, defaults) {
+    const p = new URLSearchParams((hash || '').replace(/^#/, ''));
+    const num = (k, d) => {
+      const v = parseFloat(p.get(k));
+      return Number.isFinite(v) ? v : d;
+    };
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    return {
+      scene:       p.get('scene') || defaults.scene,
+      integrator:  p.get('int')   || defaults.integrator,
+      dt:          clamp(num('dt',    defaults.dt),          0.001, 0.02),
+      restitution: clamp(num('e',     defaults.restitution), 0,     1),
+      gravity:     clamp(num('g',     defaults.gravity),     0,     25),
+      drag:        clamp(num('drag',  defaults.drag),        0,     0.2),
+      speed:       clamp(num('speed', defaults.speed),       0.25,  2),
+      count:       Math.round(clamp(num('n', defaults.count), 3,   120))
+    };
+  },
+
+  write(s) {
+    // replaceState, not location.hash: no history entry per slider nudge.
+    if (typeof history !== 'undefined' && history.replaceState)
+      history.replaceState(null, '', StateURL.encode(s));
+  }
+};
+
+/* ===== src/scenes.js ===== */
+// scenes.js — every scene is a pure function (state) -> World.
+// Deterministic by construction: the RNG is seeded from the state, so
+// "Reset" reproduces the identical run and a permalink reproduces it on
+// someone else's machine. (Math.random() here would break both.)
+
+
+function mulberry32(seed) {                 // 8-line deterministic PRNG
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
+
+function base(state, opts) {
+  const w = new World({
+    dt: state.dt, integrator: state.integrator,
+    restitution: state.restitution, ...opts
+  });
+  return w;
+}
+
+function attachCommon(w, state, { gravity = true } = {}) {
+  if (gravity) w.addForce(new UniformGravity(state.gravity));
+  w.addForce(new QuadraticDrag(state.drag));
+  const ps = new PointerSpring();
+  w.addForce(ps);                           // input, as a force, like any other
+  w.pointer = ps;
+  return w;
+}
+
+const SCENES = {
+
+  // 1. Billiards: collisions in a box. Walls are external -> momentum breaks.
+  billiards(state) {
+    Body.resetIds();
+    const bounds = { xmin: -6, xmax: 6, ymin: -4, ymax: 4 };
+    const w = base(state, { bounds, useHash: state.count > 40, cell: 1.0 });
+    const rnd = mulberry32(1234);
+    for (let i = 0; i < state.count; i++) {
+      w.add(new Body({
+        pos: new Vec2(-5.2 + rnd() * 10.4, -3.2 + rnd() * 6.4),
+        vel: new Vec2((rnd() - 0.5) * 7, (rnd() - 0.5) * 7),
+        mass: 1, radius: 0.26, color: PALETTE[i % PALETTE.length]
+      }));
+    }
+    attachCommon(w, state, { gravity: false });
+    w.momentumConserved = false;          // the walls are an external force
+    w.markReference();
+    return { world: w, view: [-6.5, 6.5, -4.5, 4.5] };
+  },
+
+  // 2. Spring chain: position-dependent force -> integrators finally separate.
+  chain(state) {
+    Body.resetIds();
+    const w = base(state, { bounds: null });
+    const n = Math.max(3, Math.min(14, state.count));
+    const anchor = w.add(new Body({ pos: new Vec2(-3, 3), fixed: true,
+                                    radius: 0.18, color: '#888' }));
+    let prev = anchor;
+    for (let i = 1; i <= n; i++) {
+      const b = w.add(new Body({ pos: new Vec2(-3 + i * 0.75, 3), mass: 1,
+                                 radius: 0.18, color: PALETTE[i % PALETTE.length] }));
+      w.addForce(new Spring(prev, b, 90, 0.75, 0));
+      prev = b;
+    }
+    attachCommon(w, state, { gravity: true });
+    w.markReference();
+    return { world: w, view: [-6, 6, -5, 4.5] };
+  },
+
+  // 3. Orbits: pure N-body, no walls -> momentum must hold to machine zero.
+  orbits(state) {
+    Body.resetIds();
+    const w = base(state, { bounds: null });
+    const sun = w.add(new Body({ pos: new Vec2(0, 0), mass: 400, radius: 0.5,
+                                 color: '#ffd866', tag: 'sun' }));
+    const rnd = mulberry32(99);
+    const n = Math.max(1, Math.min(12, Math.round(state.count / 4)));
+    for (let i = 0; i < n; i++) {
+      const r = 2 + i * 0.9 + rnd() * 0.2;
+      const v = Math.sqrt(400 / r);
+      w.add(new Body({ pos: new Vec2(r, 0), vel: new Vec2(0, v), mass: 1,
+                       radius: 0.16, color: PALETTE[i % PALETTE.length] }));
+    }
+    // Remove net drift so the barycentre stays put and p0 is exactly zero.
+    let px = 0, py = 0, M = 0;
+    for (const b of w.bodies) { px += b.mass * b.vel.x; py += b.mass * b.vel.y; M += b.mass; }
+    for (const b of w.bodies) { b.vel.x -= px / M; b.vel.y -= py / M; }
+    w.addForce(new NewtonGravity(1.0, 0.05));
+    attachCommon(w, state, { gravity: false });
+    w.momentumConserved = true;           // isolated: must hold to ~1e-15
+    w.markReference();
+    return { world: w, view: [-13, 13, -9, 9] };
+  },
+
+  // 4. Projectile: the control case. Change integrators here and NOTHING
+  //    happens -- constant force is degenerate (Week 2, section 5.5).
+  projectile(state) {
+    Body.resetIds();
+    const w = base(state, { bounds: null });
+    const n = Math.max(1, Math.min(9, Math.round(state.count / 3)));
+    for (let i = 0; i < n; i++) {
+      const th = (15 + i * (60 / Math.max(1, n - 1 || 1))) * Math.PI / 180;
+      w.add(new Body({ pos: new Vec2(-10, -4),
+                       vel: new Vec2(18 * Math.cos(th), 18 * Math.sin(th)),
+                       mass: 1, radius: 0.22, color: PALETTE[i % PALETTE.length] }));
+    }
+    attachCommon(w, state, { gravity: true });
+    w.markReference();
+    return { world: w, view: [-11, 25, -5, 12] };
+  },
+
+  // 5. Pendulum grid: easy to grab, obvious when you inject energy by dragging.
+  pendulums(state) {
+    Body.resetIds();
+    const w = base(state, { bounds: null });
+    const n = Math.max(2, Math.min(10, Math.round(state.count / 3)));
+    for (let i = 0; i < n; i++) {
+      const x = -4.5 + i * (9 / Math.max(1, n - 1));
+      const top = w.add(new Body({ pos: new Vec2(x, 3.5), fixed: true,
+                                   radius: 0.12, color: '#888' }));
+      const L = 1.6 + i * 0.22;
+      const bob = w.add(new Body({ pos: new Vec2(x + L * Math.sin(0.5),
+                                                 3.5 - L * Math.cos(0.5)),
+                                   mass: 1, radius: 0.24,
+                                   color: PALETTE[i % PALETTE.length] }));
+      w.addForce(new Spring(top, bob, 2500, L, 0));   // stiff spring ~ rigid rod
+    }
+    attachCommon(w, state, { gravity: true });
+    w.markReference();
+    return { world: w, view: [-6.5, 6.5, -2.5, 4.5] };
+  }
+};
+
+const SCENE_LIST = [
+  ['billiards',  'Billiards in a box'],
+  ['chain',      'Spring chain'],
+  ['orbits',     'N-body orbits'],
+  ['projectile', 'Projectile (control case)'],
+  ['pendulums',  'Pendulum row']
+];
+
+/* ===== src/main.js ===== */
+// main.js — the only file that wires engine + render + ui together.
+// Everything DOM-related lives at or below this file; engine/ stays pure.
+
+
+
+
+
+
+
+
+const DEFAULTS = {
+  scene: 'billiards', integrator: 'verlet', dt: 1 / 240,
+  restitution: 0.95, gravity: 9.81, drag: 0.0,
+  speed: 1.0, count: 24, trails: true, spawnMode: false
+};
+
+const canvas = document.getElementById('sim');
+const live   = document.getElementById('live');       // aria-live announcer
+const cam    = new Camera();
+const render = new Renderer(canvas, cam);
+const hud    = new HUD(document.getElementById('hud'));
+
+// Respect the OS "reduce motion" setting: no trails, no flashing.
+render.reducedMotion =
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || false;
+
+// ---- state: URL hash wins over defaults, so a shared link reproduces a run ----
+const state = { ...DEFAULTS, ...StateURL.decode(location.hash, DEFAULTS) };
+
+let world = null, view = null, paused = false, lastSubsteps = 0;
+let pointer = null, keyboard = null;
+let cursor = null;
+
+function announce(msg) { live.textContent = msg; }
+
+function build() {
+  const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
+  world = made.world; view = made.view;
+  world.setIntegrator(state.integrator);
+  render.clearTrails();
+  render.resize();
+  cam.fit(...view);
+  // Rebuilding replaces `world`, so re-point the input objects at the new one.
+  if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
+  if (keyboard) { keyboard.world = world; keyboard.spring = world.pointer;
+                  keyboard.selected = null; }
+  StateURL.write(state);
+  announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
+           `integrator ${state.integrator}`);
+}
+
+// Live parameter edits that must NOT restart the simulation.
+function applyLive(changed = null) {
+  if (!world) return;
+  world.setIntegrator(state.integrator);
+  world.restitution = state.restitution;
+  for (const f of world.forces) {
+    if (f.constructor.name === 'UniformGravity')  f.g = state.gravity;
+    if (f.constructor.name === 'QuadraticDrag')   f.c = state.drag;
+  }
+  render.showTrails = state.trails;
+  if (!state.trails) render.clearTrails();
+  if (pointer) pointer.spawnMode = state.spawnMode;
+  if (['integrator', 'restitution', 'gravity', 'drag'].includes(changed)) {
+    world.markReference();
+  }
+  StateURL.write(state);
+}
+
+function spawn(x, y) {
+  if (world.bodies.length >= 400) { announce('Body limit reached'); return; }
+  world.add(new Body({ pos: new Vec2(x, y), vel: new Vec2(0, 0),
+                       mass: 1, radius: 0.26, color: '#58a6ff' }));
+  world.markReference();          // new body => new reference energy, honestly
+  announce(`Body added at ${x.toFixed(1)}, ${y.toFixed(1)} metres`);
+}
+
+const actions = {
+  togglePause() { paused = !paused; controls.setPlayLabel(paused);
+                  announce(paused ? 'Paused' : 'Running'); },
+  stepOnce()    { if (!paused) actions.togglePause();
+                  world.stepOnce(); render.recordTrails(world);
+                  announce(`Stepped to t = ${world.time.toFixed(3)} seconds`); },
+  adjustSpeed(delta) {
+    state.speed = Math.max(0.25, Math.min(2, parseFloat((state.speed + delta).toFixed(2))));
+    controls.syncToDOM();
+    applyLive();
+    announce(`Simulation speed ${state.speed.toFixed(2)} times`);
+  },
+  reset()       { build(); announce('Simulation reset'); },
+  toggleTrails(){ state.trails = !state.trails; controls.syncToDOM(); applyLive(); },
+  preset(i)     { const s = SCENE_LIST[i]; if (!s) return;
+                  state.scene = s[0]; controls.syncToDOM(); build(); },
+  copyLink() {
+    const url = location.origin + location.pathname + StateURL.encode(state);
+    navigator.clipboard?.writeText(url)
+      .then(() => announce('Permalink copied to clipboard'))
+      .catch(() => announce('Copy failed; the URL bar already holds the link'));
+  }
+};
+
+const controls = new Controls(state, {
+  onChange : applyLive,
+  onRebuild: build,
+  onAction : (k) => actions[k] && actions[k]()
+});
+
+build();
+pointer  = new PointerInput(canvas, cam, world, world.pointer, {
+  onSpawn: spawn,
+  onCursor: position => { cursor = position; }
+});
+keyboard = new KeyboardInput(world, world.pointer, cam, { ...actions, announce });
+pointer.spawnMode = state.spawnMode;
+
+window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
+
+// ---- the frame loop: fixed physics step, variable render rate ----
+let last = performance.now();
+function frame(now) {
+  hud.tick(now);
+  let dtFrame = (now - last) / 1000;      // ms -> s, ONCE, here
+  last = now;
+  if (!Number.isFinite(dtFrame) || dtFrame < 0) dtFrame = 0;
+
+  if (!paused) {
+    const frameSeconds = Math.min(dtFrame, 0.25);
+    const requestedSteps = Math.ceil(frameSeconds * state.speed / world.DT);
+    const maxSubsteps = Math.min(64, Math.max(8, requestedSteps));
+    const r = world.advance(frameSeconds * state.speed, maxSubsteps);
+    lastSubsteps = r.substeps;
+    render.recordTrails(world);
+  } else lastSubsteps = 0;
+
+  render.draw(world, {
+    grabbed: world.pointer.grabbed,
+    target : world.pointer.active ? world.pointer.target : null,
+    cursor
+  });
+  hud.update(world, { substeps: lastSubsteps, paused, cursor });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Pause when the tab is hidden, so returning does not dump a huge dt in.
+document.addEventListener('visibilitychange', () => { last = performance.now(); });
+
+window.addEventListener('hashchange', () => {
+  Object.assign(state, StateURL.decode(location.hash, DEFAULTS));
+  controls.syncToDOM(); build();
+});
+
+</script>
+</body>
+</html>
