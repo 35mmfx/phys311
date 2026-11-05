@@ -106,8 +106,9 @@ fixed step, Space to pause/resume, R to reset, and `+`/`-` to change speed.
   with other bodies.
 - **Keyboard:** Tab keeps its normal job of moving through controls. Use `[` and
   `]` to select a body, arrows to pull it, and release the arrows to let it go.
-  With Slingshot launch enabled, press `L` to place at the canvas center, use
-  arrows to aim, and press Enter to launch.
+  When a slider or select menu has focus, its arrow keys change its value.
+  With Slingshot launch enabled, focus the canvas and press `L` to place at an
+  open spot near the center, use arrows to aim, and press Enter to launch.
 - **Visuals:** each is independently switchable: alpha-fading motion trails,
   scaled velocity arrows, and net-force arrows.
 
@@ -137,7 +138,9 @@ the canvas/control focus indicators remain visible. **Unplugged-mouse test:**
 a keyboard-only browser check passed: Space paused the simulation, R reset it,
 Tab moved focus to controls, the integrator changed to Euler-Cromer, and the
 gravity slider changed from 9.81 to 9.82 m/s² with an arrow key. The physical
-unplugged-mouse check still needs to be confirmed on the user's computer.
+unplugged-mouse check still needs to be confirmed on the user's computer. For
+gravity, Tab from the canvas to Preset, then Tab four more times to the Gravity
+slider and press Left or Right; the visible value readout updates.
 
 ---
 
