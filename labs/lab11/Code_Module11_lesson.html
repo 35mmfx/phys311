@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 11 Lesson — Scoping a Physics Project</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+  .tier { border: 2px solid #ddd; border-radius: 8px; padding: 15px 20px; margin: 12px 0; }
+  .tier-a { border-left: 6px solid #28a745; }
+  .tier-b { border-left: 6px solid #17a2b8; }
+  .tier-c { border-left: 6px solid #dc3545; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 11 -- Scoping a Physics Project</h1>
+
+<div class="objectives">
+  <strong>🎯 By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Choose a final project whose <em style="font-style: normal">physics</em> is the point, not decoration</li>
+    <li>Scope a three-week build realistically, using a must-have / should-have / could-have split</li>
+    <li>Write a <strong>validation plan</strong> for a system that has no exact solution</li>
+    <li>Identify which new physics your engine needs and where it plugs in</li>
+    <li>Estimate risk and name your single biggest unknown before you start coding</li>
+    <li>Write a proposal that a peer can give useful feedback on</li>
+  </ul>
+</div>
+
+<div class="key-idea">
+  <strong>💡 Block 4 has no new mechanics.</strong> You already have every tool you need: three integrators, four force types, a collision pipeline, a renderer, an input system, and a public deployment. What Block 4 teaches is harder to grade and more valuable long-term — <strong>choosing a problem, scoping it honestly, validating it without an answer key, and explaining it to strangers.</strong> That is what practicing computational physicists actually spend their time on.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; What Makes a Good Project</h2>
+
+<p>The single most common failure mode in a project like this isn't bad code. It's a project whose physics turns out to be trivial once it's running — a game where the "physics" is a sprite moving at constant velocity until it hits a wall. It looks finished and teaches nothing.</p>
+
+<div class="key-idea">
+  <strong>💡 The test: could you write a validation section about it?</strong> If your project has a conserved quantity to track, a known limit to compare against, or a measurable relationship to plot, the physics is real. If the only thing you could write is "it looks right," pick something else. <strong>Physics you can validate is physics worth simulating.</strong>
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.1 &nbsp; Three shapes a project can take</h3>
+
+<table><caption>Comparison of interactive physics project types, their strengths, and key design risks</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Type</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What it is</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Graded strength</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Watch out for</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Explanatory simulation</strong></td><td>A tool that lets a user discover a phenomenon (resonance explorer, orbit sandbox, coupled oscillators)</td><td>Physics depth; easiest to validate</td><td>Can feel like a lab plot with sliders — needs real interaction design</td></tr>
+    <tr><td><strong>Physics game</strong></td><td>A goal, a challenge, a win condition (lunar lander, slingshot orbital golf, trebuchet)</td><td>Engaging; strong public appeal</td><td>Game design eats your time; physics gets "tuned" until it's fake</td></tr>
+    <tr><td><strong>Numerical study</strong></td><td>An investigation rendered live (chaos in the double pendulum, N-body stability, Lagrange points)</td><td>Highest physics ceiling</td><td>Can end up with nothing for a user to 
+		<em style="font-style: normal">do</em></td></tr>
+  </tbody>
+</table>
+
+<p>All three are fully acceptable. The rubric rewards the same things in each: correct physics, honest validation, clean architecture, and a page a stranger can use.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.2 &nbsp; The "one new thing" rule</h3>
+
+<p>Your Lab 10 engine already does uniform gravity, drag, springs, Newtonian gravity, circle collisions, and restitution. A good project adds <strong>exactly one</strong> substantial new piece of physics on top of that.</p>
+
+<table><caption>Candidate physics features, their implementation difficulty, and where they integrate into the existing system</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Candidate "one new thing"</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Difficulty</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Where it plugs in</th></tr></thead>
+  <tbody>
+    <tr><td>Constraint: rigid rod / pendulum linkage</td><td>Medium</td><td>New <code style="font-size: 12pt;">Constraint</code> applied after integration</td></tr>
+    <tr><td>Coupled oscillator lattice (springs between N bodies)</td><td>Low</td><td>Loop of existing <code style="font-size: 12pt;">Spring</code> forces</td></tr>
+    <tr><td>Thrust + finite fuel (variable mass)</td><td>Medium</td><td>New <code style="font-size: 12pt;">Force</code> + body mass changes</td></tr>
+    <tr><td>Rotation &amp; torque on collision (friction, spin)</td><td>High</td><td>Extend collision resolution with tangential impulse</td></tr>
+    <tr><td>Polygon or line-segment collision (ramps, walls)</td><td>High</td><td>New narrow-phase test</td></tr>
+    <tr><td>Magnetic / velocity-dependent force (<em style="font-style: normal">qv</em>×<em style="font-style: normal">B</em>)</td><td>Low</td><td>New <code style="font-size: 12pt;">Force</code> class, ~10 lines</td></tr>
+    <tr><td>Buoyancy + fluid drag layer</td><td>Low</td><td>New <code style="font-size: 12pt;">Force</code> keyed on depth</td></tr>
+  </tbody>
+</table>
+
+<div class="warning-box">
+  <strong>⚠️ Two new things is the classic over-scope.</strong> "Rigid-body rotation 
+	<em style="font-style: normal">and</em> polygon collision 
+	<em style="font-style: normal">and</em> a level editor" is a semester, not 
+	three weeks.&nbsp; Pick one, do it properly, validate it, and spend the leftover time on polish.
+</div>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; Scoping: The Three-Tier Plan</h2>
+
+<p>Every proposal must split the work into three tiers. This is standard practice in software projects, and it is the single most useful planning tool in this block.</p>
+
+<div class="tier tier-a">
+  <strong>✅ MUST have</strong> — If these aren't done, the project fails. This is your <strong>Week 12 target</strong>, and it should feel almost boringly achievable. Physics correct, one scene, runs without crashing, deployed.
+</div>
+
+<div class="tier tier-b">
+  <strong>🔁 SHOULD have</strong> — What makes it good rather than merely working. Controls, a second scene, the validation HUD, documentation. This is your <strong>Week 13 target</strong>.
+</div>
+
+<div class="tier tier-c">
+  <strong>✨ COULD have</strong> — Stretch goals you will cheerfully abandon. Sound, level editor, extra scenes, mobile gestures. Touch these <strong>only in Week 13</strong>, and only if everything above is done.
+</div>
+
+<div class="key-idea">
+  <strong>💡 Write the MUST tier so you'd bet money on finishing it in one week.</strong> If your MUST list makes you nervous, it's a SHOULD list in disguise. Deadlines are met by projects with humble MUST tiers and generous COULD tiers, because the COULD tier is the part that's allowed to be cut without anything breaking.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.1 &nbsp; A worked example</h3>
+
+<p>Suppose the project is <em style="font-style: normal">Lunar Lander with real orbital gravity</em>.</p>
+
+<table><caption>Prioritized feature tiers for the lander game: must-have, should-have, and optional features.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Tier</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Items</th></tr></thead>
+  <tbody>
+    <tr><td><strong>MUST</strong></td><td>Lander body with thrust force and finite fuel; uniform gravity; ground collision with a crash/land speed threshold; keyboard control; energy + fuel HUD; deployed to Pages</td></tr>
+    <tr><td><strong>SHOULD</strong></td><td>Switch to inverse-square gravity from a planet center; rotation &amp; angular thrust; terrain of line segments; validation panel showing momentum bookkeeping under thrust; restart &amp; scoring</td></tr>
+    <tr><td><strong>COULD</strong></td><td>Fuel-optimal trajectory hint; 
+		multiple landing pads; sound; touch controls</td></tr>
+  </tbody>
+</table>
+
+<div class="physics-note">
+  <strong>🔬 Notice where the physics depth lives.</strong> The MUST tier is honest but shallow (uniform gravity). The 
+	<em style="font-style: normal">interesting</em> physics — inverse-square gravity, torque, variable mass — sits in SHOULD, which is exactly right. You are guaranteed a working submission, and the good physics is the first thing you build once it works, not the thing you gamble on.
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; The Validation Plan</h2>
+
+<p>This is the section that separates a physics project from a coding project, and it is worth the most points in the proposal rubric. Your project almost certainly has no closed-form solution — that's why you're simulating it. So how will you know it's right?</p>
+
+<p>You already know the answer. You've used it since Week 2.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.1 &nbsp; Four validation strategies</h3>
+
+<table><caption>Strategies for validating simulations through conservation laws, analytic limits, convergence tests, and symmetry or invariance checks</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Strategy</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">How it works</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Example</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Conservation law</strong></td><td>Track a quantity that must not change; report drift as a fraction of E₀</td><td>Total energy in a spring lattice; angular momentum in an orbit</td></tr>
+    <tr><td><strong>Analytic limit</strong></td><td>Turn off complexity until a textbook formula applies, then compare</td><td>Pendulum at small angle → 
+		<em style="font-style: normal">T</em> = 2π√(L/g); drag → 0 recovers 45° optimum range</td></tr>
+    <tr><td><strong>Convergence test</strong></td><td>Halve <code style="font-size: 12pt;">DT</code>; the answer should stop changing at the expected order</td><td>Landing speed vs. DT; orbital period vs. DT (log-log slope ≈ 2)</td></tr>
+    <tr><td><strong>Symmetry / invariance</strong></td><td>A transformation that shouldn't change the outcome doesn't</td><td>Mirror the scene → mirrored trajectory; shift origin → identical dynamics</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Your proposal must name at least two specific, numerical tests</strong> — with the quantity, the expected result, and the tolerance. "I'll check energy" is not a plan. "Undriven, undamped: |ΔE/E₀| &lt; 0.5% over 60 s at DT = 1/240 with Velocity Verlet" is a plan. You can pass or fail it, which is the whole point.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.2 &nbsp; When your project is intentionally non-conservative</h3>
+
+<p>Many good projects have drag, thrust, or inelastic collisions — energy 
+<em style="font-style: normal">should</em> change. That doesn't exempt you; it just changes the test.</p>
+
+<table><caption>Conservation-law tests for drag, thrust, inelastic collisions, and driven systems</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Situation</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">The correct test</th></tr></thead>
+  <tbody>
+    <tr><td>Drag present</td><td>ΔE must equal −∫<strong>F</strong><sub style="font-size: 12pt;">drag</sub>·<strong>v</strong> dt (accumulate it and compare)</td></tr>
+    <tr><td>Thrust present</td><td>Δ<strong>p</strong> must equal ∫<strong>F</strong><sub style="font-size: 12pt;">thrust</sub> dt; with fuel mass, check the rocket equation</td></tr>
+    <tr><td>Inelastic collisions (<em style="font-style: normal">e</em> &lt; 1)</td><td>Momentum exactly conserved; KE must 
+		<em style="font-style: normal">decrease</em>, never increase</td></tr>
+    <tr><td>Anything driven</td><td>Turn the driving off → the conservative test must pass again</td></tr>
+  </tbody>
+</table>
+
+<div class="physics-note">
+  <strong>🔬 The "switch it off" move is your most reliable tool.</strong> Any dissipative or driven system can be reduced to a conservative one by zeroing a coefficient. That reduced system is testable against Block 1–2 standards. Build a <code style="font-size: 12pt;">?test=conservative</code> mode or a checkbox that does exactly this — you'll use it every time something looks wrong for the rest of the project.
+</div>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; Naming Your Biggest Risk</h2>
+
+<p>Your proposal must include one sentence completing: 
+<em style="font-style: normal">"The thing most likely to sink this project is ______, and my fallback is ______."</em></p>
+
+<p>This isn't pessimism theater. Projects fail from unexamined assumptions, and writing the risk down forces you to check it early instead of in Week 13.</p>
+
+<table><caption>Common project risks and fallback strategies for maintaining scope, performance, and schedule</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Common risk</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Reasonable fallback</th></tr></thead>
+  <tbody>
+    <tr><td>"I've never written polygon collision"</td><td>Ship with circles and axis-aligned walls; polygons move to COULD</td></tr>
+    <tr><td>"Rotation might not be stable"</td><td>Lock rotation off with a flag; project still works as a point-mass sim</td></tr>
+    <tr><td>"200 bodies may be too slow"</td><td>Cap N at whatever holds 60 fps; report the measured limit as a finding</td></tr>
+    <tr><td>"The constraint solver may drift"</td><td>Swap the rigid rod for a stiff spring; document the tradeoff</td></tr>
+    <tr><td>"I'm traveling in Week 13"</td><td>Front-load: finish the SHOULD tier in Week 12</td></tr>
+  </tbody>
+</table>
+
+<div class="try-it">
+  <strong>✍️ Try it — the 90-minute spike.</strong> Before you submit your proposal, spend 90 minutes building the 
+	<em style="font-style: normal">riskiest</em> piece as a throwaway prototype. Don't make it pretty; don't integrate it. Just find out whether it works. If your one new thing is polygon collision, get a single circle bouncing off a single tilted line segment. If it's rotation, get one square spinning under a torque. <strong>This is the highest-value 90 minutes of the entire block</strong> — a risk you've touched is a risk you can plan around, and if it fails you still have time to change direction.
+</div>
+
+<!-- ============================================================ -->
+<h2>5 &nbsp; Reusing Your Engine (and What to Change)</h2>
+
+<p>Start your project by copying <code style="font-size: 12pt;">labs/lab10/</code> into <code style="font-size: 12pt;">project/</code>. Then resist the urge to rewrite.</p>
+
+<div class="warning-box">
+  <strong>⚠️ Do not start from scratch.</strong>&nbsp; Your engine is 
+	<em style="font-style: normal">validated</em>. Refactor in place, one file at a time, with the simulation running the whole time.<p></p>
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">5.1 &nbsp; Where new physics goes</h3>
+
+<table><caption>Extension points for adding forces, body types, collision shapes, constraints, and integrators</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">If your new thing is…</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Add…</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Touch nothing else</th></tr></thead>
+  <tbody>
+    <tr><td>A new force</td><td>A class in <code style="font-size: 12pt;">engine/forces.js</code> with <code style="font-size: 12pt;">apply(world)</code> and, if conservative, <code style="font-size: 12pt;">potentialEnergy(world)</code></td><td>✅</td></tr>
+    <tr><td>A new body type</td><td>Fields on <code style="font-size: 12pt;">Body</code> + a draw case in <code style="font-size: 12pt;">render/renderer.js</code></td><td>✅</td></tr>
+    <tr><td>A new collision shape</td><td>A narrow-phase function in <code style="font-size: 12pt;">engine/collisions.js</code></td><td>✅</td></tr>
+    <tr><td>A constraint</td><td>A <code style="font-size: 12pt;">constraints[]</code> array on <code style="font-size: 12pt;">World</code>, resolved after integration</td><td>Small <code style="font-size: 12pt;">step()</code> change</td></tr>
+    <tr><td>A new integrator</td><td>A class in <code style="font-size: 12pt;">engine/integrators.js</code> with <code style="font-size: 12pt;">step(world, dt)</code></td><td>✅</td></tr>
+  </tbody>
+</table>
+
+<p>If your new physics <em style="font-style: normal">doesn't</em> fit one of these slots, that's a signal worth taking seriously — either you're about to violate the layering rule, or the feature is bigger than you think. Ask in the discussion before you start cutting into <code style="font-size: 12pt;">world.js</code>.</p>
+
+<div class="key-idea">
+  <strong>💡 The architecture payoff arrives now.</strong> This table is why Weeks 7 and 9 spent so long on structure. Adding a magnetic force to a well-layered engine is a 10-line file and one line in <code style="font-size: 12pt;">main.js</code>. Adding it to a tangled one means editing five files and re-debugging your renderer. The students who took the layering rule seriously are about to have a much better 
+	three weeks.
+</div>
+
+<!-- ============================================================ -->
+<h2>6 &nbsp; Writing the Proposal</h2>
+
+<p>Your proposal is one page. Its job is not to impress me — it's to be <strong>concrete enough that a peer can find the flaw in it.</strong> Vague proposals get useless feedback.</p>
+
+<table><caption>Required sections, lengths, and content for a physics project proposal, including scope, validation, risks, timeline, and audience.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Section</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Length</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Must contain</th></tr></thead>
+  <tbody>
+    <tr><td>Title &amp; one-line pitch</td><td>1 sentence</td><td>What a visitor sees and does</td></tr>
+    <tr><td>The physics</td><td>1 paragraph</td><td>Equations, forces, and the 
+		<em style="font-style: normal">one new thing</em></td></tr>
+    <tr><td>Three-tier scope</td><td>Bulleted</td><td>MUST / SHOULD / COULD, with MUST due Week 12</td></tr>
+    <tr><td>Validation plan</td><td>2+ items</td><td>Quantity, expected value, tolerance</td></tr>
+    <tr><td>Biggest risk + fallback</td><td>1 sentence</td><td>Named, with a real Plan B</td></tr>
+    <tr><td>Week-by-week timeline</td><td>4 rows</td><td>Weeks 11–14, one deliverable each</td></tr>
+    <tr><td>Audience</td><td>1 sentence</td><td>Who this is for and what they'll learn</td></tr>
+  </tbody>
+</table>
+
+<div class="try-it">
+  <strong>✍️ Try it — the stranger test.</strong> Read your pitch out loud to someone who isn't in this course. If they can't tell you what the user does and what physics is involved, rewrite it. You'll do a version of this in Week 13 for real, so it's worth practicing on a low-stakes audience now.
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ A note on ambition.</strong> Be ambitious in your COULD tier, not your MUST tier.&nbsp; 
+	The best-received projects are the ones that do 
+	<em style="font-style: normal">one</em> thing beautifully, a single scene, tight controls, honest numbers, a page that explains itself.&nbsp; The sprawling projects with five half-finished features are the ones students apologize for during 
+	a presentation. <strong>&nbsp;Depth reads as skill, breadth reads as unfinished.</strong>
+</div>
+
+<!-- ============================================================ -->
+<h2>7 &nbsp; This Week's Deliverables</h2>
+
+<table><caption>Project proposal, risk spike, peer workshop, and journal submission requirements and locations</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Item</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Where</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Project Proposal</strong> (1 page, seven sections above)</td><td>Canvas assignment</td></tr>
+    <tr><td><strong>90-minute risk spike</strong> — committed to <code style="font-size: 12pt;">project/spike/</code>, working or not</td><td>GitHub</td></tr>
+    <tr><td><strong>Discussion: Proposal Workshop</strong> � post your proposal, 
+		give substantive feedback to at least one peer</td><td>Canvas discussion</td></tr>
+    <tr><td><strong>Journal entry</strong> — why this project, and what scares you about it</td><td>Canvas / repo</td></tr>
+  </tbody>
+</table>
+
+
+
+</body></html>

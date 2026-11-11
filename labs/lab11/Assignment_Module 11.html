@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 11 — Final Project Proposal</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610"; font-size: 1.15em }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 11 -- Final Project Proposal</h1>
+
+<div class="concept-box">
+  <strong>📋 Assignment Overview</strong><br>
+  <strong>Due:</strong> End of Week 11 (see Canvas calendar) — 
+	<em style="font-style: normal">proposal draft due mid-week for the workshop</em><br>
+  <strong>Submit:</strong> Proposal (PDF or Markdown) via Canvas + risk spike committed to your repo<br>
+  <strong>Also:</strong> Post to <strong>Discussion:</strong> Post your proposal and respond substantively to 
+	at least one peer<br>
+  <strong>Points:</strong> 100 — <em style="font-style: normal">counts toward the Final Project grade, not the lab average</em><br>
+  <strong>Estimated time:</strong> 4–5 hours (including the 90-minute spike)
+</div>
+
+<p>This week you decide what you're building for the rest of the semester. There is less code than usual and more thinking — which most students find harder. A good proposal makes the next three weeks calm; a vague one makes them frantic.</p>
+
+<div class="key-idea">
+  <strong>💡 The big idea this week:</strong> Scope is a skill. Anyone can list features; the discipline is deciding 
+	<em style="font-style: normal">which features you will cheerfully abandon</em> before you start. Your MUST tier is a promise, your COULD tier is a wish list, and knowing the difference is what gets projects finished.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Lab 10 complete and deployed — this is your starting codebase</li>
+  <li>Week 11 Lesson: <em style="font-style: normal">Scoping a Physics Project</em></li>
+</ul>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Getting Started</h3>
+<ol>
+  <li>Copy <code style="font-size: 12pt;">labs/lab10/</code> to <code style="font-size: 12pt;">project/</code> in your <code style="font-size: 12pt;">phys311</code> repo</li>
+  <li>Confirm it still runs from the new location and still deploys</li>
+  <li>Create <code style="font-size: 12pt;">project/PROPOSAL.md</code> — write the proposal there, then export a PDF for Canvas if you prefer</li>
+  <li>Create <code style="font-size: 12pt;">project/spike/</code> for this week's risk prototype</li>
+</ol>
+
+<div class="physics-note">
+  <strong>🔬 The proposal is a contract, not an essay.</strong> Weeks 12–13 are graded partly against what you promised here. That cuts both ways: an over-ambitious proposal hurts you at the end, and so does a proposal so vague that nobody can tell whether you delivered. Be specific, be honest, and pick a scope you'd defend.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A — The Proposal (55 points)</h2>
+<span class="part-label part-a" style="font-size: 12pt;">GUIDED — Follow the Template</span>
+
+<p>One page. Seven sections. Use these exact headings so peer reviewers and I can find things.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A1 — Title &amp; pitch (5 pts)</h3>
+<p>A title, and <strong>one sentence</strong> stating what a visitor sees and what they do. No jargon.</p>
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">💡 Examples of good and bad pitches</summary>
+<p><strong>Weak:</strong> "An interactive physics simulation demonstrating various mechanical principles." — says nothing.</p>
+<p><strong>Strong:</strong> "Drag a planet into orbit around a binary star and see how long you can keep it stable — the HUD shows energy and angular momentum drifting as the orbit decays."</p>
+<p><strong>Strong:</strong> "A double pendulum you can release from any angle, side by side with a second one released 0.001 rad away, so you can watch chaos separate them."</p>
+</details>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A2 — The physics (12 pts)</h3>
+<ol>
+  <li>State every force and constraint in the system, <strong>with equations</strong>.</li>
+  <li>Name your <strong>one new thing</strong> — the physics that isn't already in your Lab 10 engine.</li>
+  <li>Name the integrator you'll use and <strong>justify it</strong> (Verlet for orbits and oscillators; Euler-Cromer where dissipation dominates).</li>
+  <li>State your units and typical scales. A scene in meters and seconds behaves very differently from one in AU and years.</li>
+</ol>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A3 — Three-tier scope (12 pts)</h3>
+<p>MUST / SHOULD / COULD, as bulleted lists. Rules that will be enforced:</p>
+<ul>
+  <li>MUST is due <strong>end of Week 12</strong> and must include "deployed to GitHub Pages"</li>
+  <li>MUST must be small enough that you'd bet money on it</li>
+  <li>COULD must contain at least two items you're prepared to drop</li>
+</ul>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A4 — Validation plan (14 pts)</h3>
+<p><strong>The highest-value section.</strong> Give <b>at least 
+<em style="font-style: normal">two</em></b> specific numerical tests. Each must state the quantity, the expected result, and a tolerance.</p>
+<table><caption>Examples of vague simulation requirements and their measurable, quantitative alternatives.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Not acceptable</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Acceptable</th></tr></thead>
+  <tbody>
+    <tr><td>"I'll make sure energy is conserved."</td><td>"Thrust and drag off, Verlet at DT=1/240: |ΔE/E₀| &lt; 0.3% over 120 s."</td></tr>
+    <tr><td>"I'll check it against theory."</td><td>"Small-amplitude pendulum period within 1% of 2π√(L/g) for θ₀ = 0.05 rad."</td></tr>
+    <tr><td>"It should look realistic."</td><td>"Halving DT from 1/120 to 1/240 changes measured landing speed by &lt; 0.5%."</td></tr>
+    <tr><td>"Momentum will be conserved in collisions."</td><td>"Two-body collision at e = 0.6: |Δp|/|p₀| &lt; 10⁻⁹, and KE strictly decreases."</td></tr>
+  </tbody>
+</table>
+<p>If your system is dissipative or driven, include the "switch it off" test from the lesson — the conservative reduction of your system, with its expected result.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A5 — Biggest risk + fallback (6 pts)</h3>
+<p>One sentence: <em style="font-style: normal">"The thing most likely to sink this project is ______, and my fallback is ______."</em> The fallback must be a real, shippable alternative — not "work harder."</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A6 — Week-by-week timeline (4 pts)</h3>
+<table><caption>Project deliverables and milestones by week</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Week</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Deliverable</th></tr></thead>
+  <tbody>
+    <tr><td>11</td><td>Proposal + risk spike</td></tr>
+    <tr><td>12</td><td>MUST tier complete and deployed</td></tr>
+    <tr><td>13</td><td>SHOULD tier + validation report + docs; polish, launch, write-up, presentation</td></tr>
+  </tbody>
+</table>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">A7 — Audience (2 pts)</h3>
+<p>One sentence: who is this for, and what will they understand after two minutes that they didn't before?</p>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B — The 90-Minute Risk Spike (25 points)</h2>
+<span class="part-label part-b" style="font-size: 12pt;">INDEPENDENT</span>
+
+<p>Build the riskiest piece of your project as a disposable prototype. Ugly is fine. Broken is acceptable — <strong>as long as you report what you learned.</strong></p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">What to do</h3>
+<ol>
+  <li><strong>Identify the risk</strong> you named in A5.</li>
+  <li><strong>Spend ~90 minutes</strong> building the smallest thing that tests it. One body, one force, one collision — no UI, no polish, no integration into your engine.</li>
+  <li><strong>Commit it</strong> to <code style="font-size: 12pt;">project/spike/</code> regardless of outcome.</li>
+  <li><strong>Write 150–300 words</strong> in <code style="font-size: 12pt;">project/spike/FINDINGS.md</code>: what you tried, what happened, and what it means for your scope. If it failed, state explicitly whether you're changing the plan or moving the feature to COULD.</li>
+</ol>
+
+<div class="key-idea">
+  <strong>💡 A failed spike earns full credit.</strong> This is graded on whether you tested the risk and drew a conclusion, 
+	<em style="font-style: normal">not</em> on whether the code works. Discovering in Week 11 that rotational collision response is harder than you thought is a win worth 25 points. Discovering it in Week 13 costs you the project.
+</div>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">💡 Hint: what a spike looks like for common risks</summary>
+<table><caption>Timeline</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Risk</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Spike</th></tr></thead>
+  <tbody>
+    <tr><td>Polygon / segment collision</td><td>One circle falling onto one tilted line segment. Does it bounce with the right reflection angle?</td></tr>
+    <tr><td>Rotation &amp; torque</td><td>One square, one off-center impulse. Does it spin the right way and conserve L?</td></tr>
+    <tr><td>Rigid constraint (rod)</td><td>Two bodies, one distance constraint, 1000 steps. How much does the length drift?</td></tr>
+    <tr><td>Performance at large N</td><td><code style="font-size: 12pt;">for</code> loop over 500 bodies with pairwise gravity. What's the actual frame time?</td></tr>
+    <tr><td>Variable mass / rocket</td><td>Thrust with dm/dt. Does Δv match the rocket equation?</td></tr>
+  </tbody>
+</table>
+</details>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C — Proposal Discussion (20 points)</h2>
+
+<p>Post your proposal to the discussion by <strong>midweek</strong>, then review 
+at least one peer proposal. Reviews are graded on usefulness, not politeness.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">For a peer review, answer all four</h3>
+<ol>
+  <li><strong>Scope check.</strong> Is the MUST tier genuinely achievable in one week? If not, name the specific item to cut or move.</li>
+  <li><strong>Validation check.</strong> Are the tests specific and numerical? If either is vague, propose a concrete replacement with a tolerance.</li>
+  <li><strong>Physics check.</strong> Is the "one new thing" actually new, and is it actually one thing? Flag hidden second features.</li>
+  <li><strong>The interesting question.</strong> Ask one question that would make the project better, something the author probably hasn't considered.</li>
+</ol>
+
+<div class="warning-box">
+  <strong>⚠️ "Looks great, good luck!" earns zero.</strong> The purpose of this workshop is to catch over-scoped projects 
+	<em style="font-style: normal">before</em> they consume three weeks. The 
+	most valuable thing you can do for a classmate is tell them their MUST list 
+	is too big.
+</div>
+
+<!-- ============================ IDEA CATALOG ============================ -->
+<h2>Project Idea Catalog</h2>
+
+<p>You are not required to pick from this list, original ideas are encouraged. These are calibrated to be finishable in 
+three weeks with your existing engine.</p>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">🌎 Orbits &amp; gravitation</summary>
+<ul>
+  <li><strong>Orbital golf</strong> — slingshot a probe past planets to hit a target. New thing: trajectory prediction / ghost path.</li>
+  <li><strong>Binary star sandbox</strong> — place a test mass and find stable regions. New thing: Lagrange point visualization.</li>
+  <li><strong>Solar system builder</strong> — drag planets in, check Kepler's third law live. New thing: automatic period measurement + log-log plot.</li>
+  <li><strong>Hohmann transfer trainer</strong> — burn at the right point to change orbit. New thing: Δv budgeting with fuel.</li>
+</ul>
+</details>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">🔒 Oscillators &amp; chaos</summary>
+<ul>
+  <li><strong>Double pendulum chaos viewer</strong> — two near-identical initial conditions diverging. New thing: rigid constraints or Lagrangian equations of motion.</li>
+  <li><strong>Coupled oscillator lattice</strong> — N masses and springs; excite a normal mode. New thing: normal-mode decomposition display.</li>
+  <li><strong>Resonance explorer</strong> — drive a damped oscillator, build the response curve live. New thing: real-time amplitude measurement.</li>
+  <li><strong>Wave on a string</strong> — a chain of coupled masses producing standing waves. New thing: many-body spring topology + mode counting.</li>
+</ul>
+</details>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">🎮 Games</summary>
+<ul>
+  <li><strong>Lunar lander</strong> — thrust, fuel, terrain, landing speed threshold. New thing: variable mass or line-segment terrain.</li>
+  <li><strong>Trebuchet / artillery</strong> — hit a target with drag and wind. New thing: constrained linkage or a wind field.</li>
+  <li><strong>Stack &amp; topple</strong> — build a tower that must not fall. New thing: rotation and resting contact.</li>
+  <li><strong>Billiards</strong> — a full table with spin. New thing: friction and tangential impulse.</li>
+  <li><strong>Magnetic maze</strong> — steer a charge with 
+	<em style="font-style: normal">qv</em>×<em style="font-style: normal">B</em> fields. New thing: velocity-dependent force + field visualization.</li>
+</ul>
+</details>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">🔬 Numerical studies</summary>
+<ul>
+  <li><strong>Integrator showdown, live</strong> — the same orbit under Euler / Euler-Cromer / Verlet side by side, with drift plotted in real time. New thing: real-time plotting + a 4th-order integrator (RK4 or Yoshida).</li>
+  <li><strong>N-body cluster</strong> — watch a self-gravitating cloud virialize. New thing: spatial partitioning or Barnes–Hut.</li>
+  <li><strong>Restitution study</strong> — a ball pit where 
+	<em style="font-style: normal">e</em> sweeps 1→0 with an energy-loss ledger. New thing: rigorous dissipation accounting.</li>
+  <li><strong>Chaos in the driven pendulum</strong> — live Poincaré section. New thing: stroboscopic sampling + phase-space rendering.</li>
+</ul>
+</details>
+
+<div class="bonus-box">
+  <strong>⭐ Bonus (+5):&nbsp; One Peer review is assigned to you.</strong>&nbsp; 
+	Do an additional peer review.</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+<h2 style="margin-top:0; border:none;">Grading Rubric (100 points)</h2>
+<table><caption>Assessment rubric for the proposal, risk spike, and discussion, with point values and full-mark criteria for each component.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Component</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Pts</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What earns full marks</th></tr></thead>
+  <tbody>
+    <tr><td colspan="3"><strong>Part A — Proposal (55)</strong></td></tr>
+    <tr><td>Title &amp; pitch</td><td>5</td><td>One clear sentence; a non-physicist understands what the user does</td></tr>
+    <tr><td>Physics</td><td>12</td><td>All forces stated with equations; "one new thing" identified; integrator justified; units given</td></tr>
+    <tr><td>Three-tier scope</td><td>12</td><td>MUST is genuinely one week and includes deployment; COULD has real droppables</td></tr>
+    <tr><td>Validation plan</td><td>14</td><td>≥2 tests, each with quantity, expected value, and tolerance; dissipative systems include the switch-it-off test</td></tr>
+    <tr><td>Risk + fallback</td><td>6</td><td>A specific risk and a shippable Plan B</td></tr>
+    <tr><td>Timeline</td><td>4</td><td>Four weeks, one deliverable each, consistent with the tiers</td></tr>
+    <tr><td>Audience</td><td>2</td><td>Named audience and a concrete takeaway</td></tr>
+    <tr><td colspan="3"><strong>Part B — Risk spike (25)</strong></td></tr>
+    <tr><td>Spike committed</td><td>10</td><td>Code in <code style="font-size: 12pt;">project/spike/</code>; clearly targets the named risk</td></tr>
+    <tr><td>FINDINGS.md</td><td>15</td><td>Honest account of what happened + an explicit scope decision</td></tr>
+    <tr><td colspan="3"><strong>Part C — Discussion (20)</strong></td></tr>
+    <tr><td>Own post on time</td><td>4</td><td>Posted by the midweek deadline so peers can review it</td></tr>
+    <tr><td>One peer review</td><td>16</td><td>All four questions answered specifically; at least one actionable suggestion each</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="deliverable-box">
+<h3 style="margin-top: 0; color: #000000 !important; background-color: #e8f5e9 !important;">📦 Submission Checklist</h3>
+<ul class="checklist">
+  <li><code style="font-size: 12pt;">project/</code> created from Lab 10 and confirmed still running</li>
+  <li><code style="font-size: 12pt;">project/PROPOSAL.md</code> with all seven sections, using the given headings</li>
+  <li>Proposal PDF or Markdown submitted via Canvas</li>
+  <li><code style="font-size: 12pt;">project/spike/</code> committed with code and <code style="font-size: 12pt;">FINDINGS.md</code></li>
+  <li>Validation plan has ≥2 tests with numerical tolerances</li>
+  <li>MUST tier includes "deployed to GitHub Pages"</li>
+  <li>Proposal posted to the discussion forum by midweek</li>
+  <li>One substantive peer review completed</li>
+  <li>Journal entry submitted</li>
+  <li>Everything committed and pushed</li>
+</ul>
+</div>
+
+
+
+</body></html>

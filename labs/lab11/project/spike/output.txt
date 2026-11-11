@@ -1,0 +1,9 @@
+Vertical lander risk spike — variable mass and finite fuel
+Model: one body, lunar gravity, vertical 8 kN thrust, flat-pad contact; dt=0.004167 s.
+Start: y=12 m, vy=-6 m/s, mass=1150 kg; dry mass=1000 kg; fuel=150 kg.
+Control sweep: 35/651 variable-mass schedules landed at <=1.8 m/s.
+Safe timing window: thrust delay 0.85–0.95 s; burn duration 1.10–2.00 s.
+Representative schedule (0.90 s delay, 1.35 s burn): impact=-1.004 m/s, fuel=146.34 kg, mass=1146.34 kg.
+Same schedule with mass artificially held constant: impact=-0.998 m/s.
+Fixed-mass comparison: 36/651 schedules landed at <=1.8 m/s.
+Collision response: e=0.25; rebound speed=0.251 m/s. Fuel/mass lower-bound checks passed.
