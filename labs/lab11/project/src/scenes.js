@@ -145,13 +145,24 @@ export const SCENES = {
     const lander = w.add(new Body({
       pos: new Vec2(-5.5, 12.5),
       vel: new Vec2(1.7, -1.8),
-      mass: 1,
+      mass: 1150,
       radius: 0.42,
       color: '#e6edf3',
       tag: 'lander',
       angle: 0.28
     }));
-    const drive = w.addForce(new LanderDrive(lander));
+    const drive = w.addForce(new LanderDrive(lander, {
+      gravity: 1.62,
+      dryMass: 1000,
+      fuelMass: 150,
+      maxFuel: 150,
+      thrust: 8000,
+      maxThrust: 8000,
+      isp: 300,
+      g0: 9.81,
+      chargeRate: 7,
+      initialCharge: 100
+    }));
     w.lander = lander;
     w.landerDrive = drive;
     w.pointer = w.addForce(new PointerSpring());

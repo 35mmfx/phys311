@@ -25,6 +25,7 @@ const ST = { scene:'billiards', integrator:'verlet', dt:1/240, restitution:0.95,
              gravity:9.81, drag:0, speed:1, count:24 };
 const snap = w => w.bodies.map(b => [b.pos.x, b.pos.y, b.vel.x, b.vel.y]);
 const maxdiff = (A, B) => Math.max(...A.flat().map((v, i) => Math.abs(v - B.flat()[i])));
+const splitCSV = row => row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
 
 // ---------------------------------------------------------------- 1
 H('1. Camera: pixels <-> world is an exact inverse');
@@ -375,8 +376,8 @@ H('15. Integrator race and CSV export');
   ok(header.startsWith('t_s,body_1_id,body_1_x_m,body_1_y_m') &&
      header.includes('body_2_x_m') && header.endsWith('mission_status'),
      'CSV includes time, positions, diagnostics and resource/game state');
-  ok(firstRow.split(',').length === header.split(',').length &&
-     secondRow.split(',').length === header.split(',').length &&
+  ok(splitCSV(firstRow).length === splitCSV(header).length &&
+     splitCSV(secondRow).length === splitCSV(header).length &&
      secondRow.endsWith('"safe, flying"'),
      'CSV rows keep a stable shape and quote comma-containing values');
 }

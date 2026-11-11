@@ -1,0 +1,8 @@
+{
+  "name": "phys311-lab11-project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate.js"
+  }
+}

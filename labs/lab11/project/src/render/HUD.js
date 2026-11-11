@@ -31,6 +31,8 @@ export class HUD {
       <span class="k">${impact ? 'vertical impact speed' : 'vertical speed'}</span><span class="v">${(impact ? impact.verticalSpeed : lander.vel.y).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'horizontal impact speed' : 'horizontal speed'}</span><span class="v">${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'impact angle' : 'orientation'}</span><span class="v">${((impact ? impact.angle : lander.angle) * 180 / Math.PI).toFixed(0)}°</span>
+      <span class="k">fuel</span><span class="v">${drive && drive.maxFuel > 0 ? `${drive.fuel.toFixed(1)} kg` : `${drive.charge.toFixed(0)}%`}</span>
+      <span class="k">mass</span><span class="v">${lander.mass.toFixed(1)} kg</span>
       <span class="k">propulsion reserve</span><span class="v">${drive.charge.toFixed(0)}%</span>
       ` : ''}
       <span class="k">KE</span><span class="v">${world.kinetic().toFixed(3)} J</span>
