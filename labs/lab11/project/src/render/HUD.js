@@ -31,15 +31,14 @@ export class HUD {
       <span class="k">${impact ? 'vertical impact speed' : 'vertical speed'}</span><span class="v">${(impact ? impact.verticalSpeed : lander.vel.y).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'horizontal impact speed' : 'horizontal speed'}</span><span class="v">${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'impact angle' : 'orientation'}</span><span class="v">${((impact ? impact.angle : lander.angle) * 180 / Math.PI).toFixed(0)}°</span>
-      <span class="k">fuel</span><span class="v">${drive && drive.maxFuel > 0 ? `${drive.fuel.toFixed(1)} kg` : `${drive.charge.toFixed(0)}%`}</span>
       <span class="k">mass</span><span class="v">${lander.mass.toFixed(1)} kg</span>
-      <span class="k">propulsion reserve</span><span class="v">${drive.charge.toFixed(0)}%</span>
+      <span class="k">fuel remaining</span><span class="v">${drive.fuel.toFixed(2)} kg (${drive.charge.toFixed(0)}%)</span>
       ` : ''}
       <span class="k">KE</span><span class="v">${world.kinetic().toFixed(3)} J</span>
       <span class="k">E mech</span><span class="v">${world.mechanical().toFixed(3)} J</span>
       <span class="k">E lost</span><span class="v">${(world.inelastic + world.dissipated).toFixed(3)} J</span>
       <span class="k">&Delta;E/E&#8320;</span>
-      <span class="v ${energyOpen ? 'na' : (bad ? 'bad' : 'ok')}" title="${energyOpen ? 'Open system: solar charging and electric thrust exchange energy with the lander.' : 'Closed-system energy drift'}">${(dE * 100).toFixed(3)} %${energyOpen ? ' (open)' : ''}</span>
+      <span class="v ${energyOpen ? 'na' : (bad ? 'bad' : 'ok')}" title="${energyOpen ? 'Open system: rocket thrust transfers energy into the lander motion.' : 'Closed-system energy drift'}">${(dE * 100).toFixed(3)} %${energyOpen ? ' (open)' : ''}</span>
       <span class="k">&Delta;p/p&#8320;</span>
       <span class="v ${badP ? 'bad' : (expectP ? 'ok' : 'na')}" title="${expectP ? 'isolated system: must hold' : 'external forces present: not expected to hold'}">${dP.toExponential(2)}${expectP ? '' : ' n/a'}</span>
       <span class="k">cursor</span>

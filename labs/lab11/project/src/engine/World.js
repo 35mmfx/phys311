@@ -47,7 +47,11 @@ export class World {
     const drag = this.forces.find(f => f instanceof Object && typeof f.dissipation === 'function');
     if (drag) this.dissipated += drag.dissipation(this.bodies) * dt;
 
+    for (const force of this.forces)
+      if (typeof force.beginStep === 'function') force.beginStep(dt);
     this.integrator.step(this, dt);
+    for (const force of this.forces)
+      if (typeof force.endStep === 'function') force.endStep(dt);
     if (this.beforeCollisions) this.beforeCollisions(dt);
 
     // Energy ledger: an inelastic impact removes REAL energy. Book it, so the

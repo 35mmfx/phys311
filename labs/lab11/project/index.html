@@ -10,7 +10,7 @@
 
 <header>
   <h1>Physics 311 &middot; Lunar Lander</h1>
-  <span class="sub">A fixed-step physics challenge: steer, harvest sunlight, and land softly.</span>
+  <span class="sub">A fixed-step physics challenge: manage finite propellant and land softly.</span>
 </header>
 
 <div class="layout">
@@ -24,7 +24,7 @@
     </canvas>
     <p id="canvas-help" class="sr-only">
       Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
-      Solar reflectors collect sunlight most efficiently when the lander points upward. Land on the green pad with low speed and nearly upright.
+      Propellant is finite, and the lander gets lighter as fuel burns. Land on the green pad with low speed and nearly upright.
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
@@ -59,7 +59,7 @@
 
     <section id="lander-instructions" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Mission</h2>
-      <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is finite, and the lander gets lighter as it burns fuel. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
       <p class="keys">
         Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
@@ -153,7 +153,7 @@
 </div>
 
 <footer>
-  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, and a steerable thrust force. The energy readout remains visible, but is marked <em>open</em> because solar charging and thrust exchange energy with the lander; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
 </footer>
 
 <script type="module" src="src/main.js"></script>

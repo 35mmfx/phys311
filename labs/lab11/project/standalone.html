@@ -119,7 +119,7 @@ a{color:var(--ut-orange)}
 
 <header>
   <h1>Physics 311 &middot; Lunar Lander</h1>
-  <span class="sub">A fixed-step physics challenge: steer, harvest sunlight, and land softly.</span>
+  <span class="sub">A fixed-step physics challenge: manage finite propellant and land softly.</span>
 </header>
 
 <div class="layout">
@@ -133,7 +133,7 @@ a{color:var(--ut-orange)}
     </canvas>
     <p id="canvas-help" class="sr-only">
       Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
-      Solar reflectors collect sunlight most efficiently when the lander points upward. Land on the green pad with low speed and nearly upright.
+      Propellant is finite, and the lander gets lighter as fuel burns. Land on the green pad with low speed and nearly upright.
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <div id="hud" role="status" aria-live="off"></div>
@@ -168,7 +168,7 @@ a{color:var(--ut-orange)}
 
     <section id="lander-instructions" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Mission</h2>
-      <p class="mission-copy">Use the steerable electric thruster to slow your descent and reach the green pad. Solar reflectors recharge the propulsion reserve when aimed toward the sunlight. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is finite, and the lander gets lighter as it burns fuel. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
       <p class="keys">
         Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
@@ -193,8 +193,8 @@ a{color:var(--ut-orange)}
       <summary>Other scenes and simulation settings</summary>
       <section class="url-examples" aria-labelledby="url-heading">
         <h2 id="url-heading">Example shareable configurations</h2>
-        <p><a href="?scene=chain&amp;int=euler&amp;dt=0.004166666666666667&amp;e=0.95&amp;g=9.81&amp;drag=0&amp;speed=1&amp;n=24">Spring chain — Euler</a></p>
-        <p><a href="?scene=projectile&amp;int=verlet&amp;dt=0.008333333333333333&amp;e=0.8&amp;g=3.71&amp;drag=0.01&amp;speed=1.5&amp;n=36">Projectile — Verlet, Mars gravity</a></p>
+        <p>Spring chain — Euler</p>
+        <p>Projectile — Verlet, Mars gravity</p>
       </section>
 
     <h2>Scene</h2>
@@ -262,7 +262,7 @@ a{color:var(--ut-orange)}
 </div>
 
 <footer>
-  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, and a steerable thrust force. The energy readout remains visible, but is marked <em>open</em> because solar charging and thrust exchange energy with the lander; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
 </footer>
 
 <script type="module">
@@ -527,28 +527,71 @@ class PointerSpring {
 }
 
 class LanderDrive {
-  constructor(body, { gravity = 1.62, thrust = 12, maxCharge = 100,
-                      initialCharge = 62, burnRate = 8, chargeRate = 7,
-                      rotationRate = 1.7 } = {}) {
+  constructor(body, {
+    gravity = 1.62,
+    thrust = 8000,
+    rotationRate = 1.7,
+    dryMass = body.mass,
+    fuelMass = 0,
+    maxFuel = fuelMass,
+    isp = 300,
+    g0 = 9.81
+  } = {}) {
+    if (![gravity, thrust, rotationRate, dryMass, fuelMass, maxFuel, isp, g0]
+      .every(Number.isFinite) || gravity < 0 || thrust < 0 || rotationRate < 0 ||
+      dryMass <= 0 || fuelMass < 0 || maxFuel < fuelMass || isp <= 0 || g0 <= 0) {
+      throw new RangeError('Lander propulsion parameters must be finite and physically valid.');
+    }
     this.body = body;
     this.g = gravity;
     this.thrust = thrust;
-    this.maxCharge = maxCharge;
-    this.charge = initialCharge;
-    this.burnRate = burnRate;
-    this.chargeRate = chargeRate;
     this.rotationRate = rotationRate;
+    this.dryMass = dryMass;
+    this.maxFuel = maxFuel;
+    this.fuel = fuelMass;
+    this.isp = isp;
+    this.g0 = g0;
+    this.charge = this.maxFuel > 0 ? 100 * this.fuel / this.maxFuel : 0;
     this.thrusting = false;
     this.rotation = 0;
+    this._burnedThisStep = 0;
+    this._thrustThisStep = 0;
+    this._initialAngle = body.angle;
+    this._syncMassCharge();
+  }
+
+  _syncMassCharge() {
+    this.fuel = Math.max(0, Math.min(this.fuel, this.maxFuel));
+    this.charge = this.maxFuel > 0 ? (this.fuel / this.maxFuel) * 100 : 0;
+    this.body.mass = this.dryMass + this.fuel;
+    this.body.invMass = this.body.fixed ? 0 : 1 / this.body.mass;
+  }
+
+  beginStep(dt) {
+    const b = this.body;
+    this._initialAngle = b.angle;
+    this._burnedThisStep = 0;
+    this._thrustThisStep = 0;
+    if (b.fixed) return;
+
+    b.angle += 0.5 * this.rotation * this.rotationRate * dt;
+    if (this.thrusting && this.fuel > 0 && this.thrust > 0) {
+      const flowRate = this.thrust / (this.isp * this.g0);
+      this._burnedThisStep = Math.min(this.fuel, flowRate * dt);
+      const activeFraction = this._burnedThisStep / (flowRate * dt);
+      this._thrustThisStep = this.thrust * activeFraction;
+      b.mass = this.dryMass + this.fuel - 0.5 * this._burnedThisStep;
+      b.invMass = 1 / b.mass;
+    }
   }
 
   apply() {
     const b = this.body;
     if (b.fixed) return;
     b.applyForce(new Vec2(0, -b.mass * this.g));
-    if (this.thrusting && this.charge > 0) {
+    if (this._thrustThisStep > 0) {
       const direction = new Vec2(-Math.sin(b.angle), Math.cos(b.angle));
-      b.applyForce(direction.mul(this.thrust));
+      b.applyForce(direction.mul(this._thrustThisStep));
     }
   }
 
@@ -556,16 +599,13 @@ class LanderDrive {
     return this.g * bodies.reduce((sum, b) => sum + b.mass * b.pos.y, 0);
   }
 
-  update(dt) {
+  endStep(dt) {
     const b = this.body;
     if (b.fixed) return;
-    b.angle = (b.angle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
-    if (this.thrusting && this.charge > 0)
-      this.charge = Math.max(0, this.charge - this.burnRate * dt);
-    else {
-      const sunlight = Math.max(0, Math.cos(b.angle));
-      this.charge = Math.min(this.maxCharge, this.charge + this.chargeRate * sunlight * dt);
-    }
+    b.angle = (this._initialAngle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
+    this.fuel = Math.max(0, this.fuel - this._burnedThisStep);
+    this._syncMassCharge();
+    if (this.fuel <= 0) this.thrusting = false;
   }
 }
 
@@ -694,7 +734,11 @@ class World {
     const drag = this.forces.find(f => f instanceof Object && typeof f.dissipation === 'function');
     if (drag) this.dissipated += drag.dissipation(this.bodies) * dt;
 
+    for (const force of this.forces)
+      if (typeof force.beginStep === 'function') force.beginStep(dt);
     this.integrator.step(this, dt);
+    for (const force of this.forces)
+      if (typeof force.endStep === 'function') force.endStep(dt);
     if (this.beforeCollisions) this.beforeCollisions(dt);
 
     // Energy ledger: an inelastic impact removes REAL energy. Book it, so the
@@ -928,18 +972,6 @@ class Renderer {
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 0.3 * cam.scale, sy + 0.22 * cam.scale); ctx.stroke();
     }
 
-    const [sunX, sunY] = cam.toScreen(0, 16.5);
-    ctx.fillStyle = '#ffd866';
-    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#ffd866';
-    ctx.globalAlpha = 0.3;
-    ctx.setLineDash([6, 8]);
-    ctx.beginPath(); ctx.moveTo(sunX, sunY + 22); ctx.lineTo(sunX, cam.toScreen(0, 0)[1]); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#ffd866';
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillText('SUNLIGHT', sunX - 29, sunY + 38);
   }
 
   _landerCraft(body, drive) {
@@ -957,18 +989,11 @@ class Renderer {
     ctx.lineTo(-0.19, 0.22); ctx.lineTo(0.19, 0.22);
     ctx.lineTo(0.25, -0.04); ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    const panelColor = drive.charge > 0 ? '#58a6ff' : '#6e7681';
-    ctx.fillStyle = panelColor;
-    ctx.strokeStyle = '#c9d1d9';
-    ctx.fillRect(-0.62, -0.12, 0.33, 0.13);
-    ctx.strokeRect(-0.62, -0.12, 0.33, 0.13);
-    ctx.fillRect(0.29, -0.12, 0.33, 0.13);
-    ctx.strokeRect(0.29, -0.12, 0.33, 0.13);
     ctx.beginPath(); ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
     ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
     ctx.stroke();
 
-    if (drive.thrusting && drive.charge > 0 && !body.fixed) {
+    if (drive.thrusting && drive.fuel > 0 && !body.fixed) {
       ctx.fillStyle = '#ff8200';
       ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
       ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
@@ -1147,13 +1172,14 @@ class HUD {
       <span class="k">${impact ? 'vertical impact speed' : 'vertical speed'}</span><span class="v">${(impact ? impact.verticalSpeed : lander.vel.y).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'horizontal impact speed' : 'horizontal speed'}</span><span class="v">${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'impact angle' : 'orientation'}</span><span class="v">${((impact ? impact.angle : lander.angle) * 180 / Math.PI).toFixed(0)}°</span>
-      <span class="k">propulsion reserve</span><span class="v">${drive.charge.toFixed(0)}%</span>
+      <span class="k">mass</span><span class="v">${lander.mass.toFixed(1)} kg</span>
+      <span class="k">fuel remaining</span><span class="v">${drive.fuel.toFixed(2)} kg (${drive.charge.toFixed(0)}%)</span>
       ` : ''}
       <span class="k">KE</span><span class="v">${world.kinetic().toFixed(3)} J</span>
       <span class="k">E mech</span><span class="v">${world.mechanical().toFixed(3)} J</span>
       <span class="k">E lost</span><span class="v">${(world.inelastic + world.dissipated).toFixed(3)} J</span>
       <span class="k">&Delta;E/E&#8320;</span>
-      <span class="v ${energyOpen ? 'na' : (bad ? 'bad' : 'ok')}" title="${energyOpen ? 'Open system: solar charging and electric thrust exchange energy with the lander.' : 'Closed-system energy drift'}">${(dE * 100).toFixed(3)} %${energyOpen ? ' (open)' : ''}</span>
+      <span class="v ${energyOpen ? 'na' : (bad ? 'bad' : 'ok')}" title="${energyOpen ? 'Open system: rocket thrust transfers energy into the lander motion.' : 'Closed-system energy drift'}">${(dE * 100).toFixed(3)} %${energyOpen ? ' (open)' : ''}</span>
       <span class="k">&Delta;p/p&#8320;</span>
       <span class="v ${badP ? 'bad' : (expectP ? 'ok' : 'na')}" title="${expectP ? 'isolated system: must hold' : 'external forces present: not expected to hold'}">${dP.toExponential(2)}${expectP ? '' : ' n/a'}</span>
       <span class="k">cursor</span>
@@ -1960,13 +1986,21 @@ const SCENES = {
     const lander = w.add(new Body({
       pos: new Vec2(-5.5, 12.5),
       vel: new Vec2(1.7, -1.8),
-      mass: 1,
+      mass: 1150,
       radius: 0.42,
       color: '#e6edf3',
       tag: 'lander',
       angle: 0.28
     }));
-    const drive = w.addForce(new LanderDrive(lander));
+    const drive = w.addForce(new LanderDrive(lander, {
+      gravity: 1.62,
+      dryMass: 1000,
+      fuelMass: 150,
+      maxFuel: 150,
+      thrust: 8000,
+      isp: 300,
+      g0: 9.81
+    }));
     w.lander = lander;
     w.landerDrive = drive;
     w.pointer = w.addForce(new PointerSpring());
@@ -1975,7 +2009,7 @@ const SCENES = {
     w.momentumConserved = false;
     w.mission = {
       status: 'flying',
-      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake.',
+      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake. Fuel is finite.',
       padCenter: 0,
       padHalfWidth: 1.45
     };
@@ -2011,9 +2045,8 @@ const SCENES = {
         else w.mission.message = 'Crash: touchdown speed was too high.';
       }
     };
-    w.afterStep = dt => {
+    w.afterStep = () => {
       if (w.mission.status === 'flying') {
-        drive.update(dt);
         return;
       }
       if (lander.fixed) return;

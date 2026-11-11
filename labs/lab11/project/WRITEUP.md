@@ -74,21 +74,22 @@ physics and collision calculations.
 ## Part C — Lunar lander
 
 **Purpose:** Turn the simulation into a landing challenge where a player must
-steer a craft, manage a limited propulsion reserve, and land gently on a
-specified pad.
+steer a craft, manage finite propellant, and land gently on a specified pad.
 
 **Physics topics used:**
 
 1. **Gravity and fixed-step dynamics:** the craft accelerates under lunar
    gravity (\(1.62\ \mathrm{m/s^2}\)) and its motion is advanced with a
    fixed-step integrator.
-2. **Thrust and energy transfer:** steerable retro-thrust changes the craft's
-   velocity and drains its reserve; solar alignment replenishes that reserve.
-   Powered flight is therefore an open system, not a closed-system energy
+2. **Variable-mass propulsion and energy transfer:** steerable rocket thrust
+   changes the craft's velocity while finite propellant burns away, reducing
+   its mass. Powered flight is an open system, not a closed-system energy
    conservation test.
 
-**Quantitative validation:** An unpowered 60 s lunar free-fall run with
-Velocity Verlet had relative mechanical-energy drift
+**Quantitative validation:** A 100 kg burn from 1,150 kg to 1,050 kg was
+compared with the ideal rocket equation at \(\Delta t=1/240\ \mathrm{s}\);
+fuel bounds were also checked through depletion. An unpowered 60 s lunar
+free-fall run with Velocity Verlet had relative mechanical-energy drift
 **\(|\Delta E/E_0|=2.32\times10^{-13}\)**, below the test limit of \(10^{-8}\).
 Separate impact checks accept an upright, low-speed touchdown within the pad
 and classify a pad miss or a 3 m/s touchdown as a crash. These checks validate
@@ -107,9 +108,8 @@ the physics rules independently of the player's powered flight.
 | Momentum during a pointer grab | Momentum changed while the external pointer force was applied; conservation returned to machine precision after release. |
 | Energy bookkeeping at restitution 1, 0.95, 0.5, and 0 | Relative ledger drift stayed at or below \(8\times10^{-16}\). |
 | Extremely fast slingshot drag | Launch speed was capped at 30 m/s. |
-| Lander thrust and solar recharge | Thrust drained reserve; solar alignment replenished it without exceeding capacity. |
+| Lander fuel burn | Thrust consumed propellant, reduced vehicle mass, and did not regenerate fuel while coasting. |
 | Landing with different impact conditions | A safe pad touchdown landed; a miss and an over-speed touchdown crashed. |
 
 The recorded numerical checks above are documented in `tests/validate.js` and
-the project README. Node.js was unavailable in this session, so the headless
-suite was not rerun while preparing this write-up.
+the project README.

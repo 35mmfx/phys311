@@ -32,14 +32,15 @@ is unchanged in character: it still contains no `canvas`, no `document`, no pixe
 ## 2. Try the lunar lander first
 
 1. Focus the canvas. Hold **Left/Right** (or **A/D**) to rotate and **Up** (or
-   **W**) to thrust. The electric thruster is the lander's braking system:
-   point it opposite your motion to slow down.
-2. Aim the solar reflectors toward the sunlight to recharge the propulsion
-   reserve. The reserve is limited; thrusting drains it.
+   **W**) to thrust. The rocket engine is the lander's braking system: point it
+   opposite your motion to slow down.
+2. Propellant is finite. Thrust burns fuel and lowers the lander's mass; there
+   is no in-flight refueling.
 3. Touch down inside the green pad, nearly upright, with vertical speed under
    1.8 m/s and horizontal speed under 1.1 m/s. Press **R** to restart.
-4. Read the HUD's energy line as an **open-system** change during flight: solar
-   charging and thrust add or remove energy. It is not a conservation score.
+4. Read the HUD's energy line as an **open-system** change during flight:
+   thrust transfers energy into the lander's motion. It is not a conservation
+   score.
 5. Open **Other scenes and simulation settings** to revisit the original
    Lab 10 scenes and test their integrators and conservation diagnostics.
 
@@ -161,25 +162,26 @@ from 9.81 to 9.82 m/s².
 ### Part C — Lunar lander game
 
 The default experience is a single-craft landing challenge. It uses lunar
-gravity (1.62 m/s²), a steerable thrust force, a limited propulsion-energy
-reserve, and solar reflectors that replenish that reserve when aimed toward
-the sunlight. Rotation is directly controlled at a fixed rate; craft
-rotational inertia is outside this model. Touchdown is checked before the
-terrain's collision response, and the game reports success only inside the pad
-at low horizontal and vertical speeds and within 15° of upright.
+gravity (1.62 m/s²), a steerable 8 kN rocket engine, and 150 kg of finite
+propellant. Propellant burns at \(T/(I_{sp}g_0)\), and the craft's mass changes
+from 1,150 kg toward its 1,000 kg dry mass. The fixed-step solver uses the
+midpoint mass during each thrust step. Rotation is directly controlled at a
+fixed rate; craft rotational inertia is outside this model. Touchdown is
+checked before the terrain's collision response, and the game reports success
+only inside the pad at low horizontal and vertical speeds and within 15° of
+upright.
 
 Controls: **Left/Right** or **A/D** rotate; hold **Up** or **W** to thrust;
 on touchscreens, press and hold the on-screen rotate/thrust buttons. **Space**
-pauses; **R** restarts. The game state, altitude, velocity,
-orientation, and propulsion reserve are visible, while the energy and momentum
+pauses; **R** restarts. The game state, altitude, velocity, orientation, fuel
+remaining, and vehicle mass are visible, while the energy and momentum
 diagnostics remain available. Powered flight is explicitly marked as an open
 system so its energy change is not presented as solver drift.
 
 There is no parachute: the Moon has no atmosphere dense enough to provide
-parachute braking. The electric thruster provides the retro-braking instead.
-This is a simplified educational model; it does not simulate propellant mass,
-orbital mechanics, terrain geometry, or the physical efficiency of solar-electric
-propulsion.
+parachute braking. The rocket engine provides retro-braking instead. This is a
+simplified educational model; it does not simulate orbital mechanics, terrain
+geometry, or rotational inertia.
 
 ### Share, compare, and export
 
@@ -195,7 +197,7 @@ propulsion.
   while open and the main simulation is unpaused.
 - **CSV export:** **Download CSV** saves recorded samples (initial state and then
   approximately every 0.1 simulated seconds) with time, each body's ID and
-  position, kinetic/mechanical/ledger energy, energy change, propulsion reserve,
+  position, kinetic/mechanical/ledger energy, energy change, fuel percentage,
   and mission status. Resetting or changing the scene starts a fresh recording.
 
 ---
@@ -217,6 +219,8 @@ propulsion.
 | Spring chain: Euler vs Verlet | 1.6e+0 vs 1.6e-4 — **10⁴× worse** |
 | Energy ledger at e = 1 / 0.95 / 0.5 / 0 | drift **≤ 8e-16** in every case |
 | Lunar free fall, Verlet, 60 s | \|ΔE/E₀\| = **2.32e-13** (unpowered, closed-system test) |
+| Rocket equation, 100 kg burn | variable-mass Δv within **1%** of \(I_{sp}g_0\ln(m_0/m_f)\) |
+| Fuel depletion | propellant and mass stay at or above their lower bounds; thrust cuts off |
 | Lunar mission impact checks | safe pad touchdown succeeds; a miss and a 3 m/s touchdown crash |
 | Query permalink round trip | slider state restored from search parameters; legacy hashes accepted |
 | CSV schema | consistent time/position/energy columns; quoted text retained |

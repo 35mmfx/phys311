@@ -87,7 +87,7 @@ const tab = keyEvent('Tab');
 windowListeners.keydown(tab);
 checks.push([!tab.defaultPrevented, 'Tab keeps its native control-navigation behavior']);
 windowListeners.keydown(keyEvent('+'));
-checks.push([document.getElementById('speed').value === '1.25',
+checks.push([Number(document.getElementById('speed').value) === 1.25,
   'keyboard plus increases simulation speed by 0.25x']);
 document.getElementById('btn-play')._fire('click', {});
 document.getElementById('btn-step')._fire('click', {});
@@ -110,36 +110,41 @@ windowListeners.keydown(keyEvent('Enter'));
 checks.push([/^Launched with speed/.test(document.getElementById('live').textContent),
   'keyboard slingshot places, aims, and launches']);
 
-document.getElementById('scene').value = 'lunar';
-document.getElementById('scene')._fire('change', { target: { value: 'lunar' } });
+const sceneControl = document.getElementById('scene');
+sceneControl.value = 'lunar';
+sceneControl._fire('change', { target: sceneControl });
 document.getElementById('btn-play')._fire('click', {});
-const readOrientation = () => Number(document.getElementById('hud').innerHTML
-  .match(/orientation<\/span><span class="v">(-?\d+)°/)[1]);
+frames++; cb(performance.now());
+const readOrientation = () => {
+  const html = document.getElementById('hud').innerHTML;
+  const match = html.match(/(?:orientation|impact angle)<\/span><span class="v">(-?\d+)°/);
+  if (!match) throw new Error(`Lander orientation missing from HUD: ${html}`);
+  return Number(match[1]);
+};
 const orientationBefore = readOrientation();
 windowListeners.keydown(keyEvent('ArrowLeft'));
 for (let i = 0; i < 15; i++) { frames++; cb(performance.now()); }
 windowListeners.keyup(keyEvent('ArrowLeft'));
 checks.push([readOrientation() > orientationBefore,
   'left arrow rotates the lander while the mission is running']);
-const reserveBefore = Number(document.getElementById('hud').innerHTML
-  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+const fuelRemaining = () => Number(document.getElementById('hud').innerHTML
+  .match(/fuel remaining<\/span><span class="v">([\d.]+) kg/)[1]);
+const reserveBefore = fuelRemaining();
 windowListeners.keydown(keyEvent('ArrowUp'));
 for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
 windowListeners.keyup(keyEvent('ArrowUp'));
-const reserveAfter = Number(document.getElementById('hud').innerHTML
-  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
-  'up arrow thrusts and reduces the propulsion reserve']);
+  'up arrow thrusts and reduces remaining fuel']);
 const touchReserveBefore = reserveAfter;
 document.getElementById('lander-thrust')._fire('pointerdown', {
   pointerId: 7, cancelable: true, preventDefault: noop
 });
 for (let i = 0; i < 10; i++) { frames++; cb(performance.now()); }
 document.getElementById('lander-thrust')._fire('pointerup', { pointerId: 7 });
-const touchReserveAfter = Number(document.getElementById('hud').innerHTML
-  .match(/propulsion reserve<\/span><span class="v">(\d+)/)[1]);
+const touchReserveAfter = fuelRemaining();
 checks.push([touchReserveAfter < touchReserveBefore,
-  'touch thrust button applies force while pressed and releases cleanly']);
+  'touch thrust button burns fuel while pressed and releases cleanly']);
 checks.push([/open\)/.test(document.getElementById('hud').innerHTML),
   'powered lander marks energy change as an open-system diagnostic']);
 checks.push([/Find the pad/.test(document.getElementById('mission-status').textContent),

@@ -157,11 +157,8 @@ export const SCENES = {
       fuelMass: 150,
       maxFuel: 150,
       thrust: 8000,
-      maxThrust: 8000,
       isp: 300,
-      g0: 9.81,
-      chargeRate: 7,
-      initialCharge: 100
+      g0: 9.81
     }));
     w.lander = lander;
     w.landerDrive = drive;
@@ -171,7 +168,7 @@ export const SCENES = {
     w.momentumConserved = false;
     w.mission = {
       status: 'flying',
-      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake.',
+      message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake. Fuel is finite.',
       padCenter: 0,
       padHalfWidth: 1.45
     };
@@ -207,9 +204,8 @@ export const SCENES = {
         else w.mission.message = 'Crash: touchdown speed was too high.';
       }
     };
-    w.afterStep = dt => {
+    w.afterStep = () => {
       if (w.mission.status === 'flying') {
-        drive.update(dt);
         return;
       }
       if (lander.fixed) return;

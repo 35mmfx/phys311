@@ -132,55 +132,68 @@ export class LanderDrive {
   constructor(body, {
     gravity = 1.62,
     thrust = 8000,
-    maxCharge = 100,
-    initialCharge = 100,
-    burnRate = 8,
-    chargeRate = 7,
     rotationRate = 1.7,
     dryMass = body.mass,
     fuelMass = 0,
     maxFuel = fuelMass,
     isp = 300,
-    g0 = 9.81,
-    maxThrust = thrust
+    g0 = 9.81
   } = {}) {
+    if (![gravity, thrust, rotationRate, dryMass, fuelMass, maxFuel, isp, g0]
+      .every(Number.isFinite) || gravity < 0 || thrust < 0 || rotationRate < 0 ||
+      dryMass <= 0 || fuelMass < 0 || maxFuel < fuelMass || isp <= 0 || g0 <= 0) {
+      throw new RangeError('Lander propulsion parameters must be finite and physically valid.');
+    }
     this.body = body;
     this.g = gravity;
-    this.thrust = maxThrust;
-    this.maxCharge = maxCharge;
-    this.charge = initialCharge;
-    this.burnRate = burnRate;
-    this.chargeRate = chargeRate;
+    this.thrust = thrust;
     this.rotationRate = rotationRate;
     this.dryMass = dryMass;
     this.maxFuel = maxFuel;
     this.fuel = fuelMass;
     this.isp = isp;
     this.g0 = g0;
+    this.charge = this.maxFuel > 0 ? 100 * this.fuel / this.maxFuel : 0;
     this.thrusting = false;
     this.rotation = 0;
+    this._burnedThisStep = 0;
+    this._thrustThisStep = 0;
+    this._initialAngle = body.angle;
     this._syncMassCharge();
   }
 
   _syncMassCharge() {
-    const fuelLimit = Math.max(0, this.maxFuel);
-    if (fuelLimit > 0) {
-      this.fuel = Math.max(0, Math.min(this.fuel, fuelLimit));
-      this.charge = (this.fuel / fuelLimit) * 100;
-    } else {
-      this.charge = Math.max(0, Math.min(this.maxCharge, this.charge));
-    }
+    this.fuel = Math.max(0, Math.min(this.fuel, this.maxFuel));
+    this.charge = this.maxFuel > 0 ? (this.fuel / this.maxFuel) * 100 : 0;
     this.body.mass = this.dryMass + this.fuel;
     this.body.invMass = this.body.fixed ? 0 : 1 / this.body.mass;
+  }
+
+  beginStep(dt) {
+    const b = this.body;
+    this._initialAngle = b.angle;
+    this._burnedThisStep = 0;
+    this._thrustThisStep = 0;
+    if (b.fixed) return;
+
+    b.angle += 0.5 * this.rotation * this.rotationRate * dt;
+    if (this.thrusting && this.fuel > 0 && this.thrust > 0) {
+      const flowRate = this.thrust / (this.isp * this.g0);
+      this._burnedThisStep = Math.min(this.fuel, flowRate * dt);
+      const activeFraction = this._burnedThisStep / (flowRate * dt);
+      this._thrustThisStep = this.thrust * activeFraction;
+      b.mass = this.dryMass + this.fuel - 0.5 * this._burnedThisStep;
+      b.invMass = 1 / b.mass;
+    }
   }
 
   apply() {
     const b = this.body;
     if (b.fixed) return;
     b.applyForce(new Vec2(0, -b.mass * this.g));
-    if (this.thrusting && this.fuel > 0) {
+    if (this._thrustThisStep > 0) {
       const direction = new Vec2(-Math.sin(b.angle), Math.cos(b.angle));
-      b.applyForce(direction.mul(this.thrust));
+      b.applyForce(direction.mul(this._thrustThisStep));
     }
   }
 
@@ -188,25 +201,12 @@ export class LanderDrive {
     return this.g * bodies.reduce((sum, b) => sum + b.mass * b.pos.y, 0);
   }
 
-  update(dt) {
+  endStep(dt) {
     const b = this.body;
     if (b.fixed) return;
-    b.angle = (b.angle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
-
-    const sunlight = Math.max(0, Math.cos(b.angle));
-    if (this.thrusting && this.fuel > 0) {
-      const burnRate = this.thrust / (this.isp * this.g0);
-      const burned = Math.min(this.fuel, burnRate * dt);
-      this.fuel = Math.max(0, this.fuel - burned);
-      this._syncMassCharge();
-      if (this.fuel <= 0) this.thrusting = false;
-      return;
-    }
-
-    if (this.maxFuel > 0 && this.fuel < this.maxFuel) {
-      const recharge = (this.chargeRate / 100) * this.maxFuel * sunlight * dt;
-      this.fuel = Math.min(this.maxFuel, this.fuel + recharge);
-      this._syncMassCharge();
-    }
+    b.angle = (this._initialAngle + this.rotation * this.rotationRate * dt) % (Math.PI * 2);
+    this.fuel = Math.max(0, this.fuel - this._burnedThisStep);
+    this._syncMassCharge();
+    if (this.fuel <= 0) this.thrusting = false;
   }
 }

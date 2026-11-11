@@ -288,7 +288,7 @@ H('13. Teleporting: direct position edits can tunnel through collisions');
 }
 
 // --------------------------------------------------------------- 14
-H('14. Lunar lander: steer, recharge, and classify touchdown');
+H('14. Lunar lander: variable mass, finite fuel, and touchdown');
 {
   const { world } = SCENES.lunar(ST);
   const { lander, landerDrive: drive, mission } = world;
@@ -296,19 +296,57 @@ H('14. Lunar lander: steer, recharge, and classify touchdown');
      'lunar scene builds one controllable lander with an active mission');
 
   const reserve = drive.charge;
+  const fuelAtStart = drive.fuel;
   drive.thrusting = true;
   for (let i = 0; i < 120; i++) world.step(world.DT);
-  ok(drive.charge < reserve && lander.vel.y > -1.8,
-     'powered thrust consumes reserve and slows the initial descent',
-     `reserve ${reserve.toFixed(1)}% -> ${drive.charge.toFixed(1)}%, vy=${lander.vel.y.toFixed(2)} m/s`);
+  ok(drive.fuel < fuelAtStart && drive.charge < reserve && lander.mass > drive.dryMass
+     && lander.vel.y > -1.8,
+     'powered thrust burns finite fuel, reduces mass, and slows the initial descent',
+     `fuel ${fuelAtStart.toFixed(2)} -> ${drive.fuel.toFixed(2)} kg, mass=${lander.mass.toFixed(2)} kg, vy=${lander.vel.y.toFixed(2)} m/s`);
 
   drive.thrusting = false;
   drive.rotation = 0;
-  drive.charge = 95;
+  const remainingFuel = drive.fuel;
   for (let i = 0; i < 120; i++) world.step(world.DT);
-  ok(drive.charge > 95 && drive.charge <= drive.maxCharge,
-     'solar alignment recharges the propulsion reserve without exceeding capacity',
-     `reserve=${drive.charge.toFixed(1)}%`);
+  ok(drive.fuel === remainingFuel,
+     'unpowered flight does not regenerate finite propellant',
+     `fuel remains ${drive.fuel.toFixed(2)} kg`);
+
+  const rocket = new World({ dt: 1 / 240, integrator: 'verlet', bounds: null });
+  Body.resetIds();
+  const rocketBody = rocket.add(new Body({
+    pos: new Vec2(0, 1000), mass: 1150, radius: 0.1
+  }));
+  const rocketDrive = rocket.addForce(new LanderDrive(rocketBody, {
+    gravity: 0, dryMass: 1000, fuelMass: 150, maxFuel: 150,
+    thrust: 8000, isp: 300, g0: 9.81
+  }));
+  rocket.lander = rocketBody;
+  rocket.landerDrive = rocketDrive;
+  rocketDrive.thrusting = true;
+  const burnSteps = Math.round((100 * 300 * 9.81 / 8000) / rocket.DT);
+  for (let i = 0; i < burnSteps; i++) rocket.step(rocket.DT);
+  const expectedDeltaV = 300 * 9.81 * Math.log(1150 / 1050);
+  const rocketError = Math.abs((rocketBody.vel.y - expectedDeltaV) / expectedDeltaV);
+  ok(rocketError < 0.01 && Math.abs(rocketDrive.fuel - 50) < 1e-8
+     && Math.abs(rocketBody.mass - 1050) < 1e-8,
+     'midpoint-mass thrust matches the rocket equation within 1% for a 100 kg burn',
+     `error=${(rocketError * 100).toFixed(4)}%, Δv=${rocketBody.vel.y.toFixed(3)} m/s`);
+
+  const depletionWorld = new World({ dt: 1 / 240, integrator: 'verlet', bounds: null });
+  Body.resetIds();
+  const depletionBody = depletionWorld.add(new Body({
+    pos: new Vec2(0, 1000), mass: 1000.01, radius: 0.1
+  }));
+  const depletionDrive = depletionWorld.addForce(new LanderDrive(depletionBody, {
+    gravity: 0, dryMass: 1000, fuelMass: 0.01, maxFuel: 0.01,
+    thrust: 8000, isp: 300, g0: 9.81
+  }));
+  depletionDrive.thrusting = true;
+  depletionWorld.step(depletionWorld.DT);
+  ok(depletionDrive.fuel === 0 && depletionBody.mass === depletionDrive.dryMass
+     && depletionBody.vel.y > 0 && !depletionDrive.thrusting,
+     'final partial burn clamps fuel and mass at their lower bounds and cuts thrust');
 
   const safe = SCENES.lunar(ST).world;
   safe.lander.pos.set(0, safe.lander.radius + 0.001);
@@ -333,6 +371,14 @@ H('14. Lunar lander: steer, recharge, and classify touchdown');
   fast.step(fast.DT);
   ok(fast.mission.status === 'crashed' && /speed was too high/.test(fast.mission.message),
      'a high-speed touchdown on the pad is a crash');
+
+  const tilted = SCENES.lunar(ST).world;
+  tilted.lander.pos.set(0, tilted.lander.radius + 0.001);
+  tilted.lander.vel.set(0, -1);
+  tilted.lander.angle = 16 * Math.PI / 180;
+  tilted.step(tilted.DT);
+  ok(tilted.mission.status === 'crashed' && /tilted/.test(tilted.mission.message),
+     'a soft touchdown beyond the 15-degree attitude limit is a crash');
 
   const isolated = new World({ dt: ST.dt, integrator: 'verlet' });
   Body.resetIds();

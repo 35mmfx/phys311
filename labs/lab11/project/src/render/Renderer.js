@@ -121,18 +121,6 @@ export class Renderer {
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 0.3 * cam.scale, sy + 0.22 * cam.scale); ctx.stroke();
     }
 
-    const [sunX, sunY] = cam.toScreen(0, 16.5);
-    ctx.fillStyle = '#ffd866';
-    ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#ffd866';
-    ctx.globalAlpha = 0.3;
-    ctx.setLineDash([6, 8]);
-    ctx.beginPath(); ctx.moveTo(sunX, sunY + 22); ctx.lineTo(sunX, cam.toScreen(0, 0)[1]); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#ffd866';
-    ctx.font = '12px system-ui, sans-serif';
-    ctx.fillText('SUNLIGHT', sunX - 29, sunY + 38);
   }
 
   _landerCraft(body, drive) {
@@ -150,18 +138,11 @@ export class Renderer {
     ctx.lineTo(-0.19, 0.22); ctx.lineTo(0.19, 0.22);
     ctx.lineTo(0.25, -0.04); ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    const panelColor = drive.charge > 0 ? '#58a6ff' : '#6e7681';
-    ctx.fillStyle = panelColor;
-    ctx.strokeStyle = '#c9d1d9';
-    ctx.fillRect(-0.62, -0.12, 0.33, 0.13);
-    ctx.strokeRect(-0.62, -0.12, 0.33, 0.13);
-    ctx.fillRect(0.29, -0.12, 0.33, 0.13);
-    ctx.strokeRect(0.29, -0.12, 0.33, 0.13);
     ctx.beginPath(); ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
     ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
     ctx.stroke();
 
-    if (drive.thrusting && drive.charge > 0 && !body.fixed) {
+    if (drive.thrusting && drive.fuel > 0 && !body.fixed) {
       ctx.fillStyle = '#ff8200';
       ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
       ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
