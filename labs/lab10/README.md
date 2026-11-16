@@ -243,9 +243,7 @@ propulsion.
 
 ## 6. Publishing to GitHub Pages
 
-1. Put this folder in your repo (e.g. `labs/week10/`), commit, push.
-2. Repo → **Settings → Pages** → Source: **Deploy from a branch** → `main` / `/ (root)`.
-3. Wait ~60 s. Visit `https://USERNAME.github.io/REPO/labs/week10/`.
+Visit `https://35mmfx.github.io/REPO/labs/week10/`.
 
 **The four failures that actually happen:**
 
