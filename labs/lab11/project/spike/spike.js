@@ -1,5 +1,8 @@
 // Disposable one-body vertical-thrust spike. Run with: node spike.js
 // No UI and no imports from the project engine.
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 const G = 1.62;
 const THRUST = 8000;
 const ISP = 300;
@@ -95,7 +98,5 @@ function runSpike() {
   ].join('\n');
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { runSpike };
-  if (require.main === module) console.log(runSpike());
-}
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
+  console.log(runSpike());
