@@ -1,7 +1,6 @@
 # Spike Findings — variable-mass lunar landing
 
 **Risk tested:** Will finite fuel and the changing thrust-to-mass ratio make a soft landing too difficult to control?
-**Time spent:** [record your actual time]
 **Code:** `spike.js` (run `node spike.js`; recorded output is in `output.txt`).
 
 ## What I tried
@@ -14,4 +13,4 @@ Thirty-five variable-mass schedules landed at or below 1.8 m/s, with safe thrust
 
 ## Scope decision
 
-I am **keeping variable-mass thrust in MUST**, not moving it to COULD: safe, fuel-bounded landings were possible, and mass change had a modest effect in this starting case. The spike does not test lateral control, attitude, or player reaction time. Keep the proposal's wider-pad/lower-start fallback and test playability before finalizing tuning. The time field above must reflect actual work; these results do not imply that 90 minutes were spent.
+I am **keeping variable-mass thrust in MUST**, not moving it to COULD: safe, fuel-bounded landings were possible, and mass change had a modest effect in this starting case. The spike does not test lateral control, attitude, or player reaction time, so it cannot establish whether real players can land reliably. Keep the proposal's wider-pad/lower-start fallback and test playability while tuning.
