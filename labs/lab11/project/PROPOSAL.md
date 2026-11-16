@@ -10,7 +10,7 @@
 
 Use SI units (m, s, kg) and one translating lander with directly steered attitude (no rotation dynamics). Forces: \(\vec F_g=-mg_L\hat y\), \(g_L=1.62\ \mathrm{m/s^2}\); \(\vec F_T=T_{\max}u(-\sin\theta,\cos\theta)\), \(0\le u\le1\); \(\dot m=-T_{\max}u/(I_{\rm sp}g_0)\), \(g_0=9.81\ \mathrm{m/s^2}\); \(\vec a=(\vec F_g+\vec F_T)/m\). Clamp fuel at zero and mass at dry mass. Flat-ground/pad contact uses the existing solver (\(e=0.25\)); evaluate touchdown before impact response. No drag or atmosphere.
 
-The **one new physics feature** is variable-mass rocket propulsion: finite fuel burns under thrust, changing mass and acceleration. Use Lab 10's velocity Verlet at fixed `DT = 1/240 s`; update mass at the substep midpoint, synchronize inverse mass, and clamp the final burn to remaining fuel. Handle contact impulses separately.
+The **one new physics feature** is variable-mass rocket propulsion: finite fuel burns under thrust, changing mass and acceleration. Use Lab 10's velocity Verlet at fixed `DT = 1/240 s`; it is already tested in the existing engine and suits the fixed-step ballistic flight. Update mass at the substep midpoint, synchronize inverse mass, and clamp the final burn to remaining fuel. Handle contact impulses separately.
 
 Starting scale: a 20 m × 18 m arena, 0.42 m lander radius, and 2.9 m pad. Tuning values: 1,000 kg dry mass, 150 kg fuel, 8 kN maximum thrust, and \(I_{\rm sp}=300\ \mathrm s\).
 
