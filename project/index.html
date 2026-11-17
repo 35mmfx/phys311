@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Physics 311 — Lunar Lander</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Physics 311 &middot; Lunar Lander</h1>
+  <span class="sub">A fixed-step physics challenge: manage finite propellant and land softly.</span>
+</header>
+
+<div class="layout">
+
+  <main class="stage">
+    <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
+    <canvas id="sim" tabindex="0" role="img"
+            aria-label="Lunar lander game. Rotate and thrust to reach the green landing pad."
+            aria-describedby="canvas-help">
+      Lunar lander simulation. Use left and right arrows to rotate, and hold up to thrust. Land upright and gently on the green pad.
+    </canvas>
+    <p id="canvas-help" class="sr-only">
+      Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
+      Propellant is finite, and the lander gets lighter as fuel burns. Land on the green pad with low speed and nearly upright.
+    </p>
+    <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
+    <div id="hud" role="status" aria-live="off"></div>
+    <section id="debug-panel" class="debug-panel" aria-label="Physics debug diagnostics" hidden>
+      <h2>Debug diagnostics</h2>
+      <div id="debug-hud"></div>
+      <p>Energy drift tolerance: 1.00% of E₀. Powered flight is an open system.</p>
+    </section>
+    <details class="race-details">
+      <summary>Open the side-by-side integrator race</summary>
+      <section class="race" aria-labelledby="race-heading">
+        <h2 id="race-heading">Same spring-chain start, different solvers</h2>
+        <p class="race-description">Both runs use identical initial conditions and timestep; only the integrator differs. The plot tracks their RMS position difference.</p>
+        <div class="race-canvases">
+          <div>
+            <label for="race-left-integrator">Left solver</label>
+            <select id="race-left-integrator" aria-label="Left race integrator"></select>
+            <canvas id="race-left" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the left integrator"></canvas>
+          </div>
+          <div>
+            <label for="race-right-integrator">Right solver</label>
+            <select id="race-right-integrator" aria-label="Right race integrator"></select>
+            <canvas id="race-right" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the right integrator"></canvas>
+          </div>
+        </div>
+        <p id="race-readout" class="race-readout" role="status" aria-live="off"></p>
+        <canvas id="race-plot" class="race-plot" role="img" aria-label="Live plot of RMS position difference between integrators"></canvas>
+        <p class="race-axis">RMS difference (m) vs simulated time (s), last 20 seconds</p>
+        <button id="race-reset" type="button">Reset race</button>
+      </section>
+    </details>
+    <!-- polite live region: announces state changes without stealing focus -->
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+
+  <aside class="panel" aria-label="Lunar lander controls">
+
+    <section id="lander-instructions" aria-labelledby="mission-heading">
+      <h2 id="mission-heading">Mission</h2>
+      <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is finite, and the lander gets lighter as it burns fuel. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+      <p class="keys">
+        Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
+        hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+        <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
+      </p>
+      <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+        <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+        <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+        <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+      </div>
+    </section>
+    <div class="btns">
+      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-reset">&#8635; Restart</button>
+      <button id="btn-step">&#9197; Step</button>
+      <button id="btn-link">&#128279; Copy link</button>
+      <button id="btn-csv">Download CSV</button>
+    </div>
+
+    <details class="advanced">
+      <summary>Other scenes and simulation settings</summary>
+      <section class="url-examples" aria-labelledby="url-heading">
+        <h2 id="url-heading">Example shareable configurations</h2>
+        <p>Spring chain — Euler</p>
+        <p>Projectile — Verlet, Mars gravity</p>
+      </section>
+
+    <h2>Scene</h2>
+    <div class="row">
+      <label for="scene">Preset</label>
+      <select id="scene">
+        <option value="billiards">1 &mdash; Billiards in a box</option>
+        <option value="chain">2 &mdash; Spring chain</option>
+        <option value="orbits">3 &mdash; N-body orbits</option>
+        <option value="projectile">4 &mdash; Projectile (control case)</option>
+        <option value="pendulums">5 &mdash; Pendulum row</option>
+        <option value="lunar">6 &mdash; Lunar lander</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="count">Bodies <output id="count-out"></output></label>
+      <input type="range" id="count" min="3" max="120" step="1" value="24">
+    </div>
+
+    <h2>Solver</h2>
+    <div class="row">
+      <label for="integrator">Integrator</label>
+      <select id="integrator">
+        <option value="euler">Euler (explicit)</option>
+        <option value="ec">Euler&ndash;Cromer</option>
+        <option value="verlet">Velocity Verlet</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="dt">Timestep <output id="dt-out"></output></label>
+      <input type="range" id="dt" min="0.001" max="0.02" step="0.001" value="0.004">
+    </div>
+
+    <h2>Physics</h2>
+    <div class="row">
+      <label for="grav">Gravity <output id="grav-out"></output></label>
+      <input type="range" id="grav" min="0" max="25" step="0.01" value="9.81">
+    </div>
+    <div class="row">
+      <label for="rest">Restitution <output id="rest-out"></output></label>
+      <input type="range" id="rest" min="0" max="1" step="0.01" value="0.95">
+    </div>
+    <div class="row">
+      <label for="drag">Drag coefficient <output id="drag-out"></output></label>
+      <input type="range" id="drag" min="0" max="0.2" step="0.001" value="0">
+    </div>
+    <div class="row">
+      <label for="speed">Time scale <output id="speed-out"></output></label>
+      <input type="range" id="speed" min="0.25" max="2" step="0.25" value="1">
+    </div>
+
+    <h2>Display</h2>
+    <div class="check"><input type="checkbox" id="trails" checked><label for="trails">Show motion trails</label></div>
+    <div class="check"><input type="checkbox" id="vel"><label for="vel">Show velocity vectors</label></div>
+    <div class="check"><input type="checkbox" id="force"><label for="force">Show force vectors</label></div>
+    <div class="check"><input type="checkbox" id="slingshot"><label for="slingshot">Slingshot launch (drag opposite the launch direction)</label></div>
+    <div class="check"><input type="checkbox" id="spawn"><label for="spawn">Click adds a body</label></div>
+    <div class="check"><input type="checkbox" id="debug-mode"><label for="debug-mode">Debug HUD (?debug=1)</label></div>
+    <div class="check"><input type="checkbox" id="conservative-mode"><label for="conservative-mode">Conservative test mode (?conservative=1)</label></div>
+
+    <p class="keys">
+      <kbd>Space</kbd> play/pause &middot; <kbd>.</kbd> step &middot; <kbd>R</kbd> reset<br>
+      <kbd>+</kbd><kbd>&minus;</kbd> speed &middot; <kbd>T</kbd> trails &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> scene
+    </p>
+    </details>
+  </aside>
+</div>
+
+<footer>
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
+</footer>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

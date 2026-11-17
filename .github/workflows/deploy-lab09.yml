@@ -1,10 +1,11 @@
-name: Deploy Lab 9 to GitHub Pages
+name: Deploy Lab 9 and Project to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
       - "labs/lab09/**"
+      - "project/**"
       - ".github/workflows/deploy-lab09.yml"
   workflow_dispatch:
 
@@ -30,10 +31,17 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Lab 9 site
+      - name: Prepare Pages site
+        run: |
+          mkdir -p _site/project
+          cp -R labs/lab09/. _site/
+          cp -R project/. _site/project/
+          touch _site/.nojekyll
+
+      - name: Upload Pages site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: labs/lab09
+          path: _site
 
       - name: Deploy to Pages
         id: deployment

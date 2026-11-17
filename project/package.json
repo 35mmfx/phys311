@@ -1,0 +1,8 @@
+{
+  "name": "phys311-week12-lunar-lander",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/validate.js && node tests/smoke-dom.js"
+  }
+}
