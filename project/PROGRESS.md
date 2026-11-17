@@ -1,6 +1,6 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-16 — build in progress; week-end checks remain.
+**Status date:** 2026-11-17 — deployed; final manual checks remain.
 
 ## MUST tier status
 
@@ -17,7 +17,7 @@
 | Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
-| GitHub Pages deployment and live-site check | deferred | Requires the changes to be pushed, then the live URL and console must be checked. |
+| GitHub Pages deployment and live-site check | done | Deployed at `https://35mmfx.github.io/phys311/project/`; fresh-browser load, normal controls, console, and network requests checked. |
 
 ## Proposal validation results
 
@@ -54,8 +54,6 @@ and conservative-mode behavior selected this week.
 
 ## Remaining Week 12 work
 
-- Check the deployed page on GitHub Pages for load/runtime errors and verify
-  it from a fresh browser session.
 - Verify CPU throttling in DevTools and test the touch controls on a real
   phone.
 - Complete the Wednesday check-in and end-of-week beta-review discussion
