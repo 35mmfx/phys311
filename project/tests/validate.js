@@ -5,6 +5,7 @@
 import { World, Body, Vec2 } from '../engine/World.js';
 import { UniformGravity, Spring, NewtonGravity, PointerSpring, LanderDrive } from '../engine/Forces.js';
 import { Camera }   from '../render/Camera.js';
+import { Renderer } from '../render/Renderer.js';
 import { StateURL } from '../ui/StateURL.js';
 import { serializeSamples } from '../ui/CSVExport.js';
 import { eventToWorld, slingshotVelocity } from '../input.js';
@@ -381,6 +382,21 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const fast = touchdown({ vx: 0, vy: -1.81 });
   ok(fast.mission.status === 'crashed' && /speed was too high/.test(fast.mission.message),
      'proposal vertical speed just above 1.8 m/s crashes');
+  const gradients = [];
+  const drawContext = new Proxy({}, { get: (_, key) =>
+    (key === 'createRadialGradient' || key === 'createLinearGradient')
+      ? () => { gradients.push(key); return { addColorStop() {} }; }
+      : () => {} });
+  const renderer = new Renderer({ getContext: () => drawContext }, new Camera({ scale: 24 }));
+  renderer.cam.resize(800, 600);
+  renderer.showTrails = false;
+  renderer.draw(fast, { frameSeconds: 0 });
+  const dustPuffs = gradients.filter(name => name === 'createRadialGradient').length;
+  ok(dustPuffs === 32, 'fast touchdown emits a one-shot dust burst',
+     `${dustPuffs} fading particles`);
+  renderer.draw(safe, { frameSeconds: 0 });
+  ok(gradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
+     'safe touchdown does not emit dust');
   const lateralFast = touchdown({ vx: 1.11, vy: -1 });
   ok(lateralFast.mission.status === 'crashed' && /speed was too high/.test(lateralFast.mission.message),
      'proposal lateral speed just above 1.1 m/s crashes');
@@ -388,6 +404,10 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const tilted = touchdown({ vx: 0, angle: 16 });
   ok(tilted.mission.status === 'crashed' && /tilted/.test(tilted.mission.message),
      'proposal attitude just beyond 15 degrees crashes');
+  renderer.draw(missed, { frameSeconds: 0 });
+  renderer.draw(tilted, { frameSeconds: 0 });
+  ok(gradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
+     'slow missed-pad and tilted crashes do not emit dust');
 
   const isolated = new World({ dt: ST.dt, integrator: 'verlet' });
   Body.resetIds();

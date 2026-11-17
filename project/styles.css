@@ -15,8 +15,17 @@ header{
 header h1{font-size:1.05rem;margin:0;color:var(--ut-orange)}
 header .sub{color:var(--dim);font-size:.85rem}
 
-.layout{display:grid;grid-template-columns:1fr 290px;gap:1rem;padding:1rem;align-items:start}
-@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.layout{position:relative;display:grid;grid-template-columns:1fr 290px;gap:1rem;padding:1rem;align-items:start}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr}
+  #lander-controls:not([hidden]){
+    position:absolute;z-index:2;
+    top:calc(1rem + min(60vh,560px) - 4.25rem);
+    left:1.5rem;right:1.5rem;margin:0;padding:.35rem;
+    border:1px solid rgba(230,237,243,.24);border-radius:10px;
+    background:rgba(21,24,28,.78);backdrop-filter:blur(4px)
+  }
+}
 
 .stage{min-width:0}
 canvas{

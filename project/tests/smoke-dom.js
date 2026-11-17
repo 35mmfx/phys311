@@ -2,8 +2,12 @@
 // entry point actually wires up and renders frames. Run: node tests/smoke-dom.js
 const noop = () => {};
 let lineToCalls = 0;
+const drawnText = [];
 const ctxStub = new Proxy({}, { get: (t, k) =>
-  (k === 'canvas' ? {} : (k === 'lineTo' ? () => { lineToCalls++; } : noop)) });
+  (k === 'canvas' ? {} :
+    (k === 'lineTo' ? () => { lineToCalls++; } :
+      (k === 'fillText' ? text => { drawnText.push(text); } :
+        (k === 'createLinearGradient' ? () => ({ addColorStop: noop }) : noop)))) });
 
 function el(id) {
   const listeners = {};
@@ -122,6 +126,9 @@ checks.push([/^Launched with speed/.test(document.getElementById('live').textCon
 const sceneControl = document.getElementById('scene');
 sceneControl.value = 'lunar';
 sceneControl._fire('change', { target: sceneControl });
+frames++; cb(performance.now());
+checks.push([drawnText.includes('UT Mission'),
+  'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
 frames++; cb(performance.now());
 const readOrientation = () => {

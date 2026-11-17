@@ -275,6 +275,7 @@ function frame(now) {
     grabbed: world.pointer.grabbed,
     target : world.pointer.active ? world.pointer.target : null,
     cursor,
+    frameSeconds: dtFrame,
     slingshot: pointer && pointer.launch ? pointer.launch
       : keyboard && keyboard.launch ? keyboard.launch : null
   });

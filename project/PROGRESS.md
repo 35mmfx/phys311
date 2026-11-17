@@ -1,6 +1,6 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-17 — deployed; final manual checks remain.
+**Status date:** 2026-11-17 — deployed; automated checks pass; final manual checks remain.
 
 ## MUST tier status
 
@@ -31,7 +31,16 @@
 The test runner also verifies the fixed-step accumulator: both 60 Hz and
 144 Hz produce 2,400 steps over 10 seconds; the jittered sequence produces
 10.0083 seconds. A two-second stall is capped at eight substeps. Final local
-test totals: **51 physics/publishing checks and 25 browser-entry checks passed**.
+test totals: **54 physics/publishing checks and 26 browser-entry checks passed**.
+
+## Recent visual polish
+
+The lander now has a shaded metallic hull, canopy, and UT Mission side decal.
+A fading dust plume is rendered only when vertical or horizontal touchdown
+speed exceeds the safe limit; slow missed-pad and tilted crashes do not emit
+dust. On narrow screens, touch controls overlay the bottom of the canvas to
+keep the lander visible during play. These effects do not change the simulation
+physics.
 
 ## Decisions
 
@@ -55,7 +64,7 @@ and conservative-mode behavior selected this week.
 ## Remaining Week 12 work
 
 - Verify CPU throttling in DevTools and test the touch controls on a real
-  phone.
+  phone; the automated browser test is not a substitute for device testing.
 - Complete the Wednesday check-in and end-of-week beta-review discussion
   posts, peer reply, and Canvas submission; these external submissions are
   not represented as completed here.

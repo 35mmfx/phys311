@@ -11,6 +11,9 @@ export class Renderer {
     this.trails = new Map();             // body.id -> array of [x,y]
     this.maxTrail = 160;
     this.reducedMotion = false;
+    this.dustMission = null;
+    this.dustParticles = [];
+    this.dustTriggered = false;
   }
 
   // Handle Retina / high-DPI screens: back the canvas with more device pixels
@@ -39,7 +42,10 @@ export class Renderer {
     }
   }
 
-  draw(world, { grabbed = null, target = null, cursor = null, slingshot = null } = {}) {
+  draw(world, {
+    grabbed = null, target = null, cursor = null, slingshot = null,
+    frameSeconds = 1 / 60
+  } = {}) {
     const ctx = this.ctx, cam = this.cam;
     ctx.clearRect(0, 0, cam.w, cam.h);
 
@@ -74,6 +80,7 @@ export class Renderer {
 
     if (this.showVelocity) this._velocityVectors(world);
     if (this.showForceVectors) this._forceVectors(world);
+    if (world.mission) this._drawImpactDust(world, frameSeconds);
 
     for (const b of world.bodies) {
       if (b.tag === 'lander') {
@@ -99,6 +106,66 @@ export class Renderer {
 
     if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+  }
+
+  _drawImpactDust(world, frameSeconds) {
+    const mission = world.mission;
+    if (mission !== this.dustMission) {
+      this.dustMission = mission;
+      this.dustParticles = [];
+      this.dustTriggered = false;
+    }
+
+    if (!this.dustTriggered && mission.status === 'crashed' && mission.impact) {
+      this.dustTriggered = true;
+      const { verticalSpeed, horizontalSpeed } = mission.impact;
+      if (Math.abs(verticalSpeed) > 1.8 || Math.abs(horizontalSpeed) > 1.1) {
+        const impactSeverity = Math.min(1.7, Math.max(
+          Math.abs(verticalSpeed) / 1.8,
+          Math.abs(horizontalSpeed) / 1.1
+        ));
+        const count = 32;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.PI * (i + 0.5) / count;
+          const speed = 1.1 + ((i * 7) % 11) / 10 * (1 + impactSeverity * 0.3);
+          this.dustParticles.push({
+            x: world.lander.pos.x,
+            y: world.bounds.ymin + 0.025,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            age: 0,
+            life: 1.3 + ((i * 3) % 7) * 0.12,
+            radius: 0.12 + ((i * 5) % 8) * 0.02
+          });
+        }
+      }
+    }
+
+    const dt = Number.isFinite(frameSeconds)
+      ? Math.min(Math.max(frameSeconds, 0), 0.1)
+      : 0;
+    const ctx = this.ctx, cam = this.cam;
+    this.dustParticles = this.dustParticles.filter(particle => {
+      particle.age += dt;
+      const progress = particle.age / particle.life;
+      if (progress >= 1) return false;
+
+      const x = particle.x + particle.vx * particle.age;
+      const y = particle.y + particle.vy * particle.age - 0.35 * particle.age ** 2;
+      const [sx, sy] = cam.toScreen(x, y);
+      const radius = (particle.radius + particle.age * 0.24) * cam.scale;
+      const opacity = 0.85 * (1 - progress);
+      const gradient = ctx.createRadialGradient(
+        sx, sy, radius * 0.08, sx, sy, radius
+      );
+      gradient.addColorStop(0, `rgba(210,192,160,${opacity})`);
+      gradient.addColorStop(1, 'rgba(210,192,160,0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+      ctx.fill();
+      return true;
+    });
   }
 
   _landerScene(world) {
@@ -130,20 +197,98 @@ export class Renderer {
     ctx.translate(x, y);
     ctx.rotate(-body.angle);
     ctx.scale(cam.scale, cam.scale);
-    ctx.lineWidth = 0.045;
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 0.075;
+    ctx.strokeStyle = '#59636e';
+    ctx.beginPath();
+    ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
+    ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
+    ctx.stroke();
+    ctx.lineWidth = 0.027;
+    ctx.strokeStyle = '#d5dde5';
+    ctx.beginPath();
+    ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
+    ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
+    ctx.stroke();
+
+    ctx.lineCap = 'butt';
+    ctx.fillStyle = '#4b535d';
+    ctx.beginPath();
+    ctx.moveTo(-0.11, 0.18); ctx.lineTo(-0.085, 0.34);
+    ctx.lineTo(0.085, 0.34); ctx.lineTo(0.11, 0.18); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#aeb8c2';
+    ctx.fillRect(-0.13, 0.17, 0.26, 0.045);
+
+    const hull = ctx.createLinearGradient(-0.24, 0, 0.24, 0);
+    hull.addColorStop(0, '#f4f7fa');
+    hull.addColorStop(0.34, '#cbd3dc');
+    hull.addColorStop(0.7, '#8995a2');
+    hull.addColorStop(1, '#4d5864');
+    ctx.lineWidth = 0.035;
     ctx.strokeStyle = '#e6edf3';
-    ctx.fillStyle = '#c9d1d9';
+    ctx.fillStyle = hull;
     ctx.beginPath();
     ctx.moveTo(0, -0.34); ctx.lineTo(-0.25, -0.04);
     ctx.lineTo(-0.19, 0.22); ctx.lineTo(0.19, 0.22);
     ctx.lineTo(0.25, -0.04); ctx.closePath(); ctx.fill(); ctx.stroke();
 
-    ctx.beginPath(); ctx.moveTo(-0.19, 0.12); ctx.lineTo(-0.38, 0.43); ctx.lineTo(-0.14, 0.43);
-    ctx.moveTo(0.19, 0.12); ctx.lineTo(0.38, 0.43); ctx.lineTo(0.14, 0.43);
+    ctx.fillStyle = 'rgba(255,255,255,0.27)';
+    ctx.beginPath();
+    ctx.moveTo(0, -0.30); ctx.lineTo(-0.20, -0.035);
+    ctx.lineTo(-0.095, 0.17); ctx.lineTo(0, 0.2); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(22,29,37,0.32)';
+    ctx.beginPath();
+    ctx.moveTo(0, -0.30); ctx.lineTo(0.20, -0.035);
+    ctx.lineTo(0.16, 0.17); ctx.lineTo(0, 0.2); ctx.closePath();
+    ctx.fill();
+
+    const canopy = ctx.createLinearGradient(-0.1, -0.27, 0.1, -0.04);
+    canopy.addColorStop(0, '#d7f0ff');
+    canopy.addColorStop(0.42, '#5d8ca5');
+    canopy.addColorStop(1, '#233b4c');
+    ctx.fillStyle = canopy;
+    ctx.strokeStyle = '#f2f6fa';
+    ctx.lineWidth = 0.018;
+    ctx.beginPath();
+    ctx.moveTo(0, -0.285); ctx.lineTo(-0.145, -0.095);
+    ctx.lineTo(0.145, -0.095); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 0.012;
+    ctx.beginPath(); ctx.moveTo(-0.105, -0.12); ctx.lineTo(-0.025, -0.245); ctx.stroke();
+
+    ctx.fillStyle = '#272d34';
+    ctx.fillRect(-0.205, -0.018, 0.41, 0.105);
+    ctx.fillStyle = '#ff8200';
+    ctx.fillRect(-0.19, -0.005, 0.018, 0.079);
+    ctx.font = 'bold 0.064px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff4e8';
+    ctx.fillText('UT Mission', 0.005, 0.034);
+
+    ctx.fillStyle = '#687481';
+    for (const [px, py] of [[-0.155, 0.12], [0.155, 0.12], [-0.205, -0.005], [0.205, -0.005]]) {
+      ctx.beginPath(); ctx.arc(px, py, 0.012, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.lineWidth = 0.04;
+    ctx.strokeStyle = '#aeb8c2';
+    ctx.beginPath();
+    ctx.moveTo(-0.4, 0.43); ctx.lineTo(-0.12, 0.43);
+    ctx.moveTo(0.12, 0.43); ctx.lineTo(0.4, 0.43);
     ctx.stroke();
 
     if (drive.thrusting && drive.fuel > 0 && !body.fixed) {
-      ctx.fillStyle = '#ff8200';
+      const flame = ctx.createLinearGradient(0, 0.24, 0, 0.58);
+      flame.addColorStop(0, '#fff0a6');
+      flame.addColorStop(0.35, '#ffb02e');
+      flame.addColorStop(1, 'rgba(255,80,0,0)');
+      ctx.fillStyle = flame;
       ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
       ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
     }

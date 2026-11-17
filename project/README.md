@@ -48,6 +48,10 @@ Focus the canvas to use **← / →** or **A / D** to steer and hold **↑** or
 **Space** pauses, **.** advances one fixed step, and **R** resets the mission
 and re-baselines the energy reference.
 
+On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷**
+buttons overlay the bottom of the canvas so you can keep the lander in view.
+Press and hold a button to steer or fire the engine; release to stop.
+
 Expand **Other scenes and simulation settings** for the inherited Lab 10
 reference scenes. The required lunar mission is the default scene.
 
