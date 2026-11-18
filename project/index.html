@@ -75,6 +75,10 @@
         <input type="checkbox" id="sound-enabled">
         <label for="sound-enabled">Cockpit sound (engines, relays, airflow, and impacts)</label>
       </div>
+      <div class="row sound-volume">
+        <label for="sound-volume">Cockpit volume <output id="sound-volume-out">75%</output></label>
+        <input type="range" id="sound-volume" min="0" max="1" step="0.05" value="0.75">
+      </div>
       <p class="sound-note">Sound starts only when enabled. Use headphones for the inside-the-cabin mix.</p>
       <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
         <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>

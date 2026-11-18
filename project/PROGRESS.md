@@ -31,7 +31,7 @@
 The test runner also verifies the fixed-step accumulator: both 60 Hz and
 144 Hz produce 2,400 steps over 10 seconds; the jittered sequence produces
 10.0083 seconds. A two-second stall is capped at eight substeps. Final local
-test totals: **55 physics/publishing checks and 29 browser-entry checks passed**.
+test totals: **55 physics/publishing checks and 30 browser-entry checks passed**.
 
 ## Bonus convergence check
 

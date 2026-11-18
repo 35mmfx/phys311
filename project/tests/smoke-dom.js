@@ -34,9 +34,9 @@ raceDetails.open = false;
 const windowListeners = {};
 const audioContexts = [];
 class MockAudioParam {
-  constructor() { this.value = 0; }
+  constructor() { this.value = 0; this.targets = []; }
   cancelScheduledValues() {}
-  setTargetAtTime(value) { this.value = value; }
+  setTargetAtTime(value) { this.value = value; this.targets.push(value); }
   setValueAtTime(value) { this.value = value; }
   exponentialRampToValueAtTime(value) { this.value = value; }
 }
@@ -46,11 +46,19 @@ class MockAudioContext {
     this.currentTime = 0;
     this.destination = {};
     this.oscillators = [];
+    this.gainNodes = [];
     audioContexts.push(this);
   }
-  createGain() { return { gain: new MockAudioParam(), connect() { return this; } }; }
+  createGain() {
+    const node = { gain: new MockAudioParam(), connect() { return this; } };
+    this.gainNodes.push(node);
+    return node;
+  }
   createBiquadFilter() {
-    return { frequency: new MockAudioParam(), connect() { return this; } };
+    return {
+      frequency: new MockAudioParam(), Q: new MockAudioParam(),
+      connect() { return this; }
+    };
   }
   createBufferSource() {
     return { connect() { return this; }, start() {}, stop() {} };
@@ -178,6 +186,12 @@ frames++; cb(performance.now());
 checks.push([soundToggle.checked && audioContexts.length === 1 &&
   audioContexts[0].oscillators.length >= 5,
   'cockpit sound initializes its procedural Web Audio layers after a user click']);
+const soundVolume = document.getElementById('sound-volume');
+soundVolume.value = '0.9';
+soundVolume._fire('input', {});
+checks.push([document.getElementById('sound-volume-out').textContent === '90%' &&
+  audioContexts[0].gainNodes[0].gain.value === 0.9,
+  'cockpit volume control updates the audio master gain']);
 const readOrientation = () => {
   const html = document.getElementById('hud').innerHTML;
   const match = html.match(/(?:orientation|impact angle)<\/span><span class="v">(-?\d+)°/);
@@ -200,7 +214,8 @@ windowListeners.keyup(keyEvent('ArrowUp'));
 const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
   'up arrow thrusts and reduces remaining fuel']);
-checks.push([audioContexts[0].oscillators.length > soundsBeforeThrust,
+checks.push([audioContexts[0].oscillators.length > soundsBeforeThrust &&
+  audioContexts[0].gainNodes.some(node => node.gain.targets.includes(0.2)),
   'thrust engages the synthesized relay sound']);
 const touchReserveBefore = reserveAfter;
 document.getElementById('lander-thrust')._fire('pointerdown', {

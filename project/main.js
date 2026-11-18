@@ -34,6 +34,8 @@ const debugHud = document.getElementById('debug-hud');
 const DEBUG_DRIFT_TOLERANCE = 0.01;
 const cockpitSound = new CockpitSound();
 const soundToggle = document.getElementById('sound-enabled');
+const soundVolume = document.getElementById('sound-volume');
+const soundVolumeOutput = document.getElementById('sound-volume-out');
 
 // Respect the OS "reduce motion" setting: no trails, no flashing.
 render.reducedMotion =
@@ -214,6 +216,11 @@ soundToggle.addEventListener('change', async () => {
     announce(`Cockpit sound could not start: ${error.message}`);
   }
 });
+soundVolume.addEventListener('input', () => {
+  const volume = Number(soundVolume.value);
+  cockpitSound.setVolume(volume);
+  soundVolumeOutput.textContent = `${Math.round(volume * 100)}%`;
+});
 
 const controls = new Controls(state, {
   onChange : applyLive,
@@ -295,6 +302,9 @@ function frame(now) {
     rotation: world.landerDrive?.rotation || 0,
     paused,
     missionStatus: world.mission?.status || 'flying',
+    fuelFraction: world.landerDrive
+      ? world.landerDrive.fuel / world.landerDrive.maxFuel
+      : 1,
     impactSpeed: impact
       ? Math.hypot(impact.verticalSpeed, impact.horizontalSpeed)
       : world.lander?.vel.len() || 0

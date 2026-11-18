@@ -52,11 +52,13 @@ On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷*
 buttons overlay the bottom of the canvas so you can keep the lander in view.
 Press and hold a button to steer or fire the engine; release to stop.
 
-Enable **Cockpit sound** in the Mission panel for a synthesized cabin mix:
-ventilation and electrical hum, pump/engine audio while thrusting, relay
-switches, steering actuators, structural creaks, and touchdown impacts. Sound
-is off by default and starts only after an explicit click; no audio files or
-network requests are used.
+Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
+a synthesized interior mix: ventilation and avionics hum, structure-borne
+engine rumble, pulsing propellant pumps, relay clicks, steering servos, hull
+creaks, and touchdown impacts. The engine is intentionally heard as vibration
+through the cabin rather than an exterior rocket roar. Sound is off by default
+and starts only after an explicit click; no audio files or network requests are
+used.
 
 Expand **Other scenes and simulation settings** for the inherited Lab 10
 reference scenes. The required lunar mission is the default scene.
