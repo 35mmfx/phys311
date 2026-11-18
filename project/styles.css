@@ -105,6 +105,8 @@ button[aria-pressed=true]{border-color:var(--ut-orange)}
 kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   border-radius:4px;padding:0 .3rem;font:inherit;font-size:.78rem}
 .keys{font-size:.78rem;color:var(--dim);line-height:1.9}
+.sound-setting{margin:.5rem 0 .1rem}
+.sound-note{font-size:.72rem;color:var(--dim);margin:.1rem 0 .55rem}
 .mission-copy{font-size:.88rem;margin:.35rem 0;color:var(--ink)}
 .physics-note{font-size:.78rem;color:var(--dim);border-left:2px solid var(--ut-orange);
   padding-left:.55rem;margin:.55rem 0}

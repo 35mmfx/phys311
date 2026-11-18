@@ -10,6 +10,7 @@ import { StateURL }     from './ui/StateURL.js';
 import { serializeSamples } from './ui/CSVExport.js';
 import { SCENES, SCENE_LIST, setConservativeMode } from './scenes.js';
 import { Body, Vec2 }   from './engine/World.js';
+import { CockpitSound } from './audio/CockpitSound.js';
 
 const DEFAULTS = {
   scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
@@ -31,6 +32,8 @@ const hud    = new HUD(document.getElementById('hud'));
 const debugPanel = document.getElementById('debug-panel');
 const debugHud = document.getElementById('debug-hud');
 const DEBUG_DRIFT_TOLERANCE = 0.01;
+const cockpitSound = new CockpitSound();
+const soundToggle = document.getElementById('sound-enabled');
 
 // Respect the OS "reduce motion" setting: no trails, no flashing.
 render.reducedMotion =
@@ -67,6 +70,11 @@ function recordSample(force = false) {
 function build() {
   const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
   world = made.world; view = made.view;
+  cockpitSound.reset();
+  if (!world.mission && soundToggle.checked) {
+    soundToggle.checked = false;
+    cockpitSound.disable();
+  }
   lastMissionStatus = null;
   setConservativeMode(world, state.conservative);
   world.setIntegrator(state.integrator);
@@ -151,7 +159,7 @@ function launch({ body, origin, velocity }) {
 }
 
 const actions = {
-  togglePause() { paused = !paused; controls.setPlayLabel(paused);
+  togglePause() { paused = !paused; cockpitSound.switchClick(); controls.setPlayLabel(paused);
                   announce(paused ? 'Paused' : 'Running'); },
   stepOnce()    { if (!paused) actions.togglePause();
                   world.stepOnce(); render.recordTrails(world);
@@ -195,6 +203,17 @@ const actions = {
   },
   launch
 };
+
+soundToggle.addEventListener('change', async () => {
+  try {
+    if (soundToggle.checked) await cockpitSound.enable();
+    else cockpitSound.disable();
+    announce(soundToggle.checked ? 'Cockpit sound enabled' : 'Cockpit sound muted');
+  } catch (error) {
+    soundToggle.checked = false;
+    announce(`Cockpit sound could not start: ${error.message}`);
+  }
+});
 
 const controls = new Controls(state, {
   onChange : applyLive,
@@ -270,6 +289,16 @@ function frame(now) {
     missionStatus.removeAttribute('data-state');
     lastMissionStatus = null;
   }
+  const impact = world.mission?.impact;
+  cockpitSound.update({
+    thrusting: Boolean(world.landerDrive?.thrusting),
+    rotation: world.landerDrive?.rotation || 0,
+    paused,
+    missionStatus: world.mission?.status || 'flying',
+    impactSpeed: impact
+      ? Math.hypot(impact.verticalSpeed, impact.horizontalSpeed)
+      : world.lander?.vel.len() || 0
+  });
 
   render.draw(world, {
     grabbed: world.pointer.grabbed,

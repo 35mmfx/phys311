@@ -32,6 +32,43 @@ const nodes = new Map();
 const raceDetails = el('race-details');
 raceDetails.open = false;
 const windowListeners = {};
+const audioContexts = [];
+class MockAudioParam {
+  constructor() { this.value = 0; }
+  cancelScheduledValues() {}
+  setTargetAtTime(value) { this.value = value; }
+  setValueAtTime(value) { this.value = value; }
+  exponentialRampToValueAtTime(value) { this.value = value; }
+}
+class MockAudioContext {
+  constructor() {
+    this.sampleRate = 100;
+    this.currentTime = 0;
+    this.destination = {};
+    this.oscillators = [];
+    audioContexts.push(this);
+  }
+  createGain() { return { gain: new MockAudioParam(), connect() { return this; } }; }
+  createBiquadFilter() {
+    return { frequency: new MockAudioParam(), connect() { return this; } };
+  }
+  createBufferSource() {
+    return { connect() { return this; }, start() {}, stop() {} };
+  }
+  createOscillator() {
+    const oscillator = {
+      frequency: new MockAudioParam(), connect() { return this; },
+      start() {}, stop() {}
+    };
+    this.oscillators.push(oscillator);
+    return oscillator;
+  }
+  createBuffer(channels, length) {
+    const data = Array.from({ length: channels }, () => new Float32Array(length));
+    return { getChannelData: index => data[index] };
+  }
+  resume() { return Promise.resolve(); }
+}
 globalThis.document = {
   getElementById: id => { if (!nodes.has(id)) nodes.set(id, el(id)); return nodes.get(id); },
   querySelector: selector => selector === '.race-details' ? raceDetails : null,
@@ -42,7 +79,7 @@ globalThis.document = {
 let frames = 0, cb = null;
 globalThis.window = {
   devicePixelRatio: 2, addEventListener: (t, f) => (windowListeners[t] = f),
-  matchMedia: () => ({ matches: false })
+  matchMedia: () => ({ matches: false }), AudioContext: MockAudioContext
 };
 globalThis.performance = { now: () => frames * 16.6667 };
 globalThis.requestAnimationFrame = f => { cb = f; };
@@ -131,6 +168,16 @@ checks.push([drawnText.includes('UT Mission'),
   'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
 frames++; cb(performance.now());
+const soundToggle = document.getElementById('sound-enabled');
+checks.push([!soundToggle.checked && audioContexts.length === 0,
+  'cockpit audio is off until explicitly enabled']);
+soundToggle.checked = true;
+soundToggle._fire('change', {});
+await Promise.resolve();
+frames++; cb(performance.now());
+checks.push([soundToggle.checked && audioContexts.length === 1 &&
+  audioContexts[0].oscillators.length >= 5,
+  'cockpit sound initializes its procedural Web Audio layers after a user click']);
 const readOrientation = () => {
   const html = document.getElementById('hud').innerHTML;
   const match = html.match(/(?:orientation|impact angle)<\/span><span class="v">(-?\d+)°/);
@@ -146,12 +193,15 @@ checks.push([readOrientation() > orientationBefore,
 const fuelRemaining = () => Number(document.getElementById('hud').innerHTML
   .match(/fuel remaining<\/span><span class="v">([\d.]+) kg/)[1]);
 const reserveBefore = fuelRemaining();
+const soundsBeforeThrust = audioContexts[0].oscillators.length;
 windowListeners.keydown(keyEvent('ArrowUp'));
 for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
 windowListeners.keyup(keyEvent('ArrowUp'));
 const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
   'up arrow thrusts and reduces remaining fuel']);
+checks.push([audioContexts[0].oscillators.length > soundsBeforeThrust,
+  'thrust engages the synthesized relay sound']);
 const touchReserveBefore = reserveAfter;
 document.getElementById('lander-thrust')._fire('pointerdown', {
   pointerId: 7, cancelable: true, preventDefault: noop

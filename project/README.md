@@ -52,6 +52,12 @@ On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷*
 buttons overlay the bottom of the canvas so you can keep the lander in view.
 Press and hold a button to steer or fire the engine; release to stop.
 
+Enable **Cockpit sound** in the Mission panel for a synthesized cabin mix:
+ventilation and electrical hum, pump/engine audio while thrusting, relay
+switches, steering actuators, structural creaks, and touchdown impacts. Sound
+is off by default and starts only after an explicit click; no audio files or
+network requests are used.
+
 Expand **Other scenes and simulation settings** for the inherited Lab 10
 reference scenes. The required lunar mission is the default scene.
 
@@ -74,9 +80,10 @@ reference scenes. The required lunar mission is the default scene.
 `npm test` runs the headless physics suite and a browser-entry smoke test. The
 physics suite includes the proposal's rocket-equation, 60-second
 free-fall-energy, fuel-bound, and touchdown checks, plus accumulator checks at
-60 Hz, 144 Hz, and jittered frame intervals. The live-site check, real-device
-touch check, and DevTools CPU-throttling check remain part of deployment
-verification; see [`PROGRESS.md`](./PROGRESS.md).
+60 Hz, 144 Hz, and jittered frame intervals, and a spring-chain DT-halving
+convergence check. The live-site check, real-device touch check, and DevTools
+CPU-throttling check remain part of deployment verification; see
+[`PROGRESS.md`](./PROGRESS.md).
 
 ## GitHub Pages
 

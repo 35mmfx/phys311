@@ -423,6 +423,20 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'proposal unpowered free-fall energy stays within 1e-8 for 60 s',
      `|dE/E0|=${energyDrift.toExponential(3)}`);
 
+  const convergenceRuns = [];
+  for (const dt of [1 / 240, 1 / 480, 1 / 960]) {
+    const world = SCENES.chain({ ...ST, dt, integrator: 'verlet' }).world;
+    for (let i = 0; i < 10 / dt; i++) world.step(dt);
+    convergenceRuns.push(snap(world));
+  }
+  const coarseToMedium = maxdiff(convergenceRuns[0], convergenceRuns[1]);
+  const mediumToFine = maxdiff(convergenceRuns[1], convergenceRuns[2]);
+  console.log(`         DT-halving spring chain: 1/240 vs 1/480 max difference=${coarseToMedium.toExponential(3)} m; ` +
+              `1/480 vs 1/960=${mediumToFine.toExponential(3)} m`);
+  ok(mediumToFine < coarseToMedium,
+     'DT-halving reduces the position difference on a position-dependent spring',
+     `differences: ${coarseToMedium.toExponential(3)}, ${mediumToFine.toExponential(3)} m`);
+
   const conservative = SCENES.lunar(ST).world;
   const fuelBeforeMode = conservative.landerDrive.fuel;
   conservative.landerDrive.thrusting = true;

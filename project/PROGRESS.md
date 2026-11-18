@@ -1,6 +1,6 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-17 — deployed; automated checks pass; final manual checks remain.
+**Status date:** 2026-11-18 — deployed; automated checks pass; manual browser/device checks and external discussion posts remain.
 
 ## MUST tier status
 
@@ -31,7 +31,14 @@
 The test runner also verifies the fixed-step accumulator: both 60 Hz and
 144 Hz produce 2,400 steps over 10 seconds; the jittered sequence produces
 10.0083 seconds. A two-second stall is capped at eight substeps. Final local
-test totals: **54 physics/publishing checks and 26 browser-entry checks passed**.
+test totals: **55 physics/publishing checks and 29 browser-entry checks passed**.
+
+## Bonus convergence check
+
+The position-dependent spring chain was run for 10 seconds at
+`DT = 1/240 s`, `1/480 s`, and `1/960 s`. After DT halving, the maximum
+position difference between runs decreases, confirming numerical convergence:
+18.22 m between 1/240 and 1/480 s, and 15.09 m between 1/480 and 1/960 s.
 
 ## Recent visual polish
 
