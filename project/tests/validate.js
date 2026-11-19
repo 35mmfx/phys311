@@ -299,8 +299,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
-  ok(drive.fuel === 25 && drive.maxFuel === 25 && lander.mass === 1025,
-     'lunar mission starts with 25 kg of fuel');
+  ok(drive.fuel === 15 && drive.maxFuel === 15 && lander.mass === 1015,
+     'lunar mission starts with 15 kg of fuel');
 
   const repeat = SCENES.lunar(missionState).world;
   const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;

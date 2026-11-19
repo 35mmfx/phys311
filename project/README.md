@@ -33,7 +33,7 @@ npm test
 - The lander radius is `0.42 m`; the pad is centered at `x = 0` with a
   `1.45 m` half-width. One moving asteroid appears on about one in three starts
   and can destroy the lander on contact.
-- Dry mass is `1,000 kg`, starting fuel is `25 kg`, maximum thrust is
+- Dry mass is `1,000 kg`, starting fuel is `15 kg`, maximum thrust is
   `8,000 N`, and specific impulse is `300 s`.
 - Thrust points along `(-sin θ, cos θ)`. Fuel flow is
   `T / (Isp g0)`, with `g0 = 9.81 m/s²`. The integrator uses midpoint mass

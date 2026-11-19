@@ -1,5 +1,10 @@
 # Week 12 Decisions
 
+## 2026-11-18 — Reduce fuel reserve to 15 kg
+Planned: start each lunar mission with 25 kg of fuel.
+Did: reduce the starting reserve and capacity to 15 kg.
+Why: match the requested fuel reserve.
+
 ## 2026-11-18 — Reduce fuel reserve
 Planned: start each lunar mission with 50 kg of fuel.
 Did: reduce the starting reserve and capacity to 25 kg.
