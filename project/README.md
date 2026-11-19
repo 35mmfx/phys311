@@ -33,8 +33,18 @@ npm test
 - The lander radius is `0.42 m`; the pad is centered at `x = 0` with a
   `1.45 m` half-width. One moving asteroid appears on about one in three starts
   and can destroy the lander on contact.
-- Dry mass is `1,000 kg`, starting fuel is `15 kg`, maximum thrust is
-  `8,000 N`, and specific impulse is `300 s`.
+- The late-descent vehicle has an approximate non-descent-propellant mass of
+  `6,900 kg` (including ascent propellant and equipment), plus `300 kg` of
+  remaining descent propellant. The `8,200 kg` tank capacity makes the HUD's
+  remaining-fuel percentage relative to the original load, not 300 kg.
+- Maximum descent thrust is `45,000 N` and specific impulse is `304 s`.
+  The slider sets 10–100% thrust; holding a thrust control fires at that
+  setting, and releasing it shuts the engine off. The continuous slider is a
+  simplification and does not model Apollo's restricted throttle regions.
+- This starts in the final metres with low horizontal speed; it does **not**
+  simulate orbital-speed braking, the preceding fuel burn, or a full 12–13
+  minute powered descent. The small lander, flat arena, and asteroid hazard
+  are game simplifications, not Apollo geometry or mission conditions.
 - Thrust points along `(-sin θ, cos θ)`. Fuel flow is
   `T / (Isp g0)`, with `g0 = 9.81 m/s²`. The integrator uses midpoint mass
   during each fixed `1/240 s` step, then clamps fuel and mass at their lower
@@ -49,7 +59,8 @@ npm test
 
 Click the game area to activate keyboard controls. Use **← / →**, **A / D**,
 or numeric keypad **4 / 6** to steer; hold **↑ / ↓**, **W / S**, or keypad
-**8 / 2** to thrust. The up/down keys activate the same engine, which always
+**8 / 2** to thrust. Set **Engine throttle** in the Mission panel before or
+during a burn. The up/down keys activate the same engine, which always
 pushes along the lander's current orientation. The on-screen buttons provide
 press-and-hold touch controls. **Space** pauses, **.** advances one fixed step,
 and **R** resets the mission and re-baselines the energy reference.
@@ -95,6 +106,10 @@ free-fall-energy, fuel-bound, and touchdown checks, plus accumulator checks at
 convergence check. The live-site check, real-device touch check, and DevTools
 CPU-throttling check remain part of deployment verification; see
 [`PROGRESS.md`](./PROGRESS.md).
+
+The engine parameters are Apollo-inspired rather than a reconstruction. See
+NASA's [descent propulsion system report](https://ntrs.nasa.gov/citations/19730011150)
+and [Apollo 14 flight evaluation](https://ntrs.nasa.gov/citations/19730021081).
 
 ## GitHub Pages
 

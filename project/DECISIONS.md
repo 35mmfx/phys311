@@ -1,5 +1,13 @@
 # Week 12 Decisions
 
+## 2026-11-18 — Apollo-inspired final approach
+Planned: use the simplified lander with 15 kg of propellant.
+Did: start a short final approach with 300 kg remaining from an 8,200 kg
+descent tank, 6,900 kg of other mass, and a 45 kN throttleable engine.
+Why: approximate the late landing phase without replacing the game with an
+orbital descent. Throttle is continuous for gameplay; orbital braking and
+the preceding propellant burn are not simulated.
+
 ## 2026-11-18 — Reduce fuel reserve to 15 kg
 Planned: start each lunar mission with 25 kg of fuel.
 Did: reduce the starting reserve and capacity to 15 kg.

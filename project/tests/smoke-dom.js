@@ -229,6 +229,13 @@ windowListeners.keyup(keyEvent('ArrowDown'));
 const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
   'down arrow thrusts and reduces remaining fuel']);
+const throttle = document.getElementById('throttle');
+throttle.value = '0.25';
+throttle._fire('input', {});
+frames++; cb(performance.now());
+checks.push([document.getElementById('throttle-out').textContent === '25%'
+  && /throttle setting<\/span><span class="v">25%/.test(document.getElementById('hud').innerHTML),
+  'throttle slider updates the active lunar HUD']);
 const keypadFuelBefore = fuelRemaining();
 windowListeners.keydown(keyEvent('2', 'Numpad2'));
 windowListeners.keydown(keyEvent('ArrowUp'));

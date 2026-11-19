@@ -1,12 +1,12 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-18 — automated checks pass; live site freshly checked with zero console errors; CPU-throttled fixed-step check passes. The local conservative-energy fix still needs a Pages deployment; real-phone and external discussion checks remain.
+**Status date:** 2026-11-18 — automated checks pass; Apollo-inspired final approach and throttle are local changes awaiting deployment. The previous live site was freshly checked with zero console errors; CPU-throttled fixed-step check passes. Real-phone and external discussion checks remain.
 
 ## MUST tier status
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 15 kg fuel; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 300 kg remaining descent fuel; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
@@ -14,10 +14,10 @@
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |
-| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `1.742e-15`. |
+| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `2.969e-15`. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
-| GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` loaded in a fresh browser with zero console errors. The conservative-energy fix in this worktree is not yet deployed. |
+| GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` previously loaded in a fresh browser with zero console errors. The Apollo-inspired model in this worktree is not yet deployed. |
 
 ## Proposal validation results
 
@@ -32,8 +32,8 @@ The test runner also verifies seeded launch variation, the asteroid encounter
 rate and collision response, the terminal mission timer, and the fixed-step
 accumulator. Both 60 Hz and 144 Hz produce 2,400 steps over 10 seconds; the
 jittered sequence produces 10.0083 seconds. A two-second stall is capped at
-eight substeps. Final local test totals: **60 physics/publishing checks and
-35 browser-entry checks passed**.
+eight substeps. Final local test totals: **61 physics/publishing checks and
+36 browser-entry checks passed**.
 
 ## Bonus convergence check
 
@@ -74,7 +74,7 @@ and conservative-mode behavior selected this week.
    despite conservative dynamics. Cause: the lander drive's potential energy
    summed every body although its gravity force applies only to the lander.
    Fix: account for potential energy on the driven lander only; the seeded
-   asteroid regression now passes at `1.742e-15` relative drift.
+   asteroid regression now passes at `2.969e-15` relative drift.
 
 ## Remaining Week 12 work
 

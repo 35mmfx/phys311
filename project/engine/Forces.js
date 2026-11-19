@@ -137,16 +137,19 @@ export class LanderDrive {
     fuelMass = 0,
     maxFuel = fuelMass,
     isp = 300,
-    g0 = 9.81
+    g0 = 9.81,
+    throttle = 1
   } = {}) {
-    if (![gravity, thrust, rotationRate, dryMass, fuelMass, maxFuel, isp, g0]
+    if (![gravity, thrust, rotationRate, dryMass, fuelMass, maxFuel, isp, g0, throttle]
       .every(Number.isFinite) || gravity < 0 || thrust < 0 || rotationRate < 0 ||
-      dryMass <= 0 || fuelMass < 0 || maxFuel < fuelMass || isp <= 0 || g0 <= 0) {
+      dryMass <= 0 || fuelMass < 0 || maxFuel < fuelMass || isp <= 0 || g0 <= 0 ||
+      throttle < 0 || throttle > 1) {
       throw new RangeError('Lander propulsion parameters must be finite and physically valid.');
     }
     this.body = body;
     this.g = gravity;
     this.thrust = thrust;
+    this.throttle = throttle;
     this.rotationRate = rotationRate;
     this.dryMass = dryMass;
     this.maxFuel = maxFuel;
@@ -177,11 +180,12 @@ export class LanderDrive {
     if (b.fixed) return;
 
     b.angle += 0.5 * this.rotation * this.rotationRate * dt;
-    if (this.thrusting && this.fuel > 0 && this.thrust > 0) {
-      const flowRate = this.thrust / (this.isp * this.g0);
+    const commandedThrust = this.thrust * this.throttle;
+    if (this.thrusting && this.fuel > 0 && commandedThrust > 0) {
+      const flowRate = commandedThrust / (this.isp * this.g0);
       this._burnedThisStep = Math.min(this.fuel, flowRate * dt);
       const activeFraction = this._burnedThisStep / (flowRate * dt);
-      this._thrustThisStep = this.thrust * activeFraction;
+      this._thrustThisStep = commandedThrust * activeFraction;
       b.mass = this.dryMass + this.fuel - 0.5 * this._burnedThisStep;
       b.invMass = 1 / b.mass;
     }

@@ -32,6 +32,7 @@ export class HUD {
       <span class="k">${impact ? 'horizontal impact speed' : 'horizontal speed'}</span><span class="v">${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} m/s</span>
       <span class="k">${impact ? 'impact angle' : 'orientation'}</span><span class="v">${((impact ? impact.angle : lander.angle) * 180 / Math.PI).toFixed(0)}°</span>
       <span class="k">mass</span><span class="v">${lander.mass.toFixed(1)} kg</span>
+      <span class="k">throttle setting</span><span class="v">${(drive.throttle * 100).toFixed(0)}%</span>
       <span class="k">fuel remaining</span><span class="v">${drive.fuel.toFixed(2)} kg (${drive.charge.toFixed(0)}%)</span>
       <span class="k">score</span><span class="v">${world.mission.score} / 100</span>
       ` : ''}

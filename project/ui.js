@@ -26,6 +26,7 @@ export class Controls {
     slider('drag',  'drag',        v => v.toFixed(3));
     slider('speed', 'speed',       v => `${v.toFixed(2)}×`);
     slider('count', 'count',       v => `${v} bodies`, true);
+    slider('throttle', 'throttle', v => `${Math.round(v * 100)}%`);
 
     this.$('integrator').addEventListener('change', e => {
       s.integrator = e.target.value; this.onChange('integrator');
@@ -74,6 +75,7 @@ export class Controls {
     const s = this.state, set = (id, v) => { const e = this.$(id); if (e) e.value = v; };
     set('dt', s.dt); set('rest', s.restitution); set('grav', s.gravity);
     set('drag', s.drag); set('speed', s.speed); set('count', s.count);
+    set('throttle', s.throttle);
     set('integrator', s.integrator); set('scene', s.scene);
     this.$('trails').checked = s.trails;
     this.$('vel').checked    = s.velocityVectors;
@@ -96,6 +98,7 @@ export class Controls {
     put('drag', s.drag.toFixed(3));
     put('speed', `${s.speed.toFixed(2)}×`);
     put('count', `${s.count} bodies`);
+    put('throttle', `${Math.round(s.throttle * 100)}%`);
   }
 
   setPlayLabel(paused) {

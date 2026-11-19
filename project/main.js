@@ -14,7 +14,7 @@ import { CockpitSound } from './audio/CockpitSound.js';
 const DEFAULTS = {
   scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
-  speed: 1.0, count: 24, trails: true, spawnMode: false,
+  speed: 1.0, count: 24, throttle: 0.6, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false,
   debug: false, conservative: false,
   seed: Math.floor(Math.random() * 0x100000000)
@@ -102,6 +102,7 @@ function build() {
 function applyLive(changed = null) {
   if (!world) return;
   world.setIntegrator(state.integrator);
+  if (world.landerDrive) world.landerDrive.throttle = state.throttle;
   if (state.scene !== 'lunar') world.restitution = state.restitution;
   for (const f of world.forces) {
     if (f.constructor.name === 'UniformGravity')  f.g = state.gravity;

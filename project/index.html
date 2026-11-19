@@ -57,6 +57,11 @@
       <h2 id="mission-heading">Mission</h2>
       <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is limited, and the lander gets lighter as it burns fuel. Watch for an asteroid on some flights. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
+      <p class="physics-note">Final approach starts with 300 kg of descent propellant left from an 8,200 kg tank. Fuel percentage is relative to that original load.</p>
+      <div class="row">
+        <label for="throttle">Engine throttle <output id="throttle-out">60%</output></label>
+        <input type="range" id="throttle" min="0.1" max="1" step="0.05" value="0.6">
+      </div>
       <p class="keys">
         Click the game, then use <kbd>←</kbd>/<kbd>→</kbd> or keypad <kbd>4</kbd>/<kbd>6</kbd> to rotate &middot;
         hold <kbd>↑</kbd>/<kbd>↓</kbd> or keypad <kbd>8</kbd>/<kbd>2</kbd> to thrust.<br>

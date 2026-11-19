@@ -12,6 +12,7 @@ export const StateURL = {
     p.set('drag',  String(s.drag));
     p.set('speed', String(s.speed));
     p.set('n',     String(s.count));
+    p.set('throttle', String(s.throttle));
     p.set('seed',  String(Number.isInteger(s.seed) ? s.seed : 0));
     if (s.debug) p.set('debug', '1');
     if (s.conservative) p.set('conservative', '1');
@@ -34,6 +35,7 @@ export const StateURL = {
       drag:        clamp(num('drag',  defaults.drag),        0,     0.2),
       speed:       clamp(num('speed', defaults.speed),       0.25,  2),
       count:       Math.round(clamp(num('n', defaults.count), 3,   120)),
+      throttle:    clamp(num('throttle', defaults.throttle), 0.1, 1),
       seed:        Math.round(clamp(num('seed', defaults.seed || 0), 0, 0xFFFFFFFF)),
       debug:       p.get('debug') === '1',
       conservative: p.get('conservative') === '1'

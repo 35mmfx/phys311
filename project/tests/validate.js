@@ -23,7 +23,7 @@ const ok = (c, name, detail = '') => {
 const H = t => console.log(`\n${t}\n${'-'.repeat(t.length)}`);
 
 const ST = { scene:'billiards', integrator:'verlet', dt:1/240, restitution:0.95,
-             gravity:9.81, drag:0, speed:1, count:24, seed:12345 };
+             gravity:9.81, drag:0, speed:1, count:24, seed:12345, throttle:0.6 };
 const snap = w => w.bodies.map(b => [b.pos.x, b.pos.y, b.vel.x, b.vel.y]);
 const maxdiff = (A, B) => Math.max(...A.flat().map((v, i) => Math.abs(v - B.flat()[i])));
 const splitCSV = row => row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
@@ -169,7 +169,7 @@ H('7. Scene 4 is degenerate; scene 2 separates the integrators');
 H('8. Permalink: encode/decode round trip');
 {
   const s = { scene:'orbits', integrator:'ec', dt:1/180, restitution:0.37,
-              gravity:3.71, drag:0.012, speed:1.45, count:57, seed:987654321 };
+              gravity:3.71, drag:0.012, speed:1.45, count:57, seed:987654321, throttle:0.45 };
   const back = StateURL.decode(StateURL.encode(s), ST);
   const same = Object.keys(s).every(k => Math.abs((back[k] ?? 0) - s[k]) < 1e-9 || back[k] === s[k]);
   ok(same && StateURL.encode(s).startsWith('?'),
@@ -181,11 +181,12 @@ H('8. Permalink: encode/decode round trip');
   ok(legacy.scene === 'projectile' && legacy.integrator === 'ec',
      'previously published hash-based links remain readable');
   const clamped = StateURL.decode(
-    '#dt=1&g=100&e=-1&drag=3&speed=0&n=900',
+    '#dt=1&g=100&e=-1&drag=3&speed=0&n=900&throttle=2',
     ST
   );
   ok(clamped.dt === 0.02 && clamped.gravity === 25 && clamped.restitution === 0
-     && clamped.drag === 0.2 && clamped.speed === 0.25 && clamped.count === 120,
+     && clamped.drag === 0.2 && clamped.speed === 0.25 && clamped.count === 120
+     && clamped.throttle === 1,
      'shareable URL parameters are clamped to the slider ranges');
   const flagged = StateURL.decode('?debug=1&conservative=1', ST);
   ok(flagged.debug && flagged.conservative,
@@ -299,8 +300,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
-  ok(drive.fuel === 15 && drive.maxFuel === 15 && lander.mass === 1015,
-     'lunar mission starts with 15 kg of fuel');
+  ok(drive.fuel === 300 && drive.maxFuel === 8200 && lander.mass === 7200,
+     'lunar final approach starts with 300 kg of fuel');
 
   const repeat = SCENES.lunar(missionState).world;
   const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;
@@ -333,6 +334,26 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(drive.fuel === remainingFuel,
      'unpowered flight does not regenerate finite propellant',
      `fuel remains ${drive.fuel.toFixed(2)} kg`);
+
+  const throttleRun = throttle => {
+    const w = new World({ dt: 1 / 240 });
+    const body = w.add(new Body({ pos: new Vec2(0, 0), mass: 7200 }));
+    const motor = w.addForce(new LanderDrive(body, {
+      gravity: 0, dryMass: 6900, fuelMass: 300, maxFuel: 8200,
+      thrust: 45000, isp: 304, throttle
+    }));
+    motor.thrusting = true;
+    for (let i = 0; i < 240; i++) w.step(w.DT);
+    return { burned: 300 - motor.fuel, velocity: body.vel.y };
+  };
+  const halfThrottle = throttleRun(0.5);
+  const fullThrottle = throttleRun(1);
+  const expectedFullBurn = 45000 / (304 * 9.81);
+  ok(Math.abs(fullThrottle.burned - expectedFullBurn) < 1e-8
+     && Math.abs(halfThrottle.burned * 2 - fullThrottle.burned) < 1e-8
+     && halfThrottle.velocity > 0 && halfThrottle.velocity < fullThrottle.velocity,
+     'throttle scales both fuel flow and acceleration',
+     `half=${halfThrottle.burned.toFixed(3)} kg/s, full=${fullThrottle.burned.toFixed(3)} kg/s`);
 
   const rocket = new World({ dt: 1 / 240, integrator: 'verlet', bounds: null });
   Body.resetIds();

@@ -145,7 +145,7 @@ export const SCENES = {
     const lander = w.add(new Body({
       pos: new Vec2(-7 + rnd() * 14, landerRadius + 10 + rnd() * 4),
       vel: new Vec2(1.7, -1.8),
-      mass: 1015,
+      mass: 7200,
       radius: landerRadius,
       color: '#e6edf3',
       tag: 'lander',
@@ -153,11 +153,12 @@ export const SCENES = {
     }));
     const drive = w.addForce(new LanderDrive(lander, {
       gravity: 1.62,
-      dryMass: 1000,
-      fuelMass: 15,
-      maxFuel: 15,
-      thrust: 8000,
-      isp: 300,
+      dryMass: 6900,
+      fuelMass: 300,
+      maxFuel: 8200,
+      thrust: 45000,
+      throttle: state.throttle,
+      isp: 304,
       g0: 9.81
     }));
     if (rnd() < 1 / 3) {
