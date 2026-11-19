@@ -43,10 +43,12 @@ npm test
 
 ## Controls
 
-Focus the canvas to use **← / →** or **A / D** to steer and hold **↑** or
-**W** to thrust. The on-screen buttons provide press-and-hold touch controls.
-**Space** pauses, **.** advances one fixed step, and **R** resets the mission
-and re-baselines the energy reference.
+Click the game area to activate keyboard controls. Use **← / →**, **A / D**,
+or numeric keypad **4 / 6** to steer; hold **↑ / ↓**, **W / S**, or keypad
+**8 / 2** to thrust. The up/down keys activate the same engine, which always
+pushes along the lander's current orientation. The on-screen buttons provide
+press-and-hold touch controls. **Space** pauses, **.** advances one fixed step,
+and **R** resets the mission and re-baselines the energy reference.
 
 On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷**
 buttons overlay the bottom of the canvas so you can keep the lander in view.
@@ -54,11 +56,12 @@ Press and hold a button to steer or fire the engine; release to stop.
 
 Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
 a synthesized interior mix: ventilation and avionics hum, structure-borne
-engine rumble, pulsing propellant pumps, relay clicks, steering servos, hull
-creaks, and touchdown impacts. The engine is intentionally heard as vibration
-through the cabin rather than an exterior rocket roar. Sound is off by default
-and starts only after an explicit click; no audio files or network requests are
-used.
+engine rumble, pulsing propellant pumps, relay clicks, hull creaks, touchdown
+thuds, and a distinct rattling side-wall collision. Steering has no synthesized
+sound. The engine is heard as vibration through the cabin rather than an
+exterior rocket roar. Sound is off by default and starts only after an explicit
+click; no audio files or network requests are used. Muting suspends the audio
+context, and the engine audio updates only when thrust state changes.
 
 Expand **Other scenes and simulation settings** for the inherited Lab 10
 reference scenes. The required lunar mission is the default scene.

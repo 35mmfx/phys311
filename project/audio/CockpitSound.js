@@ -10,7 +10,8 @@ export class CockpitSound {
     this.enabled = false;
     this.volume = 0.75;
     this.thrusting = false;
-    this.rotation = 0;
+    this.engineLevel = null;
+    this.fuelBand = null;
     this.paused = false;
     this.missionStatus = 'flying';
   }
@@ -30,40 +31,42 @@ export class CockpitSound {
     }
   }
 
-  disable() {
+  async disable() {
     if (!this.context || !this.enabled) return;
     this.enabled = false;
-    setTarget(this.master.gain, 0, this.context, 0.08);
+    this.master.gain.setValueAtTime(0, this.context.currentTime);
+    await this.context.suspend();
   }
 
   reset() {
     this.thrusting = false;
-    this.rotation = 0;
     this.paused = false;
     this.missionStatus = 'flying';
     if (this.enabled) this.switchClick();
-    this._setFlightGains(0, 0);
+    this._setFlightGains(0);
   }
 
-  update({ thrusting = false, rotation = 0, paused = false, missionStatus = 'flying',
-           impactSpeed = 0, fuelFraction = 1 } = {}) {
+  update({ thrusting = false, paused = false, missionStatus = 'flying',
+           impactSpeed = 0, impactKind = '', fuelFraction = 1 } = {}) {
     if (!this.enabled || !this.context) return;
 
     if (thrusting !== this.thrusting) this.relayClick(thrusting);
     if (paused !== this.paused) this.switchClick();
     if (missionStatus !== this.missionStatus && missionStatus !== 'flying') {
-      this.impact(impactSpeed, missionStatus === 'landed');
+      if (impactKind === 'side-wall') this.sideImpact(impactSpeed);
+      else this.impact(impactSpeed, missionStatus === 'landed');
     }
 
     this.thrusting = thrusting;
-    this.rotation = rotation;
     this.paused = paused;
     this.missionStatus = missionStatus;
-    this._setFlightGains(
-      thrusting && !paused ? 1 : 0,
-      rotation && !paused ? rotation : 0,
-      fuelFraction
-    );
+    const engine = thrusting && !paused ? 1 : 0;
+    const fuelBand = Math.round(fuelFraction * 20) / 20;
+    if (engine !== this.engineLevel || (engine && fuelBand !== this.fuelBand)) {
+      this._setFlightGains(engine, fuelFraction);
+      this.engineLevel = engine;
+      this.fuelBand = fuelBand;
+    }
   }
 
   switchClick() {
@@ -131,6 +134,33 @@ export class CockpitSound {
     this.creak();
   }
 
+  sideImpact(speed) {
+    if (!this.enabled || !this.context) return;
+    this.impact(speed, false);
+    const now = this.context.currentTime;
+    const amount = Math.max(0.35, Math.min(1, speed / 5));
+    for (const [delay, frequency, level] of [
+      [0, 1250, 0.34],
+      [0.055, 820, 0.24],
+      [0.12, 1680, 0.16]
+    ]) {
+      const noise = this.context.createBufferSource();
+      const filter = this.context.createBiquadFilter();
+      const gain = this.context.createGain();
+      const start = now + delay;
+      noise.buffer = this.noiseBuffer;
+      filter.type = 'bandpass';
+      filter.frequency.value = frequency;
+      filter.Q.value = 0.9;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(level * amount, start + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.095);
+      noise.connect(filter).connect(gain).connect(this.master);
+      noise.start(start);
+      noise.stop(start + 0.105);
+    }
+  }
+
   _createAudioGraph() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) throw new Error('Web Audio is not supported by this browser.');
@@ -174,13 +204,6 @@ export class CockpitSound {
     pumpLfo.start();
     this.pumpDepth = pumpDepth;
 
-    const servo = this._tone(240, 'sawtooth', 0);
-    this.servoGain = servo.gain;
-    this.servoGain.gain.value = 0;
-    this.servoOsc = servo.osc;
-    const servoNoise = this._noiseLoop(1450, 0, 'bandpass', 1.2);
-    this.servoNoiseGain = servoNoise.gain;
-    this.servoNoiseGain.gain.value = 0;
   }
 
   _noiseLoop(cutoff, volume, type, quality = 1) {
@@ -209,7 +232,7 @@ export class CockpitSound {
     return { osc, gain };
   }
 
-  _setFlightGains(engine, actuator, fuelFraction = 1) {
+  _setFlightGains(engine, fuelFraction = 1) {
     if (!this.context) return;
     const context = this.context;
     setTarget(this.engineGain.gain, engine * 0.2, context, 0.14);
@@ -219,9 +242,6 @@ export class CockpitSound {
     setTarget(this.pumpGain.gain, engine * 0.019, context, 0.08);
     setTarget(this.pumpDepth.gain, engine * 0.012, context, 0.08);
     setTarget(this.engineTone.frequency, 40 + (1 - fuelFraction) * 11, context, 0.2);
-    setTarget(this.servoGain.gain, Math.abs(actuator) * 0.045, context, 0.05);
-    setTarget(this.servoNoiseGain.gain, Math.abs(actuator) * 0.055, context, 0.05);
-    setTarget(this.servoOsc.frequency, 230 + actuator * 35, context, 0.05);
   }
 
   _click(frequency, volume, duration, bodyVolume) {

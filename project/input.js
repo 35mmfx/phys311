@@ -26,6 +26,15 @@ export function slingshotVelocity(origin, current) {
   return { x, y };
 }
 
+function landerControlKey(event) {
+  const key = event.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'w', 's'].includes(key) ||
+      ['Numpad8', 'Numpad2'].includes(event.code)) return 'thrust';
+  if (['arrowleft', 'a'].includes(key) || event.code === 'Numpad4') return 'left';
+  if (['arrowright', 'd'].includes(key) || event.code === 'Numpad6') return 'right';
+  return null;
+}
+
 export class PointerInput {
   constructor(canvas, camera, world, spring, {
     onSpawn = null, onLaunch = () => {}, onCursor = () => {}, slingshotMode = false
@@ -128,21 +137,20 @@ export class KeyboardInput {
   }
 
   _down(e) {
-    if (e.target.matches('input, select, textarea, button, a, [contenteditable="true"]')) return;
+    if (e.target.matches('input, select, textarea, [contenteditable="true"]')) return;
     const A = this.actions;
-    if (this.world.conservativeMode &&
-        ['arrowup', 'w', 'arrowleft', 'a', 'arrowright', 'd'].includes(e.key.toLowerCase())) {
-      e.preventDefault();
-      return;
-    }
-    if (this.world.landerDrive && this.world.mission?.status === 'flying') {
-      const key = e.key.toLowerCase();
-      if (['arrowup', 'w', 'arrowleft', 'a', 'arrowright', 'd'].includes(key)) {
-        this._landerHeld.add(key);
-        this._updateLanderControls();
+    const control = landerControlKey(e);
+    if (this.world.landerDrive && control) {
+      if (this.world.conservativeMode || this.world.mission?.status !== 'flying') {
         e.preventDefault();
         return;
       }
+      this._landerHeld.add(
+        e.code && e.code.startsWith('Numpad') ? e.code : e.key.toLowerCase()
+      );
+      this._updateLanderControls();
+      e.preventDefault();
+      return;
     }
     switch (e.key) {
       case ' ':      A.togglePause(); e.preventDefault(); break;
@@ -190,8 +198,11 @@ export class KeyboardInput {
   }
 
   _up(e) {
-    if (this.world.landerDrive) {
-      this._landerHeld.delete(e.key.toLowerCase());
+    const control = landerControlKey(e);
+    if (this.world.landerDrive && control) {
+      this._landerHeld.delete(
+        e.code && e.code.startsWith('Numpad') ? e.code : e.key.toLowerCase()
+      );
       this._updateLanderControls();
     }
     if (e.key.startsWith('Arrow') && !this.launch) {
@@ -203,9 +214,12 @@ export class KeyboardInput {
     const drive = this.world.landerDrive;
     if (!drive) return;
     const held = this._landerHeld;
-    drive.thrusting = held.has('arrowup') || held.has('w') || held.has('button-thrust');
-    drive.rotation = (held.has('arrowleft') || held.has('a') || held.has('button-left') ? 1 : 0)
-      - (held.has('arrowright') || held.has('d') || held.has('button-right') ? 1 : 0);
+    const isHeld = control => Array.from(held).some(key =>
+      landerControlKey({ key, code: key }) === control
+    );
+    drive.thrusting = isHeld('thrust') || held.has('button-thrust');
+    drive.rotation = (isHeld('left') || held.has('button-left') ? 1 : 0)
+      - (isHeld('right') || held.has('button-right') ? 1 : 0);
   }
 
   _clearLanderControls() {

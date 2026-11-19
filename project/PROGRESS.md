@@ -8,7 +8,7 @@
 |---|---|---|
 | Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 150 kg fuel; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
-| Keyboard and touch controls | done | Arrow/WASD keyboard controls and press-and-hold touch buttons; smoke-tested. |
+| Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls (including Up/Down thrust aliases), plus press-and-hold touch buttons; smoke-tested with a focused button. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
 | HUD: altitude, speed, attitude, fuel, score | done | Score is 100 for a safe landing and 0 otherwise. |
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
@@ -31,7 +31,7 @@
 The test runner also verifies the fixed-step accumulator: both 60 Hz and
 144 Hz produce 2,400 steps over 10 seconds; the jittered sequence produces
 10.0083 seconds. A two-second stall is capped at eight substeps. Final local
-test totals: **55 physics/publishing checks and 30 browser-entry checks passed**.
+test totals: **56 physics/publishing checks and 35 browser-entry checks passed**.
 
 ## Bonus convergence check
 

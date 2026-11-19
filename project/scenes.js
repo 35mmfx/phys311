@@ -178,10 +178,19 @@ export const SCENES = {
       if (w.mission.status !== 'flying') return;
       const { xmin, xmax, ymin, ymax } = w.bounds;
       const r = lander.radius;
-      if (lander.pos.x - r < xmin || lander.pos.x + r > xmax ||
-          lander.pos.y + r > ymax) {
+      const sideImpact = lander.pos.x - r < xmin || lander.pos.x + r > xmax;
+      const ceilingImpact = lander.pos.y + r > ymax;
+      if (sideImpact || ceilingImpact) {
+        w.mission.impact = {
+          verticalSpeed: lander.vel.y,
+          horizontalSpeed: lander.vel.x,
+          angle: lander.angle,
+          kind: sideImpact ? 'side-wall' : 'ceiling'
+        };
         w.mission.status = 'crashed';
-        w.mission.message = 'Crash: the lander struck the canyon wall.';
+        w.mission.message = sideImpact
+          ? 'Crash: the lander struck the canyon wall.'
+          : 'Crash: the lander struck the canyon ceiling.';
         return;
       }
       if (lander.pos.y - r >= ymin) return;

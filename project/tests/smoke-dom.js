@@ -1,5 +1,7 @@
 // smoke-dom.js — boots main.js against a stub DOM to prove the browser
 // entry point actually wires up and renders frames. Run: node tests/smoke-dom.js
+import { CockpitSound } from '../audio/CockpitSound.js';
+
 const noop = () => {};
 let lineToCalls = 0;
 const drawnText = [];
@@ -47,6 +49,8 @@ class MockAudioContext {
     this.destination = {};
     this.oscillators = [];
     this.gainNodes = [];
+    this.bufferSources = [];
+    this.state = 'suspended';
     audioContexts.push(this);
   }
   createGain() {
@@ -61,7 +65,9 @@ class MockAudioContext {
     };
   }
   createBufferSource() {
-    return { connect() { return this; }, start() {}, stop() {} };
+    const source = { connect() { return this; }, start() {}, stop() {} };
+    this.bufferSources.push(source);
+    return source;
   }
   createOscillator() {
     const oscillator = {
@@ -75,7 +81,8 @@ class MockAudioContext {
     const data = Array.from({ length: channels }, () => new Float32Array(length));
     return { getChannelData: index => data[index] };
   }
-  resume() { return Promise.resolve(); }
+  resume() { this.state = 'running'; return Promise.resolve(); }
+  suspend() { this.state = 'suspended'; return Promise.resolve(); }
 }
 globalThis.document = {
   getElementById: id => { if (!nodes.has(id)) nodes.set(id, el(id)); return nodes.get(id); },
@@ -123,10 +130,10 @@ checks.push([/cursor/.test(document.getElementById('hud').innerHTML)
   && !/outside canvas/.test(document.getElementById('hud').innerHTML),
   'pointer position appears in the live HUD']);
 const beforeStep = Number(document.getElementById('hud').innerHTML.match(/<span class="v">(\d+)<\/span>\s*<span class="k">bodies/)[1]);
-const keyEvent = (key) => {
+const keyEvent = (key, code = '', target = { matches: () => false }) => {
   let defaultPrevented = false;
   return {
-    key, target: { matches: () => false },
+    key, code, target,
     preventDefault: () => { defaultPrevented = true; },
     get defaultPrevented() { return defaultPrevented; }
   };
@@ -204,16 +211,31 @@ for (let i = 0; i < 15; i++) { frames++; cb(performance.now()); }
 windowListeners.keyup(keyEvent('ArrowLeft'));
 checks.push([readOrientation() > orientationBefore,
   'left arrow rotates the lander while the mission is running']);
+const keypadOrientationBefore = readOrientation();
+const focusedButton = { matches: selector => selector.includes('button') };
+windowListeners.keydown(keyEvent('4', 'Numpad4', focusedButton));
+for (let i = 0; i < 15; i++) { frames++; cb(performance.now()); }
+windowListeners.keyup(keyEvent('4', 'Numpad4', focusedButton));
+checks.push([readOrientation() > keypadOrientationBefore,
+  'numeric keypad steering works when a button has focus']);
 const fuelRemaining = () => Number(document.getElementById('hud').innerHTML
   .match(/fuel remaining<\/span><span class="v">([\d.]+) kg/)[1]);
 const reserveBefore = fuelRemaining();
 const soundsBeforeThrust = audioContexts[0].oscillators.length;
-windowListeners.keydown(keyEvent('ArrowUp'));
+windowListeners.keydown(keyEvent('ArrowDown'));
 for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
-windowListeners.keyup(keyEvent('ArrowUp'));
+windowListeners.keyup(keyEvent('ArrowDown'));
 const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
-  'up arrow thrusts and reduces remaining fuel']);
+  'down arrow thrusts and reduces remaining fuel']);
+const keypadFuelBefore = fuelRemaining();
+windowListeners.keydown(keyEvent('2', 'Numpad2'));
+windowListeners.keydown(keyEvent('ArrowUp'));
+windowListeners.keyup(keyEvent('2', 'Numpad2'));
+for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
+windowListeners.keyup(keyEvent('ArrowUp'));
+checks.push([fuelRemaining() < keypadFuelBefore,
+  'thrust stays active while another thrust key is still held']);
 checks.push([audioContexts[0].oscillators.length > soundsBeforeThrust &&
   audioContexts[0].gainNodes.some(node => node.gain.targets.includes(0.2)),
   'thrust engages the synthesized relay sound']);
@@ -248,6 +270,22 @@ checks.push([/score<\/span><span class="v">0 \/ 100/.test(document.getElementByI
 checks.push([document.getElementById('race-left-integrator').value === 'euler' &&
   document.getElementById('race-right-integrator').value === 'verlet',
   'integrator race offers two independently selected solvers']);
+const soundProbe = new CockpitSound();
+await soundProbe.enable();
+const probeContext = audioContexts[audioContexts.length - 1];
+const oscillatorsBeforeSteering = probeContext.oscillators.length;
+soundProbe.update({ rotation: 1 });
+checks.push([probeContext.oscillators.length === oscillatorsBeforeSteering,
+  'steering alone produces no synthesized actuator sound']);
+const noisesBeforeSideCrash = probeContext.bufferSources.length;
+soundProbe.update({
+  missionStatus: 'crashed', impactKind: 'side-wall', impactSpeed: 6
+});
+checks.push([probeContext.bufferSources.length >= noisesBeforeSideCrash + 4,
+  'side-wall crash produces impact and metallic-rattle noise layers']);
+await soundProbe.disable();
+checks.push([probeContext.state === 'suspended',
+  'muting suspends the audio context to reduce idle processing']);
 raceDetails.open = true;
 for (let i = 0; i < 120; i++) { frames++; cb(performance.now()); }
 checks.push([/RMS position difference/.test(document.getElementById('race-readout').textContent) &&

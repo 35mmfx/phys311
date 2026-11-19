@@ -75,7 +75,9 @@ function build() {
   cockpitSound.reset();
   if (!world.mission && soundToggle.checked) {
     soundToggle.checked = false;
-    cockpitSound.disable();
+    cockpitSound.disable().catch(error => {
+      announce(`Cockpit sound could not be suspended: ${error.message}`);
+    });
   }
   lastMissionStatus = null;
   setConservativeMode(world, state.conservative);
@@ -209,11 +211,11 @@ const actions = {
 soundToggle.addEventListener('change', async () => {
   try {
     if (soundToggle.checked) await cockpitSound.enable();
-    else cockpitSound.disable();
+    else await cockpitSound.disable();
     announce(soundToggle.checked ? 'Cockpit sound enabled' : 'Cockpit sound muted');
   } catch (error) {
     soundToggle.checked = false;
-    announce(`Cockpit sound could not start: ${error.message}`);
+    announce(`Cockpit sound could not be updated: ${error.message}`);
   }
 });
 soundVolume.addEventListener('input', () => {
@@ -299,9 +301,9 @@ function frame(now) {
   const impact = world.mission?.impact;
   cockpitSound.update({
     thrusting: Boolean(world.landerDrive?.thrusting),
-    rotation: world.landerDrive?.rotation || 0,
     paused,
     missionStatus: world.mission?.status || 'flying',
+    impactKind: impact?.kind || '',
     fuelFraction: world.landerDrive
       ? world.landerDrive.fuel / world.landerDrive.maxFuel
       : 1,

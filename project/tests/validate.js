@@ -382,6 +382,14 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const fast = touchdown({ vx: 0, vy: -1.81 });
   ok(fast.mission.status === 'crashed' && /speed was too high/.test(fast.mission.message),
      'proposal vertical speed just above 1.8 m/s crashes');
+  const sideCrash = SCENES.lunar(ST).world;
+  sideCrash.lander.pos.x = sideCrash.bounds.xmax + sideCrash.lander.radius + 0.1;
+  sideCrash.lander.vel.set(4, -2);
+  sideCrash.step(sideCrash.DT);
+  ok(sideCrash.mission.status === 'crashed'
+     && sideCrash.mission.impact.kind === 'side-wall'
+     && sideCrash.mission.impact.horizontalSpeed === 4,
+     'side-wall crashes preserve pre-impact speed for the crash sound');
   const gradients = [];
   const drawContext = new Proxy({}, { get: (_, key) =>
     (key === 'createRadialGradient' || key === 'createLinearGradient')

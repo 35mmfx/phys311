@@ -20,10 +20,10 @@
     <canvas id="sim" tabindex="0" role="img"
             aria-label="Lunar lander game. Rotate and thrust to reach the green landing pad."
             aria-describedby="canvas-help">
-      Lunar lander simulation. Use left and right arrows to rotate, and hold up to thrust. Land upright and gently on the green pad.
+      Lunar lander simulation. Use left and right arrows to rotate, and hold up or down to thrust. Land upright and gently on the green pad.
     </canvas>
     <p id="canvas-help" class="sr-only">
-      Focus the canvas for keyboard controls. Hold left or right arrow (or A and D) to rotate. Hold up arrow (or W) to thrust.
+      Click the game canvas, then hold left or right arrow, keypad 4 or 6, or A and D to rotate. Hold up or down arrow, keypad 8 or 2, or W and S to thrust.
       Propellant is finite, and the lander gets lighter as fuel burns. Land on the green pad with low speed and nearly upright.
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
@@ -67,8 +67,8 @@
       <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is finite, and the lander gets lighter as it burns fuel. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
       <p class="keys">
-        Focus the canvas: <kbd>←</kbd>/<kbd>→</kbd> or <kbd>A</kbd>/<kbd>D</kbd> rotate &middot;
-        hold <kbd>↑</kbd> or <kbd>W</kbd> to thrust and brake.<br>
+        Click the game, then use <kbd>←</kbd>/<kbd>→</kbd> or keypad <kbd>4</kbd>/<kbd>6</kbd> to rotate &middot;
+        hold <kbd>↑</kbd>/<kbd>↓</kbd> or keypad <kbd>8</kbd>/<kbd>2</kbd> to thrust.<br>
         <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
       </p>
       <div class="check sound-setting">
