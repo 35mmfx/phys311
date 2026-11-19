@@ -1,5 +1,10 @@
 # Week 12 Decisions
 
+## 2026-11-18 — Randomized lunar missions
+Planned: use the same fixed lunar start and 150 kg fuel reserve on every run.
+Did: reduce fuel to 50 kg, randomize the seeded start within x = -7 to 7 m and altitude = 10 to 14 m, and add an asteroid hazard to about one in three starts.
+Why: each restart offers a more varied challenge while seeded URLs remain reproducible; mission time freezes when the lander lands or crashes.
+
 ## 2026-11-18 — Remove optional integrator race
 Planned: keep the side-by-side integrator race as an inherited Lab 10 demonstration.
 Did: remove the race UI and its runtime wiring; keep the individual integrator setting and legacy scenes.

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 12 Lesson — Building Under a Deadline</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  pre .class { color: #4ec9b0; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 12 -- Building Under a Deadline</h1>
+
+<div class="objectives">
+  <strong>🎯 By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Work in small, always-running increments rather than large risky rewrites</li>
+    <li>Diagnose a misbehaving simulation with a systematic decision tree instead of guesswork</li>
+    <li>Recognize the five classic physics-simulation bugs on sight</li>
+    <li>Use Git branches and commits as a safety net for experiments</li>
+    <li>Decide, on evidence, when to cut a feature — and cut it cleanly</li>
+    <li>Ask for help in a way that gets you an answer within hours</li>
+  </ul>
+</div>
+
+<div class="concept-box">
+    <strong>📅 Read this first — the calendar is shorter than you think.</strong>
+	<strong>Week 13 is the last week of the course.</strong>&nbsp; Everything, final code, validation report, documentation,&nbsp; presentation, Showcase post, and final reflection 
+	,s due at the <strong>end of Week 13</strong>. That means this week is your last full building week, and Week 13 is almost entirely measurement, writing, and launch. Plan accordingly: anything not working by the end of this week is very likely not going to ship.
+</div>
+
+<div class="key-idea">
+  <strong>💡 One goal this week: your MUST tier, deployed.</strong> Not the SHOULD tier. Not "mostly the MUST tier plus a start on rotation." A running, public, correct-physics version of the smallest complete form of your project. Everything in this lesson exists to protect that goal from the two things that threaten it, scope creep and unsystematic debugging. If the MUST tier lands early, spend the remainder of the week on SHOULD items,but only ones you can finish and leave running.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; Always-Running Development</h2>
+
+<p>There are two ways to build a feature. One of them works.</p>
+
+<table><caption>Comparison of large-batch development with incremental, test-and-commit development</caption>
+  <thead><tr><th></th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">The way that fails</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">The way that works</th></tr></thead>
+  <tbody>
+    <tr><td>Approach</td><td>Write the whole feature, then run it</td><td>Change one thing, run it, commit, repeat</td></tr>
+    <tr><td>When a bug appears</td><td>Somewhere in 300 new lines</td><td>In the 10 lines you just wrote</td></tr>
+    <tr><td>Time to find it</td><td>Hours</td><td>Seconds</td></tr>
+    <tr><td>If it's unfixable</td><td>You've lost a day</td><td><code style="font-size: 12pt;">git checkout .</code> and you've lost ten minutes</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Your simulation should never be broken for more than about ten minutes.</strong> If it has been broken longer than that, stop adding and start subtracting until it runs again. A working simulation is your measuring instrument, you cannot debug physics without one. Being "mid-rewrite" for two days is how a project dies.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.1 &nbsp; Slicing a feature into always-running steps</h3>
+
+<p>Suppose your one new thing is line-segment terrain for a lunar lander. Don't write a terrain system. Write these, in order, running after each:</p>
+
+<ol>
+  <li>Draw one hard-coded line segment. Nothing collides. Commit.</li>
+  <li>Compute closest-point distance from the lander to that segment; print it. Commit.</li>
+  <li>When distance &lt; radius, print "HIT" once. Physics unchanged. Commit.</li>
+  <li>On hit, reflect velocity about the segment normal with e = 1. Check it bounces sensibly. Commit.</li>
+  <li>Apply your real restitution and positional correction. Commit.</li>
+  <li>Replace the hard-coded segment with an array of segments. Commit.</li>
+</ol>
+
+<p>Six commits, six working states. If step 4 goes wrong, you know with certainty that steps 1–3 are fine and the bug is in the reflection math, which is fifteen lines.</p>
+
+<div class="physics-note">
+  <strong>🔬 Notice step 3.</strong> Detection is validated before response exists. This is the broad-phase / narrow-phase / resolution separation from Week 9, used as a debugging strategy. Most collision bugs students report turn out to be detection bugs misdiagnosed as response bugs, because they wrote both at once.
+</div>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; Git as a Safety Net</h2>
+
+<p>You've been committing weekly all semester. This week, commit hourly.</p>
+
+<table><caption>Equivalent Git commands and VS Code actions for saving work, discarding changes, creating and abandoning a branch, and merging an experiment.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Situation</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Command line</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Desktop / VS Code</th></tr></thead>
+  <tbody>
+    <tr><td>Save a working state</td><td><code style="font-size: 12pt;">git commit -am "segment collision detects"</code></td><td>Summary + <strong>Commit to main</strong></td></tr>
+    <tr><td>Throw away the last 20 minutes</td><td><code style="font-size: 12pt;">git checkout .</code></td><td>Right-click changes → <strong>Discard changes</strong></td></tr>
+    <tr><td>Try something risky</td><td><code style="font-size: 12pt;">git checkout -b try-rotation</code></td><td><strong>Branch → New Branch</strong></td></tr>
+    <tr><td>Abandon the experiment</td><td><code style="font-size: 12pt;">git checkout main</code></td><td>Switch branch back to <code style="font-size: 12pt;">main</code></td></tr>
+    <tr><td>Keep the experiment</td><td><code style="font-size: 12pt;">git checkout main &amp;&amp; git merge try-rotation</code></td><td><strong>Branch → Merge into current branch</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Branch before every risky experiment.</strong> The reason students hesitate to try the interesting approach is fear of breaking the working one. A branch removes that fear entirely: worst case you delete it and you're exactly where you started. This is the single cheapest confidence upgrade available to you this week.
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ Commit messages matter now.</strong> "update", "fix", and "stuff" are useless when you're trying to find the last working state at 11pm. Write what changed: <code style="font-size: 12pt;">"verlet: fix half-step ordering"</code>, <code style="font-size: 12pt;">"terrain: segments array replaces hardcoded line"</code>. You will thank yourself in Week 13, and part of your final grade looks at commit history as evidence of incremental work.
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; Debugging a Physics Simulation</h2>
+
+<p>"It looks wrong" is not a bug report. Turn it into one with this sequence.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.1 &nbsp; The decision tree</h3>
+
+<pre style="font-size: 12pt;">Something is wrong.
+├─ Is the Console showing an error?
+│    → YES: read it. Fix that first. Nothing else matters.
+├─ Are any values NaN or Infinity?
+│    → YES: go to §3.2 (blow-up). Almost always divide-by-zero or overlap.
+├─ Does it break only when the frame rate changes / tab is backgrounded?
+│    → YES: your timestep isn't fixed. Re-check the accumulator (Week 8).
+├─ Does energy drift when it shouldn't?
+│    → YES: go to §3.3 (integration order).
+├─ Does it behave correctly with ONE body but not many?
+│    → YES: force accumulation or pair iteration. Check clearForces() and i&lt;j loops.
+├─ Does it behave correctly with DT halved?
+│    → YES: not a bug — an accuracy limit. Lower DT or use a better integrator.
+└─ None of the above
+     → go to §3.4 (bisection).
+</pre>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.2 &nbsp; The five classic bugs</h3>
+
+<table><caption>Common simulation physics bugs, their likely causes, and recommended fixes</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Symptom</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Almost always</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Everything vanishes; values are <code style="font-size: 12pt;">NaN</code></td><td>Division by zero — two bodies at identical positions, or <code style="font-size: 12pt;">r = 0</code> in inverse-square gravity</td><td>Softening: <code style="font-size: 12pt;">r2 + eps2</code>; or skip pairs closer than a floor distance</td></tr>
+    <tr><td>Bodies jitter or sink into each other</td><td>Penetration corrected by velocity only, never by position</td><td>Positional correction: push apart along the normal by the overlap before applying impulse</td></tr>
+    <tr><td>Objects gain energy every bounce</td><td>Collision resolved more than once per step, or resolved while still separating</td><td>Only resolve if the relative normal velocity is negative (approaching)</td></tr>
+    <tr><td>Fast body passes through a wall</td><td>Tunneling , it moved more than its own diameter in one step</td><td>Smaller DT, thicker walls, or a swept test. Cap maximum speed as a stopgap</td></tr>
+    <tr><td>Simulation is subtly wrong but stable</td><td>Force accumulator not cleared, so forces from last step persist and double</td><td><code style="font-size: 12pt;">clearForces()</code> at the top of <code style="font-size: 12pt;">step()</code>, before any force applies</td></tr>
+  </tbody>
+</table>
+
+<div class="physics-note">
+  <strong>🔬 A NaN is a physics message, not just a crash.</strong> It nearly always means a singularity in your force law got reached — two point masses at zero separation is genuinely infinite force. The fix isn't a coding trick, it's admitting your point-particle model breaks down at short range, and choosing a softening length that says where. That's a modeling decision worth one sentence in your write-up.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.3 &nbsp; When energy drifts</h3>
+
+<p>Check in this order — it's roughly the frequency order of real causes:</p>
+
+<ol>
+  <li><strong>Is your PE complete?</strong> Every conservative force needs a <code style="font-size: 12pt;">potentialEnergy()</code>. A missing spring PE looks exactly like energy drift.</li>
+  <li><strong>Is the integrator ordering right?</strong> Verlet needs acceleration from the start of the step and from the end. Reusing the old acceleration for both is the single most common port bug.</li>
+  <li><strong>Are you resolving collisions inside the integrator?</strong> Don't. Integrate, then resolve, then measure energy — measuring mid-step gives nonsense.</li>
+  <li><strong>Is anything dissipative that you forgot about?</strong> Drag with a tiny coefficient, or e = 0.99 instead of 1.0.</li>
+  <li><strong>Is it actually bounded oscillation?</strong> Euler-Cromer's energy oscillates by design. Plot it over many periods before calling it drift.</li>
+</ol>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.4 &nbsp; Bisection: the method that always works</h3>
+
+<p>When you have no hypothesis, stop guessing and start halving.</p>
+
+<div class="key-idea">
+  <strong>💡 Reduce the scene until the bug disappears.</strong> Twenty bodies → two. All forces → one force. Collisions on → off. Your new feature → disabled. Keep simplifying until it behaves correctly, then add back one thing. The thing that reintroduces the bug is the bug. This takes ten minutes and beats an hour of staring at code, every single time.
+</div>
+
+<p>The same logic works on your history: if it worked yesterday and not today, <code style="font-size: 12pt;">git log</code> the commits between and check them out one at a time. Six commits means three checkouts to find the culprit.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">3.5 &nbsp; Instrument, don't squint</h3>
+
+<pre style="font-size: 12pt;"><span class="comment" style="font-size: 12pt;">// Put numbers on screen. Guessing from animation is hopeless.</span>
+<span class="keyword" style="font-size: 12pt;">if</span> (DEBUG) {
+  hud.line(<span class="string" style="font-size: 12pt;">`E: ${E.toFixed(6)}  (drift ${(100*(E-E0)/E0).toFixed(3)}%)`</span>);
+  hud.line(<span class="string" style="font-size: 12pt;">`|p|: ${p.length().toFixed(6)}`</span>);
+  hud.line(<span class="string" style="font-size: 12pt;">`L: ${L.toFixed(6)}`</span>);
+  hud.line(<span class="string" style="font-size: 12pt;">`contacts this step: ${world.contacts.length}`</span>);
+  hud.line(<span class="string" style="font-size: 12pt;">`max |v|: ${maxSpeed.toFixed(2)} m/s`</span>);
+}
+</pre>
+
+<p>A contact count that reads 3 when two circles touch tells you instantly that you're resolving the same collision repeatedly, a bug that is essentially invisible on screen.</p>
+
+<div class="try-it">
+  <strong>✍️ Try it:</strong> Add a <code style="font-size: 12pt;">DEBUG</code> flag to your project today, wired to a URL parameter (<code style="font-size: 12pt;">?debug=1</code>) or the <kbd style="font-size: 12pt;">D</kbd> key. Put energy drift, momentum magnitude, contact count, and max speed behind it. Leave it in your final submission — it's a feature, not scaffolding, and reviewers will use it.
+</div>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; Cutting Scope, Deliberately</h2>
+
+<p>Cutting a feature is not failure. Cutting it too late is.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.1 &nbsp; The Wednesday rule</h3>
+
+<div class="key-idea">
+  <strong>💡 If your MUST tier isn't essentially done by midweek, cut something now.</strong> 
+	Not "push harder", cut. Move the hardest MUST item down to SHOULD, simplify it, or replace it with the fallback you named in your proposal. A project that ships a smaller MUST tier on time scores far better than one that ships an ambitious tier broken, and you already wrote down what the fallback would be. Trust your Week 11 self.
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ </strong>With Week 13 reserved for validation, documentation, and launch, a feature deferred out of Week 12 is deferred out of the project — there is no later week to recover it. Treat the midweek checkpoint as a genuine go/no-go decision, not a status update.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.2 &nbsp; How to cut cleanly</h3>
+
+<table><caption>Recommended practices for managing experimental features and documenting implementation tradeoffs</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Do this</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Not this</th></tr></thead>
+  <tbody>
+    <tr><td>Move the code to a branch and note it in <code style="font-size: 12pt;">DECISIONS.md</code></td><td>Delete it in frustration at midnight</td></tr>
+    <tr><td>Replace with the simplest thing that works (stiff spring instead of rigid rod)</td><td>Leave it half-implemented and crashing</td></tr>
+    <tr><td>Put it behind a flag, off by default</td><td>Ship it on by default and hope nobody clicks it</td></tr>
+    <tr><td>Write one sentence in your write-up about the tradeoff</td><td>Pretend it was never in the plan</td></tr>
+  </tbody>
+</table>
+
+<div class="physics-note">
+  <strong>🔬 Documented tradeoffs earn credit.</strong> "I replaced the rigid constraint with a stiff spring (k = 5000 N/m); this introduces a small oscillation at the constraint but keeps the system stable at DT = 1/240, and energy drift stays under 0.4%" is a good sentence. It shows you understood the physics of your own compromise. Silently shipping less earns nothing; explaining why you shipped less earns most of it back.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.3 &nbsp; The DECISIONS.md file</h3>
+
+<p>Start one now. Each entry is three lines: what you were going to do, what you did instead, why. It takes thirty seconds and it writes half of your reflection for you.</p>
+
+<pre style="font-size: 12pt;">## 2026-11-18 — Constraint approach
+Planned: rigid distance constraint solved iteratively.
+Did: stiff spring, k = 5000, with damping c = 20.
+Why: spike showed constraint drift growing past 3% length error
+     over 60 s; spring is stable and visually indistinguishable.
+</pre>
+
+<!-- ============================================================ -->
+<h2>5 &nbsp; Getting Unstuck Fast</h2>
+
+<p>You have limited weeks left. Being stuck for six hours is a scope decision you didn't intend to make.</p>
+
+<div class="key-idea">
+  <strong>💡 The 45-minute rule.</strong> Stuck on the same bug for 45 minutes with no new information? Post it. Not "still trying", post. In an async course the discussion forum is your lab bench, and a well-formed question typically gets answered in a few hours. Six hours of solo grinding costs you a feature.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">5.1 &nbsp; A question that gets answered</h3>
+
+<table><caption>Information to include in a reproducible physics bug report, with examples</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Include</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Example</th></tr></thead>
+  <tbody>
+    <tr><td>What you expected</td><td>"Two equal masses, e = 1, head-on: velocities should swap."</td></tr>
+    <tr><td>What happened, numerically</td><td>"Both end up at −1.4 m/s; |Δp| = 2.8 kg·m/s."</td></tr>
+    <tr><td>The smallest reproducing case</td><td>"Two bodies, no gravity, no drag. Scene in <code style="font-size: 12pt;">main.js</code> lines 40–52."</td></tr>
+    <tr><td>What you already ruled out</td><td>"Detection fires exactly once (contact count = 1). Masses are correct in the HUD."</td></tr>
+    <tr><td>A link</td><td>Your Pages URL or a permalink to the commit</td></tr>
+  </tbody>
+</table>
+
+<p>Notice that writing this out often solves the problem before you hit post. That's not a bug in the method, it's the main feature.</p>
+
+<div class="try-it">
+  <strong>✍️ Try it — the rubber duck commit.</strong> When you're stuck, write your bug report as a commit message on a scratch branch before posting it. Forcing the expected-vs-actual comparison into words resolves a surprising fraction of physics bugs, because "should swap" versus "both went the same direction" immediately implicates the relative-velocity sign.
+</div>
+
+<!-- ============================================================ -->
+<h2>6 &nbsp; A Realistic Week</h2>
+
+<table><caption>Weekly project development phases, aims, and completion criteria</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Phase</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Aim for</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Ends when</th></tr></thead>
+  <tbody>
+    <tr><td>Early week</td><td>Scene, bodies, and existing forces working in the new project; DEBUG HUD live</td><td>Your scene runs and the HUD shows sensible numbers</td></tr>
+    <tr><td>Midweek</td><td>The "one new thing," built in always-running slices</td><td><strong>Wednesday rule checkpoint</strong> — on track, or cut</td></tr>
+    <tr><td>Late week</td><td>Interaction, reset, and the conservative-mode test switch</td><td>Your two validation tests from the proposal actually run</td></tr>
+    <tr><td>End of week</td><td>Deploy, verify the live URL on a phone, tag the commit, <strong>post your beta</strong></td><td>MUST tier is public and working, and classmates can open it</td></tr>
+  </tbody>
+</table>
+
+<div class="warning-box">
+  <strong>⚠️ Beta posting moved to the end of this week.</strong> Because Week 13 is the final week, peer review has to happen at its start, not its middle. Your live URL goes into <strong>Discussion</strong> by the end of Week 12 so your reviewers have the first half of Week 13 to work and you have the second half to respond. A beta posted late isn't just a lost point, it leaves a classmate with nothing to review.
+</div>
+
+<div class="warning-box">
+  <strong>⚠️ Deploy early in the week, not at the end.</strong> Deployment bugs (case-sensitive filenames, absolute paths, missing <code style="font-size: 12pt;">.js</code> extensions, browser caching) are a known category from Week 10 
+	, and they only appear on the live site, never on Live Server. Push a deploy on day one, even if the simulation is barely started. Then every later push is verified continuously and the last day contains no surprises.
+</div>
+
+<div class="key-idea">
+  <strong>💡 What "done" means this week.</strong> Someone clicks your public link on a phone, sees your simulation running, interacts with it, and the physics is correct. That's it. No polish, no second scene, no documentation. Get there, and Week 13 becomes about making it good rather than making it exist.
+</div>
+
+
+
+</body></html>

@@ -23,7 +23,7 @@ const ok = (c, name, detail = '') => {
 const H = t => console.log(`\n${t}\n${'-'.repeat(t.length)}`);
 
 const ST = { scene:'billiards', integrator:'verlet', dt:1/240, restitution:0.95,
-             gravity:9.81, drag:0, speed:1, count:24 };
+             gravity:9.81, drag:0, speed:1, count:24, seed:12345 };
 const snap = w => w.bodies.map(b => [b.pos.x, b.pos.y, b.vel.x, b.vel.y]);
 const maxdiff = (A, B) => Math.max(...A.flat().map((v, i) => Math.abs(v - B.flat()[i])));
 const splitCSV = row => row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
@@ -169,7 +169,7 @@ H('7. Scene 4 is degenerate; scene 2 separates the integrators');
 H('8. Permalink: encode/decode round trip');
 {
   const s = { scene:'orbits', integrator:'ec', dt:1/180, restitution:0.37,
-              gravity:3.71, drag:0.012, speed:1.45, count:57 };
+              gravity:3.71, drag:0.012, speed:1.45, count:57, seed:987654321 };
   const back = StateURL.decode(StateURL.encode(s), ST);
   const same = Object.keys(s).every(k => Math.abs((back[k] ?? 0) - s[k]) < 1e-9 || back[k] === s[k]);
   ok(same && StateURL.encode(s).startsWith('?'),
@@ -294,10 +294,28 @@ H('13. Teleporting: direct position edits can tunnel through collisions');
 // --------------------------------------------------------------- 14
 H('14. Lunar lander: variable mass, finite fuel, and touchdown');
 {
-  const { world } = SCENES.lunar(ST);
+  const missionState = { ...ST, scene: 'lunar', seed: 2468 };
+  const { world } = SCENES.lunar(missionState);
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
+  ok(drive.fuel === 50 && drive.maxFuel === 50 && lander.mass === 1050,
+     'lunar mission starts with 50 kg of fuel');
+
+  const repeat = SCENES.lunar(missionState).world;
+  const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;
+  ok(lander.pos.x === repeat.lander.pos.x && lander.pos.y === repeat.lander.pos.y
+     && (lander.pos.x !== otherStart.lander.pos.x || lander.pos.y !== otherStart.lander.pos.y),
+     'seeded random starts reproduce from a link and vary with the seed');
+  ok(lander.pos.x >= -7 && lander.pos.x <= 7
+     && lander.pos.y - lander.radius >= 10 && lander.pos.y - lander.radius <= 14,
+     'randomized starts stay within the documented x and altitude ranges');
+  let asteroidCount = 0;
+  for (let seed = 0; seed < 300; seed++)
+    if (SCENES.lunar({ ...missionState, seed }).world.find('asteroid')) asteroidCount++;
+  ok(asteroidCount > 70 && asteroidCount < 130,
+     'one moving asteroid appears on about one in three mission starts',
+     `${asteroidCount} of 300 seeded starts`);
 
   const reserve = drive.charge;
   const fuelAtStart = drive.fuel;
@@ -353,7 +371,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'final partial burn clamps fuel and mass at their lower bounds and cuts thrust');
 
   const touchdown = ({ x = 0, vx = 0.5, vy = -1, angle = 0 } = {}) => {
-    const world = SCENES.lunar(ST).world;
+    const world = SCENES.lunar(missionState).world;
+    world.bodies = world.bodies.filter(body => body.tag !== 'asteroid');
     world.lander.pos.set(x, world.lander.radius + 0.001);
     world.lander.vel.set(vx, vy + 1.62 * world.DT);
     world.lander.angle = angle * Math.PI / 180;
@@ -365,6 +384,10 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && safe.lander.fixed && safe.lander.vel.len2() === 0,
      'proposal touchdown case (0.5, -1.0 m/s, upright) lands safely',
      safe.mission.message);
+  const frozenLandingTime = safe.mission.elapsedTime;
+  safe.step(safe.DT);
+  ok(frozenLandingTime > 0 && safe.mission.elapsedTime === frozenLandingTime,
+     'mission time is captured at touchdown');
   const thresholdSafe = touchdown({
     x: 1.45 - 1.1 * (1 / 240), vx: 1.1, vy: -1.8, angle: 15
   });
@@ -387,6 +410,19 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && sideCrash.mission.impact.kind === 'side-wall'
      && sideCrash.mission.impact.horizontalSpeed === 4,
      'side-wall crashes preserve pre-impact speed for the crash sound');
+  let asteroidCrash = null;
+  for (let seed = 0; seed < 20 && !asteroidCrash; seed++) {
+    const candidate = SCENES.lunar({ ...missionState, seed }).world;
+    const asteroid = candidate.find('asteroid');
+    if (!asteroid) continue;
+    candidate.lander.pos.set(asteroid.pos.x, asteroid.pos.y);
+    candidate.lander.vel.set(0, 0);
+    candidate.step(candidate.DT);
+    asteroidCrash = candidate;
+  }
+  ok(asteroidCrash && asteroidCrash.mission.status === 'crashed'
+     && asteroidCrash.mission.impact.kind === 'asteroid',
+     'asteroid contact crashes the lander');
   const gradients = [];
   const drawContext = new Proxy({}, { get: (_, key) =>
     (key === 'createRadialGradient' || key === 'createLinearGradient')

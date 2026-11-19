@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 12 — Build Sprint: MUST Tier</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610  "; font-size: 1.15em; }
+</style>
+</head>
+<body>
+
+<h1>Week 12-- Build Sprint: The MUST Tier</h1>
+
+<div class="concept-box">
+  <strong>&#128203; Assignment Overview</strong><br>
+  <strong>Due:</strong> End of Week 12 (see Canvas calendar) &mdash; midweek check-in required<br>
+  <strong>Submit:</strong> Live GitHub Pages link + progress log via Canvas<br>
+  <strong>Also:</strong> Commit throughout the week to <code>project/</code>; post to <strong>Discussion: Midweek Check-In</strong>, and post your <strong>beta</strong> to <strong>Discussion: Beta Review</strong> by end of week<br>
+  <strong>Points:</strong> 100 &mdash; counts toward the Final Project grade<br>
+  <strong>Estimated time:</strong> 8&ndash;10 hours
+</div>
+
+<div class="warning-box">
+  <strong>&#128197; This is the last full building week of the semester.</strong> <strong>Week 13 is the final week</strong>, and it is reserved for validation, documentation, your presentation, and launch 
+	-- all due at the <strong>end of Week 13</strong>. There is no week after that. Whatever is running at the end of this week is, in practice, what you will submit.
+</div>
+
+<p>One requirement this week: <strong>your MUST tier, working and deployed.</strong> This is the least ambiguous assignment of the semester and the one students most often talk themselves out of. Resist the urge to build the interesting parts first.</p>
+
+<div class="key-idea">
+  <strong>&#128161; The big idea this week:</strong> A shipped small thing beats an unshipped big thing. By the end of this week, a stranger should be able to open your public URL and interact with correct physics. Everything after that is improvement; everything before it is risk.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Week 11 proposal submitted, with a written MUST tier</li>
+  <li>Peer feedback from the Proposal Workshop read &mdash; and scope adjusted if they flagged over-reach</li>
+  <li>Week 12 Lesson: Building Under a Deadline</li>
+  <li><code>project/</code> exists, runs, and deploys</li>
+  <li>Your risk spike findings in hand &mdash; if the spike failed, your plan should already reflect that</li>
+</ul>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; If your proposal's MUST tier still looks too big, shrink it now.</strong> Do it in writing, in <code>project/DECISIONS.md</code>, on day one. A documented reduction at the start of the week is a planning decision and costs you nothing. The same reduction on Friday is a missed deliverable.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A -- The MUST Tier, Running (50 points)</h2>
+<span class="part-label part-a">INDEPENDENT</span>
+
+<p>Build exactly what your proposal listed as MUST. Nothing more.</p>
+
+<h3>Required regardless of project</h3>
+<ol>
+  <li><strong>Your scene builds and runs</strong> from <code>project/main.js</code>, using your Lab 9&ndash;10 <code>engine/</code> and <code>render/</code> modules with the layering rule intact.</li>
+  <li><strong>Fixed timestep</strong> via the accumulator. Physics must be frame-rate independent &mdash; verify by throttling CPU in DevTools and confirming behavior is unchanged.</li>
+  <li><strong>Your "one new thing"</strong> is implemented, or your documented fallback is implemented in its place.</li>
+  <li><strong>At least one user interaction</strong> works (keyboard, pointer, or a control) with a keyboard-accessible equivalent.</li>
+  <li><strong>Reset</strong> rebuilds the scene from initial conditions and re-baselines E&#8320;.</li>
+  <li><strong>Deployed to GitHub Pages</strong> and verified on the live URL &mdash; not just on Live Server.</li>
+  <li><strong>No console errors</strong> on load or during normal use.</li>
+</ol>
+
+<div class="physics-note">
+  <strong>&#128300; Deploy on day one.</strong> Push a deploy before the simulation is finished. Case-sensitive filenames, missing <code>.js</code> extensions in imports, and absolute paths all work locally and fail on Pages, and you don't want to meet them on Friday night. Deploy early, then every push is continuously verified.
+</div>
+
+<details><summary>&#128161; Hint: my Pages site is blank but Live Server works</summary>
+<p>Work this list. (1) DevTools Console on the live site &mdash; read the error. (2) 404s in the Network tab mean a path problem: check capitalization exactly (<code>Vec2.js</code> &ne; <code>vec2.js</code> on GitHub's servers, even though Windows and macOS don't care). (3) All import paths must be relative (<code>./engine/vec2.js</code>), never absolute (<code>/engine/vec2.js</code>). (4) Hard-refresh with <kbd>Shift</kbd>+reload. Pages caches aggressively. (5) Confirm Settings &rarr; Pages points at the right branch and folder, and that your project is in the published path.</p>
+</details>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B &mdash; Instrumentation &amp; First Validation (30 points)</h2>
+<span class="part-label part-b">INDEPENDENT</span>
+
+<p>You can't polish physics you can't measure. Build the instruments this week, while the code is small.</p>
+
+<h3>B1 &mdash; Debug HUD (12 pts)</h3>
+<ol>
+  <li>A <code>DEBUG</code> mode toggled by the <kbd>D</kbd> key or <code>?debug=1</code>.</li>
+  <li>Displays at minimum: total energy and drift as % of E&#8320;, total momentum magnitude, body count, contacts resolved this step, max speed, and measured FPS.</li>
+  <li>Drift readout turns red past your own stated tolerance.</li>
+</ol>
+
+<h3>B2 &mdash; Conservative test mode (10 pts)</h3>
+<p>A switch (checkbox, key, or URL parameter) that zeroes every dissipative and driving term &mdash; drag, thrust, friction &mdash; and sets e = 1. This reduces your project to a conservative system that must satisfy Block 1&ndash;2 standards.</p>
+
+<div class="key-idea">
+  <strong>&#128161; This switch is the most useful thing you will build this week.</strong> Every time your project misbehaves for the rest of the semester, your first move is to flip it on. If the conservative case is clean, your bug is in the dissipative terms. If it isn't, your bug is in the core loop. That's a two-second bisection of your entire codebase.
+</div>
+
+<h3>B3 &mdash; Run your two proposal tests (8 pts)</h3>
+<p>Execute the two validation tests you promised in Week 11. Report the actual numbers in your progress log, pass or fail. A failing test reported honestly is worth full marks here; Week 13 is when you fix it.</p>
+
+<table>
+  <thead><tr><th>Test</th><th>Expected</th><th>Measured</th><th>Pass?</th></tr></thead>
+  <tbody>
+    <tr><td>(from your proposal)</td><td>e.g. |&Delta;E/E&#8320;| &lt; 0.3%</td><td>&mdash;</td><td>&mdash;</td></tr>
+    <tr><td>(from your proposal)</td><td>e.g. T within 1% of 2&pi;&radic;(L/g)</td><td>&mdash;</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C &mdash; Check-In, Beta Post &amp; Progress Log (20 points)</h2>
+<span class="part-label part-c">DOCUMENTATION + PEER</span>
+
+<h3>C1 &mdash; Midweek check-in post (6 pts)</h3>
+<p>By midweek, post to <strong>Discussion: Midweek Check-In</strong>:</p>
+<ol>
+  <li>Your live URL (even if barely working)</li>
+  <li>Which MUST items are done, in progress, and not started</li>
+  <li>Your honest answer to the Wednesday rule: on track, or cutting something? If cutting, say what.</li>
+  <li>One thing you're stuck on, or "nothing yet"</li>
+</ol>
+
+<p>Then respond to <strong>one</strong> peer, ideally someone who's stuck on something you've already solved.</p>
+
+<div class="warning-box">
+  <strong>&#9888;&#65039; The check-in is graded on honesty, not progress.</strong> "Two of five MUST items done, cutting the terrain generator to a hard-coded ramp" earns full credit. "On track!" from someone whose repo has no commits earns none. This exists so I can intervene while there's still time, use it.
+</div>
+
+<h3>C2 &mdash; Post your beta (4 pts)</h3>
+<p>By the <strong>end of this week</strong>, post to <strong>Discussion: Beta Review</strong>:</p>
+<ol>
+  <li>Your live URL and a one-line description of what the visitor is looking at</li>
+  <li>One thing you specifically want feedback on</li>
+  <li>One thing you want stress-tested, a parameter to push, a configuration to try and break</li>
+</ol>
+
+<h3>C3 &mdash; Progress log (10 pts)</h3>
+<p>Submit <code>project/PROGRESS.md</code> (also paste into Canvas) covering:</p>
+<ul>
+  <li><strong>MUST tier status table</strong> &mdash; each item marked done / cut / deferred, with one line of explanation for anything not done</li>
+  <li><strong>Validation results</strong> &mdash; the table from B3 with real numbers</li>
+  <li><strong>DECISIONS.md entries</strong> &mdash; every scope change made this week, in the three-line format from the lesson</li>
+  <li><strong>Two bugs you fixed</strong> &mdash; symptom, cause, fix. One should be a physics bug, not a syntax bug</li>
+  <li><strong>Next week's plan</strong> &mdash; the three SHOULD items you'll tackle first</li>
+</ul>
+
+<div class="physics-note">
+  <strong>&#128300; The bug write-ups are real physics work.</strong> "Bodies gained energy on every bounce; cause was resolving the collision on consecutive frames because I never checked whether they were separating; fix was to skip resolution when the relative normal velocity is positive", that's a diagnosis, and it's exactly the kind of reasoning the final write-up is graded on. Start building the habit now.
+</div>
+
+<!-- ============================ BONUS ============================ -->
+<div class="bonus-box">
+  <strong>&#11088; Bonus (up to +10)</strong>
+  <ul>
+    <li><strong>+4 &mdash; Commit hygiene.</strong> At least 15 meaningful commits this week with descriptive messages, showing incremental always-running development rather than two giant dumps.</li>
+    <li><strong>+3 &mdash; Convergence check early.</strong> Run your DT-halving test this week instead of next and report the numbers.</li>
+    <li><strong>+3 &mdash; Mobile verified.</strong> Your live site works with touch on a real phone, with a screenshot to prove it.</li>
+  </ul>
+</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+<h2 style="margin-top:0; border:none;">Grading Rubric (100 points + 10 bonus)</h2>
+<table>
+  <thead><tr><th>Component</th><th>Pts</th><th>What earns full marks</th></tr></thead>
+  <tbody>
+    <tr><td colspan="3"><strong>Part A &mdash; MUST tier running (50)</strong></td></tr>
+    <tr><td>Scene runs; layering intact</td><td>10</td><td>Builds from <code>main.js</code>; nothing in <code>engine/</code> touches <code>ctx</code>/<code>document</code></td></tr>
+    <tr><td>Fixed timestep verified</td><td>8</td><td>Accumulator correct; behavior unchanged under CPU throttling</td></tr>
+    <tr><td>"One new thing" or fallback</td><td>14</td><td>Implemented and working; a documented fallback earns full credit</td></tr>
+    <tr><td>Interaction + reset</td><td>8</td><td>At least one interaction with keyboard equivalent; reset re-baselines E&#8320;</td></tr>
+    <tr><td>Deployed &amp; clean</td><td>10</td><td>Live URL works; no console errors; verified on the deployed site</td></tr>
+    <tr><td colspan="3"><strong>Part B &mdash; Instrumentation (30)</strong></td></tr>
+    <tr><td>Debug HUD</td><td>12</td><td>All six readouts present; drift turns red past tolerance</td></tr>
+    <tr><td>Conservative test mode</td><td>10</td><td>One switch zeroes all dissipation and driving; demonstrably works</td></tr>
+    <tr><td>Proposal tests run</td><td>8</td><td>Both tests executed with real numbers reported, pass or fail</td></tr>
+    <tr><td colspan="3"><strong>Part C &mdash; Check-in, beta &amp; documentation (20)</strong></td></tr>
+    <tr><td>Midweek check-in</td><td>6</td><td>Posted on time with an honest scope answer + one peer response</td></tr>
+    <tr><td>Beta posted</td><td>4</td><td>Live URL in <strong>Discussion: Beta Review</strong> by end of week, with a feedback request and a stress-test request</td></tr>
+    <tr><td>Progress log</td><td>10</td><td>Status table, validation numbers, decisions, two diagnosed bugs, Week 13 plan</td></tr>
+  </tbody>
+</table>
+<p style="margin-bottom:0;"><strong>Note on partial completion:</strong> a MUST item you cut with documented reasoning in <code>DECISIONS.md</code> loses only a small amount. A MUST item left half-built and crashing loses the full allocation. Cut deliberately rather than running out of time.</p>
+</div>
+
+<div class="deliverable-box">
+<h3 style="margin-top:0;">&#128230; Submission Checklist</h3>
+<ul class="checklist">
+  <li>Live GitHub Pages URL submitted and confirmed working in a fresh browser</li>
+  <li>Every MUST item done, or explicitly cut in <code>DECISIONS.md</code></li>
+  <li>Fixed-timestep behavior verified under CPU throttling</li>
+  <li>Debug HUD works, with all six readouts</li>
+  <li>Conservative test mode works</li>
+  <li>Both proposal validation tests run, numbers recorded</li>
+  <li>Zero console errors on the live site</li>
+  <li>Midweek check-in posted + one peer response</li>
+  <li><strong>Beta posted to Discussion: Beta Review</strong> with live URL, feedback request, and stress-test request</li>
+  <li><code>project/PROGRESS.md</code> and <code>project/DECISIONS.md</code> committed</li>
+  <li>Journal entry submitted</li>
+  <li>All work pushed to <code>project/</code></li>
+</ul>
+</div>
+
+</body>
+</html>

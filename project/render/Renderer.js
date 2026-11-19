@@ -87,6 +87,10 @@ export class Renderer {
         this._landerCraft(b, world.landerDrive);
         continue;
       }
+      if (b.tag === 'asteroid') {
+        this._asteroid(b, world.time);
+        continue;
+      }
       const [px, py] = cam.toScreen(b.pos.x, b.pos.y);
       const r = Math.max(2.5, b.radius * cam.scale);
       ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2);
@@ -292,6 +296,36 @@ export class Renderer {
       ctx.beginPath(); ctx.moveTo(-0.12, 0.24); ctx.lineTo(0, 0.58);
       ctx.lineTo(0.12, 0.24); ctx.closePath(); ctx.fill();
     }
+    ctx.restore();
+  }
+
+  _asteroid(body, time) {
+    const ctx = this.ctx, cam = this.cam;
+    const [x, y] = cam.toScreen(body.pos.x, body.pos.y);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(time * 0.7);
+    ctx.scale(body.radius * cam.scale, body.radius * cam.scale);
+    ctx.beginPath();
+    ctx.moveTo(-0.9, -0.15);
+    ctx.lineTo(-0.55, -0.8);
+    ctx.lineTo(0.1, -0.95);
+    ctx.lineTo(0.75, -0.55);
+    ctx.lineTo(0.9, 0.2);
+    ctx.lineTo(0.45, 0.8);
+    ctx.lineTo(-0.35, 0.9);
+    ctx.lineTo(-0.85, 0.45);
+    ctx.closePath();
+    ctx.fillStyle = body.color;
+    ctx.fill();
+    ctx.strokeStyle = '#514b44';
+    ctx.lineWidth = 0.08;
+    ctx.stroke();
+    ctx.fillStyle = '#655e55';
+    ctx.beginPath();
+    ctx.arc(-0.3, -0.2, 0.18, 0, 2 * Math.PI);
+    ctx.arc(0.35, 0.3, 0.12, 0, 2 * Math.PI);
+    ctx.fill();
     ctx.restore();
   }
 

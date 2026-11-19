@@ -6,7 +6,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 150 kg fuel; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 50 kg fuel; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
@@ -28,10 +28,12 @@
 | Fuel depletion | Fuel ≥ 0, mass ≥ 1,000 kg, thrust stops | Fuel = 0, mass = 1,000 kg, thrusting = false | pass |
 | Touchdown limits | Center case passes; each over-limit case fails | Center and exact inclusive limits pass; 1.46 m, 1.81 m/s, 1.11 m/s, and 16° fail | pass |
 
-The test runner also verifies the fixed-step accumulator: both 60 Hz and
-144 Hz produce 2,400 steps over 10 seconds; the jittered sequence produces
-10.0083 seconds. A two-second stall is capped at eight substeps. Final local
-test totals: **56 physics/publishing checks and 36 browser-entry checks passed**.
+The test runner also verifies seeded launch variation, the asteroid encounter
+rate and collision response, the terminal mission timer, and the fixed-step
+accumulator. Both 60 Hz and 144 Hz produce 2,400 steps over 10 seconds; the
+jittered sequence produces 10.0083 seconds. A two-second stall is capped at
+eight substeps. Final local test totals: **59 physics/publishing checks and
+35 browser-entry checks passed**.
 
 ## Bonus convergence check
 

@@ -1,7 +1,5 @@
 // scenes.js — every scene is a pure function (state) -> World.
-// Deterministic by construction: the RNG is seeded from the state, so
-// "Reset" reproduces the identical run and a permalink reproduces it on
-// someone else's machine. (Math.random() here would break both.)
+// Randomized scenes use a state seed, so a permalink reproduces the same run.
 import { World, Body, Vec2 } from './engine/World.js';
 import { UniformGravity, QuadraticDrag, Spring, NewtonGravity, PointerSpring, LanderDrive }
   from './engine/Forces.js';
@@ -142,11 +140,13 @@ export const SCENES = {
     Body.resetIds();
     const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 18 };
     const w = base(state, { bounds, restitution: 0.25 });
+    const rnd = mulberry32(state.seed || 0);
+    const landerRadius = 0.42;
     const lander = w.add(new Body({
-      pos: new Vec2(-5.5, 12.5),
+      pos: new Vec2(-7 + rnd() * 14, landerRadius + 10 + rnd() * 4),
       vel: new Vec2(1.7, -1.8),
       mass: 1150,
-      radius: 0.42,
+      radius: landerRadius,
       color: '#e6edf3',
       tag: 'lander',
       angle: 0.28
@@ -154,12 +154,23 @@ export const SCENES = {
     const drive = w.addForce(new LanderDrive(lander, {
       gravity: 1.62,
       dryMass: 1000,
-      fuelMass: 150,
-      maxFuel: 150,
+      fuelMass: 50,
+      maxFuel: 50,
       thrust: 8000,
       isp: 300,
       g0: 9.81
     }));
+    if (rnd() < 1 / 3) {
+      const fromLeft = rnd() < 0.5;
+      w.add(new Body({
+        pos: new Vec2(fromLeft ? -9.2 : 9.2, 5 + rnd() * 11),
+        vel: new Vec2(fromLeft ? 2.4 : -2.4, (rnd() - 0.5) * 0.4),
+        mass: 350,
+        radius: 0.65,
+        color: '#8e8578',
+        tag: 'asteroid'
+      }));
+    }
     w.lander = lander;
     w.landerDrive = drive;
     w.pointer = w.addForce(new PointerSpring());
@@ -171,13 +182,27 @@ export const SCENES = {
       message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake. Fuel is finite.',
       padCenter: 0,
       padHalfWidth: 1.45,
-      score: 0
+      score: 0,
+      elapsedTime: null
     };
     w.beforeCollisions = () => {
       if (w.conservativeMode) return;
       if (w.mission.status !== 'flying') return;
       const { xmin, xmax, ymin, ymax } = w.bounds;
       const r = lander.radius;
+      const asteroid = w.bodies.find(body => body.tag === 'asteroid' &&
+        body.pos.sub(lander.pos).len() < body.radius + r);
+      if (asteroid) {
+        w.mission.impact = {
+          verticalSpeed: lander.vel.y,
+          horizontalSpeed: lander.vel.x,
+          angle: lander.angle,
+          kind: 'asteroid'
+        };
+        w.mission.status = 'crashed';
+        w.mission.message = 'Crash: the lander struck an asteroid.';
+        return;
+      }
       const sideImpact = lander.pos.x - r < xmin || lander.pos.x + r > xmax;
       const ceilingImpact = lander.pos.y + r > ymax;
       if (sideImpact || ceilingImpact) {
@@ -221,6 +246,11 @@ export const SCENES = {
       }
     };
     w.afterStep = () => {
+      if (w.mission.status === 'flying') {
+        w.mission.elapsedTime = w.time;
+      } else if (w.mission.elapsedTime === null) {
+        w.mission.elapsedTime = w.time;
+      }
       if (w.conservativeMode || w.mission.status === 'flying') {
         return;
       }

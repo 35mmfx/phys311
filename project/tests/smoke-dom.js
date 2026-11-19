@@ -9,7 +9,8 @@ const ctxStub = new Proxy({}, { get: (t, k) =>
   (k === 'canvas' ? {} :
     (k === 'lineTo' ? () => { lineToCalls++; } :
       (k === 'fillText' ? text => { drawnText.push(text); } :
-        (k === 'createLinearGradient' ? () => ({ addColorStop: noop }) : noop)))) });
+        (k === 'createLinearGradient' || k === 'createRadialGradient'
+          ? () => ({ addColorStop: noop }) : noop)))) });
 
 function el(id) {
   const listeners = {};
@@ -179,7 +180,7 @@ frames++; cb(performance.now());
 checks.push([drawnText.includes('UT Mission'),
   'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
-document.getElementById('btn-reset-touch')._fire('click', {});
+document.getElementById('btn-reset')._fire('click', {});
 checks.push([document.getElementById('live').textContent === 'Simulation reset',
   'touch restart button resets the lunar mission']);
 frames++; cb(performance.now());
@@ -283,6 +284,21 @@ checks.push([probeContext.bufferSources.length >= noisesBeforeSideCrash + 4,
 await soundProbe.disable();
 checks.push([probeContext.state === 'suspended',
   'muting suspends the audio context to reduce idle processing']);
+conservative.checked = false;
+conservative._fire('change', { target: conservative });
+sceneControl.value = 'lunar';
+sceneControl._fire('change', { target: sceneControl });
+for (let i = 0; i < 420; i++) { frames++; cb(performance.now()); }
+const stoppedTime = document.getElementById('hud').innerHTML.match(
+  /<span class="k">t<\/span><span class="v">([\d.]+) s/
+);
+const endedMission = document.getElementById('mission-status').textContent;
+for (let i = 0; i < 60; i++) { frames++; cb(performance.now()); }
+const laterTime = document.getElementById('hud').innerHTML.match(
+  /<span class="k">t<\/span><span class="v">([\d.]+) s/
+);
+checks.push([endedMission && stoppedTime && laterTime && stoppedTime[1] === laterTime[1],
+  'mission timer stops after landing or crash']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }

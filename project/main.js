@@ -7,7 +7,7 @@ import { Controls }     from './ui.js';
 import { PointerInput, KeyboardInput } from './input.js';
 import { StateURL }     from './ui/StateURL.js';
 import { serializeSamples } from './ui/CSVExport.js';
-import { SCENES, SCENE_LIST, setConservativeMode } from './scenes.js';
+import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js';
 import { Body, Vec2 }   from './engine/World.js';
 import { CockpitSound } from './audio/CockpitSound.js';
 
@@ -16,7 +16,8 @@ const DEFAULTS = {
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false,
-  debug: false, conservative: false
+  debug: false, conservative: false,
+  seed: Math.floor(Math.random() * 0x100000000)
 };
 
 const canvas = document.getElementById('sim');
@@ -156,7 +157,8 @@ function launch({ body, origin, velocity }) {
 const actions = {
   togglePause() { paused = !paused; cockpitSound.switchClick(); controls.setPlayLabel(paused);
                   announce(paused ? 'Paused' : 'Running'); },
-  stepOnce()    { if (!paused) actions.togglePause();
+  stepOnce()    { if (world.mission && world.mission.status !== 'flying') return;
+                  if (!paused) actions.togglePause();
                   world.stepOnce(); render.recordTrails(world);
                   recordSample(true);
                   announce(`Stepped to t = ${world.time.toFixed(3)} seconds`); },
@@ -166,7 +168,9 @@ const actions = {
     applyLive();
     announce(`Simulation speed ${state.speed.toFixed(2)} times`);
   },
-  reset()       { build(); announce('Simulation reset'); },
+  reset()       { const nextRandom = mulberry32(state.seed);
+                  state.seed = Math.floor(nextRandom() * 0x100000000);
+                  build(); announce('Simulation reset'); },
   toggleTrails(){ state.trails = !state.trails; controls.syncToDOM(); applyLive(); },
   preset(i)     { const s = SCENE_LIST[i]; if (!s) return;
                   state.scene = s[0]; controls.syncToDOM(); build(); },
@@ -243,7 +247,7 @@ function frame(now) {
   last = now;
   if (!Number.isFinite(dtFrame) || dtFrame < 0) dtFrame = 0;
 
-  if (!paused) {
+  if (!paused && (!world.mission || world.mission.status === 'flying')) {
     const frameSeconds = Math.min(dtFrame, 0.25);
     const requestedSteps = Math.ceil(frameSeconds * state.speed / world.DT);
     const maxSubsteps = Math.min(64, Math.max(8, requestedSteps));

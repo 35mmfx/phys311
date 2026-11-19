@@ -15,6 +15,16 @@
 
 <div class="layout">
 
+  <aside class="left-panel" aria-label="Lander telemetry">
+    <h2>Flight data</h2>
+    <div id="hud" role="status" aria-live="off"></div>
+    <section id="debug-panel" class="debug-panel" aria-label="Physics debug diagnostics" hidden>
+      <h2>Debug diagnostics</h2>
+      <div id="debug-hud"></div>
+      <p>Energy drift tolerance: 1.00% of E₀. Powered flight is an open system.</p>
+    </section>
+  </aside>
+
   <main class="stage">
     <!-- tabindex makes the canvas focusable so keyboard users can reach it -->
     <canvas id="sim" tabindex="0" role="img"
@@ -27,12 +37,16 @@
       Propellant is finite, and the lander gets lighter as fuel burns. Land on the green pad with low speed and nearly upright.
     </p>
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
-    <div id="hud" role="status" aria-live="off"></div>
-    <section id="debug-panel" class="debug-panel" aria-label="Physics debug diagnostics" hidden>
-      <h2>Debug diagnostics</h2>
-      <div id="debug-hud"></div>
-      <p>Energy drift tolerance: 1.00% of E₀. Powered flight is an open system.</p>
-    </section>
+    <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
+      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
+      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
+      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+    </div>
+    <div class="stage-actions" aria-label="Simulation actions">
+      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
+      <button id="btn-reset">&#8635; Restart</button>
+      <button id="btn-step">&#9197; Step</button>
+    </div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
@@ -41,7 +55,7 @@
 
     <section id="lander-instructions" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Mission</h2>
-      <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is finite, and the lander gets lighter as it burns fuel. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is limited, and the lander gets lighter as it burns fuel. Watch for an asteroid on some flights. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
       <p class="keys">
         Click the game, then use <kbd>←</kbd>/<kbd>→</kbd> or keypad <kbd>4</kbd>/<kbd>6</kbd> to rotate &middot;
@@ -57,17 +71,8 @@
         <input type="range" id="sound-volume" min="0" max="1" step="0.05" value="0.75">
       </div>
       <p class="sound-note">Sound starts only when enabled. Use headphones for the inside-the-cabin mix.</p>
-      <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
-        <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
-        <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
-        <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
-        <button id="btn-reset-touch" class="lander-mobile-reset" type="button">↻ Restart</button>
-      </div>
     </section>
     <div class="btns">
-      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
-      <button id="btn-reset">&#8635; Restart</button>
-      <button id="btn-step">&#9197; Step</button>
       <button id="btn-link">&#128279; Copy link</button>
       <button id="btn-csv">Download CSV</button>
     </div>

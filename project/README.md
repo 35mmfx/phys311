@@ -27,9 +27,13 @@ npm test
   `y` is up.
 - The arena is 20 m wide with a flat floor at `y = 0`; lunar gravity is
   `1.62 m/s²`.
+- The lander starts at a seeded-random `x` from `-7 m` to `7 m` and altitude
+  from `10 m` to `14 m`. Restart chooses a new start; shared URLs preserve
+  their seed.
 - The lander radius is `0.42 m`; the pad is centered at `x = 0` with a
-  `1.45 m` half-width.
-- Dry mass is `1,000 kg`, starting fuel is `150 kg`, maximum thrust is
+  `1.45 m` half-width. One moving asteroid appears on about one in three starts
+  and can destroy the lander on contact.
+- Dry mass is `1,000 kg`, starting fuel is `50 kg`, maximum thrust is
   `8,000 N`, and specific impulse is `300 s`.
 - Thrust points along `(-sin θ, cos θ)`. Fuel flow is
   `T / (Isp g0)`, with `g0 = 9.81 m/s²`. The integrator uses midpoint mass
@@ -51,8 +55,9 @@ press-and-hold touch controls. **Space** pauses, **.** advances one fixed step,
 and **R** resets the mission and re-baselines the energy reference.
 
 On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷**
-buttons overlay the bottom of the canvas so you can keep the lander in view;
-**Restart** sits directly below **Thrust**. Press and hold a flight button to
+buttons sit directly below the canvas, with a small gap, so they cannot cover the landing pad.
+Pause, Restart, and Step sit in a separate row beneath those flight controls.
+Press and hold a flight button to
 steer or fire the engine; release to stop.
 
 Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
