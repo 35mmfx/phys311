@@ -1,5 +1,10 @@
 # Week 12 Decisions
 
+## 2026-11-18 — Reduce fuel reserve
+Planned: start each lunar mission with 50 kg of fuel.
+Did: reduce the starting reserve and capacity to 25 kg.
+Why: the requested starting reserve is half the previous amount.
+
 ## 2026-11-18 — Randomized lunar missions
 Planned: use the same fixed lunar start and 150 kg fuel reserve on every run.
 Did: reduce fuel to 50 kg, randomize the seeded start within x = -7 to 7 m and altitude = 10 to 14 m, and add an asteroid hazard to about one in three starts.

@@ -6,7 +6,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 50 kg fuel; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | 1,000 kg dry mass + up to 25 kg fuel; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
@@ -14,7 +14,7 @@
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |
-| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `1.992e-15`. |
+| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `2.353e-15`. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
 | GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` loaded in a fresh browser with zero console errors. The conservative-energy fix in this worktree is not yet deployed. |
@@ -74,7 +74,7 @@ and conservative-mode behavior selected this week.
    despite conservative dynamics. Cause: the lander drive's potential energy
    summed every body although its gravity force applies only to the lander.
    Fix: account for potential energy on the driven lander only; the seeded
-   asteroid regression now passes at `1.992e-15` relative drift.
+   asteroid regression now passes at `2.353e-15` relative drift.
 
 ## Remaining Week 12 work
 
