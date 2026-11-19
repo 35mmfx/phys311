@@ -51,8 +51,9 @@ press-and-hold touch controls. **Space** pauses, **.** advances one fixed step,
 and **R** resets the mission and re-baselines the energy reference.
 
 On a phone or tablet, no keyboard is needed. The **↶**, **Thrust**, and **↷**
-buttons overlay the bottom of the canvas so you can keep the lander in view.
-Press and hold a button to steer or fire the engine; release to stop.
+buttons overlay the bottom of the canvas so you can keep the lander in view;
+**Restart** sits directly below **Thrust**. Press and hold a flight button to
+steer or fire the engine; release to stop.
 
 Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
 a synthesized interior mix: ventilation and avionics hum, structure-borne

@@ -182,6 +182,9 @@ frames++; cb(performance.now());
 checks.push([drawnText.includes('UT Mission'),
   'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
+document.getElementById('btn-reset-touch')._fire('click', {});
+checks.push([document.getElementById('live').textContent === 'Simulation reset',
+  'touch restart button resets the lunar mission']);
 frames++; cb(performance.now());
 const soundToggle = document.getElementById('sound-enabled');
 checks.push([!soundToggle.checked && audioContexts.length === 0,

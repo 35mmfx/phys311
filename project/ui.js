@@ -68,6 +68,7 @@ export class Controls {
                              ['btn-reset','reset'], ['btn-link','copyLink'],
                              ['btn-csv','downloadCSV']])
       this.$(id).addEventListener('click', () => this.onAction(act));
+    this.$('btn-reset-touch').addEventListener('click', () => this.onAction('reset'));
   }
 
   syncToDOM() {
