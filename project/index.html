@@ -33,29 +33,6 @@
       <div id="debug-hud"></div>
       <p>Energy drift tolerance: 1.00% of E₀. Powered flight is an open system.</p>
     </section>
-    <details class="race-details">
-      <summary>Open the side-by-side integrator race</summary>
-      <section class="race" aria-labelledby="race-heading">
-        <h2 id="race-heading">Same spring-chain start, different solvers</h2>
-        <p class="race-description">Both runs use identical initial conditions and timestep; only the integrator differs. The plot tracks their RMS position difference.</p>
-        <div class="race-canvases">
-          <div>
-            <label for="race-left-integrator">Left solver</label>
-            <select id="race-left-integrator" aria-label="Left race integrator"></select>
-            <canvas id="race-left" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the left integrator"></canvas>
-          </div>
-          <div>
-            <label for="race-right-integrator">Right solver</label>
-            <select id="race-right-integrator" aria-label="Right race integrator"></select>
-            <canvas id="race-right" class="race-canvas" tabindex="0" role="img" aria-label="Spring chain simulated by the right integrator"></canvas>
-          </div>
-        </div>
-        <p id="race-readout" class="race-readout" role="status" aria-live="off"></p>
-        <canvas id="race-plot" class="race-plot" role="img" aria-label="Live plot of RMS position difference between integrators"></canvas>
-        <p class="race-axis">RMS difference (m) vs simulated time (s), last 20 seconds</p>
-        <button id="race-reset" type="button">Reset race</button>
-      </section>
-    </details>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>

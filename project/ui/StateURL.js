@@ -12,8 +12,6 @@ export const StateURL = {
     p.set('drag',  String(s.drag));
     p.set('speed', String(s.speed));
     p.set('n',     String(s.count));
-    p.set('raceA', s.raceA || 'euler');
-    p.set('raceB', s.raceB || 'verlet');
     if (s.debug) p.set('debug', '1');
     if (s.conservative) p.set('conservative', '1');
     return '?' + p.toString();
@@ -35,8 +33,6 @@ export const StateURL = {
       drag:        clamp(num('drag',  defaults.drag),        0,     0.2),
       speed:       clamp(num('speed', defaults.speed),       0.25,  2),
       count:       Math.round(clamp(num('n', defaults.count), 3,   120)),
-      raceA:       ['euler', 'ec', 'verlet'].includes(p.get('raceA')) ? p.get('raceA') : (defaults.raceA || 'euler'),
-      raceB:       ['euler', 'ec', 'verlet'].includes(p.get('raceB')) ? p.get('raceB') : (defaults.raceB || 'verlet'),
       debug:       p.get('debug') === '1',
       conservative: p.get('conservative') === '1'
     };

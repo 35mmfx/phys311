@@ -3,7 +3,6 @@
 import { Camera }       from './render/Camera.js';
 import { Renderer }     from './render/Renderer.js';
 import { HUD }          from './render/HUD.js';
-import { IntegratorRace } from './render/IntegratorRace.js';
 import { Controls }     from './ui.js';
 import { PointerInput, KeyboardInput } from './input.js';
 import { StateURL }     from './ui/StateURL.js';
@@ -17,8 +16,7 @@ const DEFAULTS = {
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false,
-  debug: false, conservative: false,
-  raceA: 'euler', raceB: 'verlet'
+  debug: false, conservative: false
 };
 
 const canvas = document.getElementById('sim');
@@ -48,7 +46,6 @@ let world = null, view = null, paused = false, lastSubsteps = 0;
 let pointer = null, keyboard = null;
 let cursor = null;
 let lastMissionStatus = null;
-let race = null;
 let samples = [];
 let nextSampleAt = 0;
 
@@ -94,11 +91,6 @@ function build() {
   samples = [];
   nextSampleAt = 0;
   recordSample(true);
-  if (race) {
-    race.dt = state.dt;
-    race.setIntegrators(state.raceA, state.raceB);
-    race.reset();
-  }
   controls.syncToDOM();
   StateURL.write(state);
   announce(`${state.scene} scene loaded with ${world.bodies.length} bodies, ` +
@@ -109,7 +101,6 @@ function build() {
 function applyLive(changed = null) {
   if (!world) return;
   world.setIntegrator(state.integrator);
-  if (race) race.setIntegrators(state.raceA, state.raceB);
   if (state.scene !== 'lunar') world.restitution = state.restitution;
   for (const f of world.forces) {
     if (f.constructor.name === 'UniformGravity')  f.g = state.gravity;
@@ -242,26 +233,7 @@ pointer.spawnMode = state.spawnMode;
 pointer.slingshotMode = state.slingshotMode;
 keyboard.slingshotMode = state.slingshotMode;
 
-race = new IntegratorRace({
-  leftCanvas: document.getElementById('race-left'),
-  rightCanvas: document.getElementById('race-right'),
-  plotCanvas: document.getElementById('race-plot'),
-  leftSelect: document.getElementById('race-left-integrator'),
-  rightSelect: document.getElementById('race-right-integrator'),
-  readout: document.getElementById('race-readout'),
-  resetButton: document.getElementById('race-reset'),
-  dt: state.dt,
-  leftIntegrator: state.raceA,
-  rightIntegrator: state.raceB,
-  onIntegratorsChange(left, right) {
-    state.raceA = left;
-    state.raceB = right;
-    StateURL.write(state);
-  }
-});
-const raceDetails = document.querySelector('.race-details');
-raceDetails.addEventListener('toggle', () => race.resize());
-window.addEventListener('resize', () => { render.resize(); cam.fit(...view); race.resize(); });
+window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
 
 // ---- the frame loop: fixed physics step, variable render rate ----
 let last = performance.now();
@@ -279,9 +251,7 @@ function frame(now) {
     lastSubsteps = r.substeps;
     render.recordTrails(world);
     recordSample();
-    if (raceDetails.open) race.advance(frameSeconds * state.speed);
   } else lastSubsteps = 0;
-  if (raceDetails.open) race.draw();
 
   if (world.mission) {
     landerInstructions.hidden = false;

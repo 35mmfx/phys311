@@ -85,8 +85,6 @@ export class Controls {
     this.$('conservative-mode').checked = s.conservative;
     const lander = s.scene === 'lunar';
     this.$('conservative-mode').disabled = !lander;
-    set('race-left-integrator', s.raceA);
-    set('race-right-integrator', s.raceB);
     for (const id of ['count', 'rest', 'grav', 'drag', 'slingshot', 'spawn']) {
       const el = this.$(id);
       const row = el.closest('.row') || el.closest('.check');

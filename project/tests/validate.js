@@ -169,14 +169,11 @@ H('7. Scene 4 is degenerate; scene 2 separates the integrators');
 H('8. Permalink: encode/decode round trip');
 {
   const s = { scene:'orbits', integrator:'ec', dt:1/180, restitution:0.37,
-              gravity:3.71, drag:0.012, speed:1.45, count:57,
-              raceA:'ec', raceB:'euler' };
+              gravity:3.71, drag:0.012, speed:1.45, count:57 };
   const back = StateURL.decode(StateURL.encode(s), ST);
   const same = Object.keys(s).every(k => Math.abs((back[k] ?? 0) - s[k]) < 1e-9 || back[k] === s[k]);
   ok(same && StateURL.encode(s).startsWith('?'),
      'every control survives the shareable query string', StateURL.encode(s).slice(0, 72) + '...');
-  ok(back.raceA === 'ec' && back.raceB === 'euler',
-     'both integrator-race selections are included in shared URLs');
   const partial = StateURL.decode('?scene=chain&int=verlet', ST);
   ok(partial.scene === 'chain' && partial.dt === ST.dt,
      'a hand-edited or truncated query falls back to defaults, no crash');
@@ -463,22 +460,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
 }
 
 // --------------------------------------------------------------- 15
-H('15. Integrator race and CSV export');
+H('15. CSV export');
 {
-  const left = SCENES.chain({ ...ST, count: 9, integrator: 'euler' }).world;
-  const right = SCENES.chain({ ...ST, count: 9, integrator: 'verlet' }).world;
-  ok(maxdiff(snap(left), snap(right)) === 0,
-     'race starts from bit-identical chain positions and velocities');
-  for (let i = 0; i < 1200; i++) {
-    left.step(left.DT);
-    right.step(right.DT);
-  }
-  const divergence = Math.sqrt(left.bodies.reduce((sum, body, i) =>
-    sum + body.pos.sub(right.bodies[i].pos).len2(), 0) / left.bodies.length);
-  ok(Number.isFinite(divergence) && divergence > 1e-5,
-     'Euler and Verlet produce measurable RMS position divergence',
-     `${divergence.toExponential(3)} m after ${left.time.toFixed(2)} s`);
-
   const csv = serializeSamples([
     { time: 0, bodies: [{ id: 1, x: -1, y: 2 }],
       kinetic: 0, mechanical: 3, energy: 3, energyChangePct: 0, charge: 62, missionStatus: 'flying' },

@@ -1,5 +1,10 @@
 # Week 12 Decisions
 
+## 2026-11-18 — Remove optional integrator race
+Planned: keep the side-by-side integrator race as an inherited Lab 10 demonstration.
+Did: remove the race UI and its runtime wiring; keep the individual integrator setting and legacy scenes.
+Why: the Week 12 assignment prioritizes the proposal's MUST tier and does not request the race.
+
 ## 2026-11-16 — Score definition
 Planned: the proposal requires a score HUD but does not define a scoring scale.
 Did: award 100 points for a safe landing and 0 while flying or after a crash.

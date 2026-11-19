@@ -31,8 +31,6 @@ function el(id) {
   };
 }
 const nodes = new Map();
-const raceDetails = el('race-details');
-raceDetails.open = false;
 const windowListeners = {};
 const audioContexts = [];
 class MockAudioParam {
@@ -86,7 +84,6 @@ class MockAudioContext {
 }
 globalThis.document = {
   getElementById: id => { if (!nodes.has(id)) nodes.set(id, el(id)); return nodes.get(id); },
-  querySelector: selector => selector === '.race-details' ? raceDetails : null,
   createElement: tag => el(tag),
   body: { appendChild: noop },
   addEventListener: noop
@@ -270,9 +267,6 @@ checks.push([/Find the pad/.test(document.getElementById('mission-status').textC
   'mission instructions are visible to visitors']);
 checks.push([/score<\/span><span class="v">0 \/ 100/.test(document.getElementById('hud').innerHTML),
   'lander HUD shows the mission score']);
-checks.push([document.getElementById('race-left-integrator').value === 'euler' &&
-  document.getElementById('race-right-integrator').value === 'verlet',
-  'integrator race offers two independently selected solvers']);
 const soundProbe = new CockpitSound();
 await soundProbe.enable();
 const probeContext = audioContexts[audioContexts.length - 1];
@@ -289,11 +283,6 @@ checks.push([probeContext.bufferSources.length >= noisesBeforeSideCrash + 4,
 await soundProbe.disable();
 checks.push([probeContext.state === 'suspended',
   'muting suspends the audio context to reduce idle processing']);
-raceDetails.open = true;
-for (let i = 0; i < 120; i++) { frames++; cb(performance.now()); }
-checks.push([/RMS position difference/.test(document.getElementById('race-readout').textContent) &&
-  !/0\.000e\+0 m/.test(document.getElementById('race-readout').textContent),
-  'opening the race advances identical runs and updates the divergence plot']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }
