@@ -493,6 +493,16 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && conservative.mission.status === 'flying'
      && !conservative.lander.fixed,
      'conservative mode disables thrust and scripted landing, and uses elastic contacts');
+
+  const conservativeAsteroid = SCENES.lunar({
+    ...ST, seed: 2010346869
+  }).world;
+  setConservativeMode(conservativeAsteroid, true);
+  for (let i = 0; i < 1574; i++) conservativeAsteroid.step(conservativeAsteroid.DT);
+  ok(conservativeAsteroid.bodies.some(body => body.tag === 'asteroid')
+     && Math.abs(conservativeAsteroid.driftE()) < 1e-8,
+     'conservative lunar energy excludes gravity-free asteroid potential',
+     `|dE/E0|=${Math.abs(conservativeAsteroid.driftE()).toExponential(3)}`);
 }
 
 // --------------------------------------------------------------- 15

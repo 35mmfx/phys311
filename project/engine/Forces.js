@@ -197,8 +197,8 @@ export class LanderDrive {
     }
   }
 
-  energy(bodies) {
-    return this.g * bodies.reduce((sum, b) => sum + b.mass * b.pos.y, 0);
+  energy() {
+    return this.g * this.body.mass * this.body.pos.y;
   }
 
   endStep(dt) {
