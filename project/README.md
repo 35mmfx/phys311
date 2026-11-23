@@ -4,7 +4,7 @@ A single-scene lunar-landing challenge built for the Week 12 MUST tier. The
 lander uses finite propellant, variable mass, keyboard/touch controls, and
 fixed-step velocity-Verlet integration. The physics modules in `engine/` do
 not access the DOM or canvas; `render/` handles drawing, and `main.js` wires
-the app together.
+the app together. [Play the live demo](https://35mmfx.github.io/phys311/project/).
 
 ## Run locally
 
@@ -52,8 +52,19 @@ npm test
 - Contact has restitution `e = 0.25`. Touchdown is evaluated before the
   collision response. A score of 100 is awarded for a safe landing; flight or
   crash scores 0.
+- After landing or crashing, the debrief reports the outcome, frozen flight
+  time, and fuel used and remaining.
 - Attitude is steered directly at a fixed rate; rotational inertia, terrain
   shape, and atmosphere are not modeled.
+
+## Architecture
+
+- `engine/` contains bodies, forces, collision resolution, integrators, and
+  the fixed-step `World`; it has no browser or rendering dependencies.
+- `scenes.js` builds deterministic simulation presets from state.
+- `render/` draws the world; `input.js` and `ui/` translate browser input and
+  display controls, diagnostics, and exports.
+- `main.js` connects the scene, engine, renderer, and user interface.
 
 ## Controls
 
@@ -97,19 +108,51 @@ reference scenes. The required lunar mission is the default scene.
 - The HUD labels powered flight as an open system: thrust changes the
   lander's mechanical energy and momentum.
 
+## Limitations
+
+The validated timestep range is specific to the study in
+[`VALIDATION.md`](./VALIDATION.md), not a universal stability guarantee.
+Orbital evolution loses accuracy at coarse timesteps, and body-count
+performance has not been benchmarked across devices. The lunar scenario is a
+short final-approach game, not a full Apollo descent; it omits orbital braking,
+atmosphere, terrain shape, and rotational inertia. Its continuous throttle
+and asteroid are deliberate simplifications.
+
 ## Validation
 
 `npm test` runs the headless physics suite and a browser-entry smoke test. The
 physics suite includes the proposal's rocket-equation, 60-second
 free-fall-energy, fuel-bound, and touchdown checks, plus accumulator checks at
 60 Hz, 144 Hz, and jittered frame intervals, and a spring-chain DT-halving
-convergence check. The live-site check, real-device touch check, and DevTools
-CPU-throttling check remain part of deployment verification; see
+convergence check, randomized collision-conservation checks, and mission
+debrief accounting. The current run passes **64 physics/publishing checks and
+37 browser-entry checks**. The live-site check and real-device touch check
+remain part of deployment verification; see
 [`PROGRESS.md`](./PROGRESS.md).
+
+| Validation | Measured result |
+|---|---|
+| 2 s powered-flight convergence, Velocity Verlet | Estimated order 2.00 over `DT = 1/30` to `1/960 s`. |
+| 60 s isolated orbit, `DT = 1/240 s` | Maximum `|ΔE/E₀| = 0.586%`; Euler comparison: 73.44%. |
+| Momentum and collisions | Orbit `|Δp|/|p₀| = 5.57e-13`; 500 randomized collisions max `1.036e-15`, with no kinetic-energy increases. |
+| Analytic and driven checks | Free-fall position error `8.23e-14%`; constant-force work-ledger discrepancy `5.36e-14`. |
+| Coarse-step orbital stress | 12 planets, `DT = 1/30 s`, 60 s: maximum `|ΔE/E₀| = 36.80%`. |
+
+See [`VALIDATION.md`](./VALIDATION.md) for test conditions, complete convergence
+data, and limitations.
+
+Run `npm run convergence` for a headless, two-second lunar thrust flight at six
+timesteps. It reports the lander's final height, error against the finest run,
+successive error ratios, and an estimated convergence order for Velocity
+Verlet.
+
+## Credits and references
 
 The engine parameters are Apollo-inspired rather than a reconstruction. See
 NASA's [descent propulsion system report](https://ntrs.nasa.gov/citations/19730011150)
 and [Apollo 14 flight evaluation](https://ntrs.nasa.gov/citations/19730021081).
+GitHub Copilot assisted with code, tests, and documentation; generated
+suggestions were reviewed against the implementation and local test results.
 
 ## GitHub Pages
 

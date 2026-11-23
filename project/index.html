@@ -55,7 +55,9 @@
 
     <section id="lander-instructions" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Mission</h2>
+      <p class="mission-copy">This lunar-landing simulation challenges you to steer a fuel-limited rocket onto a small pad.</p>
       <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. Propellant is limited, and the lander gets lighter as it burns fuel. Watch for an asteroid on some flights. Touch down upright with a vertical speed under 1.8 m/s and horizontal speed under 1.1 m/s.</p>
+      <p class="physics-note"><strong>What to notice:</strong> As fuel burns away, the same thrust accelerates the lighter lander more. Watch the speed and fuel readouts during a steady burn.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
       <p class="physics-note">Final approach starts with 300 kg of descent propellant left from an 8,200 kg tank. Fuel percentage is relative to that original load.</p>
       <div class="row">
@@ -63,10 +65,11 @@
         <input type="range" id="throttle" min="0.1" max="1" step="0.05" value="0.6">
       </div>
       <p class="keys">
-        Click the game, then use <kbd>←</kbd>/<kbd>→</kbd> or keypad <kbd>4</kbd>/<kbd>6</kbd> to rotate &middot;
-        hold <kbd>↑</kbd>/<kbd>↓</kbd> or keypad <kbd>8</kbd>/<kbd>2</kbd> to thrust.<br>
+        <strong>Keyboard:</strong> Click the game; use <kbd>←</kbd>/<kbd>→</kbd>, <kbd>A</kbd>/<kbd>D</kbd>, or keypad <kbd>4</kbd>/<kbd>6</kbd> to rotate; hold <kbd>↑</kbd>/<kbd>↓</kbd>, <kbd>W</kbd>/<kbd>S</kbd>, or keypad <kbd>8</kbd>/<kbd>2</kbd> to thrust.<br>
+        <strong>Pointer/touch:</strong> press and hold the on-screen rotate and thrust buttons.<br>
         <kbd>Space</kbd> pause &middot; <kbd>R</kbd> restart
       </p>
+      <p class="keys"><a href="README.md">Developer README</a> · <a href="https://github.com/35mmfx/phys311">Source repository</a></p>
       <div class="check sound-setting">
         <input type="checkbox" id="sound-enabled">
         <label for="sound-enabled">Cockpit sound (engines, relays, airflow, and impacts)</label>
@@ -76,6 +79,15 @@
         <input type="range" id="sound-volume" min="0" max="1" step="0.05" value="0.75">
       </div>
       <p class="sound-note">Sound starts only when enabled. Use headphones for the inside-the-cabin mix.</p>
+      <section id="mission-debrief" class="mission-debrief" aria-labelledby="debrief-heading" hidden>
+        <h3 id="debrief-heading">Mission debrief</h3>
+        <dl>
+          <dt>Outcome</dt><dd id="debrief-outcome"></dd>
+          <dt>Flight time</dt><dd id="debrief-time"></dd>
+          <dt>Fuel used</dt><dd id="debrief-fuel-used"></dd>
+          <dt>Fuel remaining</dt><dd id="debrief-fuel-remaining"></dd>
+        </dl>
+      </section>
     </section>
     <div class="btns">
       <button id="btn-link">&#128279; Copy link</button>

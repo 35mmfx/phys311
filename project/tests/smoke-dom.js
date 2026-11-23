@@ -306,6 +306,13 @@ const laterTime = document.getElementById('hud').innerHTML.match(
 );
 checks.push([endedMission && stoppedTime && laterTime && stoppedTime[1] === laterTime[1],
   'mission timer stops after landing or crash']);
+const debrief = document.getElementById('mission-debrief');
+checks.push([!debrief.hidden
+  && /^(Safe landing|Crash)$/.test(document.getElementById('debrief-outcome').textContent)
+  && /[\d.]+ s/.test(document.getElementById('debrief-time').textContent)
+  && /[\d.]+ kg/.test(document.getElementById('debrief-fuel-used').textContent)
+  && /[\d.]+ kg/.test(document.getElementById('debrief-fuel-remaining').textContent),
+  'terminal mission displays outcome, flight time, and fuel debrief']);
 
 let bad = 0;
 for (const [c, n] of checks) { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}`); if (!c) bad++; }

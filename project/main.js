@@ -23,6 +23,11 @@ const DEFAULTS = {
 const canvas = document.getElementById('sim');
 const live   = document.getElementById('live');       // aria-live announcer
 const missionStatus = document.getElementById('mission-status');
+const missionDebrief = document.getElementById('mission-debrief');
+const debriefOutcome = document.getElementById('debrief-outcome');
+const debriefTime = document.getElementById('debrief-time');
+const debriefFuelUsed = document.getElementById('debrief-fuel-used');
+const debriefFuelRemaining = document.getElementById('debrief-fuel-remaining');
 const landerControls = document.getElementById('lander-controls');
 const landerInstructions = document.getElementById('lander-instructions');
 const cam    = new Camera();
@@ -263,12 +268,26 @@ function frame(now) {
     landerControls.hidden = false;
     missionStatus.textContent = world.mission.message;
     missionStatus.setAttribute('data-state', world.mission.status);
-    if (world.mission.status !== lastMissionStatus &&
-        world.mission.status !== 'flying') announce(world.mission.message);
-    lastMissionStatus = world.mission.status;
+    if (world.mission.status !== lastMissionStatus) {
+      if (world.mission.status !== 'flying') {
+        const debrief = world.mission.debrief;
+        missionDebrief.hidden = false;
+        missionDebrief.setAttribute('data-state', debrief.outcome);
+        debriefOutcome.textContent = debrief.outcome === 'landed' ? 'Safe landing' : 'Crash';
+        debriefTime.textContent = `${debrief.elapsedTime.toFixed(2)} s`;
+        debriefFuelUsed.textContent = `${debrief.fuelUsed.toFixed(2)} kg`;
+        debriefFuelRemaining.textContent = `${debrief.fuelRemaining.toFixed(2)} kg`;
+        announce(world.mission.message);
+      } else {
+        missionDebrief.hidden = true;
+        missionDebrief.removeAttribute('data-state');
+      }
+      lastMissionStatus = world.mission.status;
+    }
   } else {
     landerInstructions.hidden = true;
     landerControls.hidden = true;
+    missionDebrief.hidden = true;
     missionStatus.textContent = '';
     missionStatus.removeAttribute('data-state');
     lastMissionStatus = null;

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/validate.js && node tests/smoke-dom.js"
+    "test": "node tests/validate.js && node tests/smoke-dom.js",
+    "convergence": "node convergence.js"
   }
 }

@@ -1,6 +1,6 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-18 — automated checks pass; Apollo-inspired final approach and throttle are local changes awaiting deployment. The previous live site was freshly checked with zero console errors; CPU-throttled fixed-step check passes. Real-phone and external discussion checks remain.
+**Status date:** 2026-11-23 — local tests pass; the Apollo-inspired model, Week 13 validation report, README updates, and visitor explainer are not yet deployed. The previous live site was freshly checked with zero console errors; CPU-throttled fixed-step check passes. Real-phone and external discussion checks remain.
 
 ## MUST tier status
 
@@ -29,11 +29,12 @@
 | Touchdown limits | Center case passes; each over-limit case fails | Center and exact inclusive limits pass; 1.46 m, 1.81 m/s, 1.11 m/s, and 16° fail | pass |
 
 The test runner also verifies seeded launch variation, the asteroid encounter
-rate and collision response, the terminal mission timer, and the fixed-step
-accumulator. Both 60 Hz and 144 Hz produce 2,400 steps over 10 seconds; the
+rate and collision response, randomized isolated collisions, the terminal
+mission timer, and the fixed-step accumulator. Both 60 Hz and 144 Hz produce
+2,400 steps over 10 seconds; the
 jittered sequence produces 10.0083 seconds. A two-second stall is capped at
-eight substeps. Final local test totals: **61 physics/publishing checks and
-36 browser-entry checks passed**.
+eight substeps. Final local test totals: **64 physics/publishing checks and
+37 browser-entry checks passed**.
 
 ## Bonus convergence check
 
@@ -86,6 +87,13 @@ and conservative-mode behavior selected this week.
 
 ## Week 13 plan
 
-1. Explain how decreasing mass changes thrust-driven acceleration.
-2. Add the landing/fuel debrief from the proposal's SHOULD tier.
-3. Complete the validation report, final documentation, and peer review.
+1. Explain how decreasing mass changes thrust-driven acceleration — done in
+   the on-page explainer.
+2. Add the landing/fuel debrief from the proposal's SHOULD tier — done; it
+   reports outcome, frozen flight time, and fuel used/remaining.
+3. Complete the validation report and final documentation — done locally;
+   peer reviews and external submissions remain outstanding.
+
+The local validation report (B1–B4), README validation table, and on-page
+visitor explainer are now complete. Real-device testing, peer reviews, and
+external submissions remain outside this worktree.

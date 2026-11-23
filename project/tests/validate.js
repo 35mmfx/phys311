@@ -3,6 +3,7 @@
 // because engine/ never touches the DOM. That is the Week 9 layering rule
 // paying its final dividend.
 import { World, Body, Vec2 } from '../engine/World.js';
+import { resolvePair } from '../engine/Collisions.js';
 import { UniformGravity, Spring, NewtonGravity, PointerSpring, LanderDrive } from '../engine/Forces.js';
 import { Camera }   from '../render/Camera.js';
 import { Renderer } from '../render/Renderer.js';
@@ -264,6 +265,51 @@ H('11. Energy ledger: inelastic loss is booked, not blamed on the solver');
      `Euler dE/E0 = ${eul.driftE().toExponential(2)} -- use scene 2 to judge a solver`);
 }
 
+// ---------------------------------------------------------------- 11b
+H('11b. Randomized isolated collisions conserve momentum and do not add KE');
+{
+  let state = 20261123;
+  const random = () => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) / 4294967296;
+  };
+  let worstMomentum = 0, energyIncreases = 0, maxEnergyIncrease = 0, resolvedCount = 0;
+  for (let i = 0; i < 500; i++) {
+    const angle = random() * Math.PI * 2;
+    const normal = new Vec2(Math.cos(angle), Math.sin(angle));
+    const massA = 0.5 + random() * 4, massB = 0.5 + random() * 4;
+    const radiusA = 0.2, radiusB = 0.2;
+    const distance = (radiusA + radiusB) * (0.2 + 0.7 * random());
+    const approachSpeed = 0.1 + random() * 8, tangentSpeed = (random() - 0.5) * 2;
+    const a = new Body({
+      pos: new Vec2(0, 0), vel: new Vec2(3, tangentSpeed),
+      mass: massA, radius: radiusA
+    });
+    const b = new Body({
+      pos: normal.mul(distance),
+      vel: new Vec2(3, tangentSpeed).sub(normal.mul(approachSpeed)),
+      mass: massB, radius: radiusB
+    });
+    const p0 = a.momentum().add(b.momentum());
+    const k0 = a.kinetic() + b.kinetic();
+    const restitution = random();
+    if (!resolvePair(a, b, restitution)) continue;
+    resolvedCount++;
+    const relativeMomentumError = a.momentum().add(b.momentum()).sub(p0).len() / p0.len();
+    const deltaKE = a.kinetic() + b.kinetic() - k0;
+    worstMomentum = Math.max(worstMomentum, relativeMomentumError);
+    if (deltaKE > 0) {
+      energyIncreases++;
+      maxEnergyIncrease = Math.max(maxEnergyIncrease, deltaKE);
+    }
+  }
+  ok(resolvedCount === 500 && energyIncreases === 0 && worstMomentum < 1e-12,
+     '500 isolated randomized impacts conserve momentum and never increase KE',
+     `max |dP|/|P0|=${worstMomentum.toExponential(3)}, KE increases=${energyIncreases}, max increase=${maxEnergyIncrease.toExponential(3)} J`);
+}
+
 // --------------------------------------------------------------- 12
 H('12. Slingshot: aim opposite the launch direction and cap speed');
 {
@@ -405,10 +451,30 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && safe.lander.fixed && safe.lander.vel.len2() === 0,
      'proposal touchdown case (0.5, -1.0 m/s, upright) lands safely',
      safe.mission.message);
+  ok(safe.mission.debrief.outcome === 'landed'
+     && safe.mission.debrief.elapsedTime === safe.mission.elapsedTime
+     && safe.mission.debrief.fuelUsed === 0
+     && safe.mission.debrief.fuelRemaining === 300,
+     'landing debrief records outcome, frozen time, and fuel');
   const frozenLandingTime = safe.mission.elapsedTime;
   safe.step(safe.DT);
   ok(frozenLandingTime > 0 && safe.mission.elapsedTime === frozenLandingTime,
      'mission time is captured at touchdown');
+  const fueledLanding = SCENES.lunar(missionState).world;
+  fueledLanding.bodies = fueledLanding.bodies.filter(body => body.tag !== 'asteroid');
+  fueledLanding.landerDrive.thrusting = true;
+  for (let i = 0; i < 20; i++) fueledLanding.step(fueledLanding.DT);
+  fueledLanding.landerDrive.thrusting = false;
+  fueledLanding.lander.pos.set(0, fueledLanding.lander.radius + 0.001);
+  fueledLanding.lander.vel.set(0, -1 + 1.62 * fueledLanding.DT);
+  fueledLanding.lander.angle = 0;
+  fueledLanding.step(fueledLanding.DT);
+  ok(fueledLanding.mission.debrief.outcome === 'landed'
+     && fueledLanding.mission.debrief.fuelUsed > 0
+     && Math.abs(fueledLanding.mission.debrief.fuelUsed
+       + fueledLanding.mission.debrief.fuelRemaining - 300) < 1e-10,
+     'landing debrief accounts for fuel consumed during the mission',
+     `used=${fueledLanding.mission.debrief.fuelUsed.toFixed(3)} kg, remaining=${fueledLanding.mission.debrief.fuelRemaining.toFixed(3)} kg`);
   const thresholdSafe = touchdown({
     x: 1.45 - 1.1 * (1 / 240), vx: 1.1, vy: -1.8, angle: 15
   });
@@ -417,7 +483,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      `${thresholdSafe.mission.message}; impact=${JSON.stringify(thresholdSafe.mission.impact)}`);
 
   const missed = touchdown({ x: 1.46, vx: 0 });
-  ok(missed.mission.status === 'crashed' && /missed the landing pad/.test(missed.mission.message),
+  ok(missed.mission.status === 'crashed' && /missed the landing pad/.test(missed.mission.message)
+     && missed.mission.debrief.outcome === 'crashed',
      'proposal miss at 1.46 m outside pad center crashes');
 
   const fast = touchdown({ vx: 0, vy: -1.81 });

@@ -184,7 +184,9 @@ export const SCENES = {
       padCenter: 0,
       padHalfWidth: 1.45,
       score: 0,
-      elapsedTime: null
+      elapsedTime: null,
+      initialFuel: drive.fuel,
+      debrief: null
     };
     w.beforeCollisions = () => {
       if (w.conservativeMode) return;
@@ -251,6 +253,14 @@ export const SCENES = {
         w.mission.elapsedTime = w.time;
       } else if (w.mission.elapsedTime === null) {
         w.mission.elapsedTime = w.time;
+      }
+      if (w.mission.status !== 'flying' && w.mission.debrief === null) {
+        w.mission.debrief = {
+          outcome: w.mission.status,
+          elapsedTime: w.mission.elapsedTime,
+          fuelUsed: w.mission.initialFuel - drive.fuel,
+          fuelRemaining: drive.fuel
+        };
       }
       if (w.conservativeMode || w.mission.status === 'flying') {
         return;
