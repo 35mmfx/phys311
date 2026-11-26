@@ -253,6 +253,7 @@ export class KeyboardInput {
       button.addEventListener('pointercancel', release);
       button.addEventListener('lostpointercapture', release);
       button.addEventListener('blur', release);
+      button.addEventListener('contextmenu', event => event.preventDefault());
       button.addEventListener('keydown', event => {
         if (event.key === ' ' || event.key === 'Enter') press(event);
       });

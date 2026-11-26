@@ -117,23 +117,25 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
 .lander-controls[hidden]{display:none}
 .lander-button{
   min-height:3rem;font-size:1.05rem;font-weight:700;
-  touch-action:none;user-select:none;border-width:2px;
+  touch-action:none;-webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  border-width:2px;
 }
 #lander-left{
   color:#07131a;background:#7dc7ff;border-color:#b8e2ff;
 }
-#lander-left:hover{background:#a3d7ff}
-#lander-left:active{background:#4aa8ef}
 #lander-thrust{
   color:#231100;background:var(--ut-orange);border-color:#ffc078;
 }
-#lander-thrust:hover{background:#ff9d33}
-#lander-thrust:active{background:#d96f00}
 #lander-right{
   color:#07131a;background:#7dc7ff;border-color:#b8e2ff;
 }
-#lander-right:hover{background:#a3d7ff}
-#lander-right:active{background:#4aa8ef}
+@media (hover:hover){
+  #lander-left:hover,#lander-right:hover{background:#a3d7ff}
+  #lander-thrust:hover{background:#ff9d33}
+  #lander-left:active,#lander-right:active{background:#4aa8ef}
+  #lander-thrust:active{background:#d96f00}
+}
 .stage-actions{
   display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;
   max-width:28rem;margin:0 auto .75rem

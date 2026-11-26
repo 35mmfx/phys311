@@ -270,6 +270,12 @@ document.getElementById('lander-thrust')._fire('pointerup', { pointerId: 7 });
 const touchReserveAfter = fuelRemaining();
 checks.push([touchReserveAfter < touchReserveBefore,
   'touch thrust button burns fuel while pressed and releases cleanly']);
+const copyMenusBlocked = ['lander-left', 'lander-thrust', 'lander-right'].every(id => {
+  let prevented = false;
+  document.getElementById(id)._fire('contextmenu', { preventDefault: () => { prevented = true; } });
+  return prevented;
+});
+checks.push([copyMenusBlocked, 'flight buttons suppress long-press copy menus']);
 checks.push([/open\)/.test(document.getElementById('hud').innerHTML),
   'powered lander marks energy change as an open-system diagnostic']);
 const conservative = document.getElementById('conservative-mode');
