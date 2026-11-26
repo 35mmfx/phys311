@@ -116,9 +116,9 @@ export class Renderer {
 
   _flightReadouts(world) {
     const ctx = this.ctx, cam = this.cam, drive = world.landerDrive;
-    const [left, top] = cam.toScreen(world.bounds.xmin, world.bounds.ymax);
+    const [left, bottom] = cam.toScreen(world.bounds.xmin, world.bounds.ymin);
     const width = Math.max(0, Math.min(110, left - 8));
-    const x = left - width - 8, y = top + 8;
+    const x = left - width - 8, y = bottom - 60;
     const color = drive.fuel <= 5 ? '#ff6b6b' : '#7ee787';
 
     ctx.save();

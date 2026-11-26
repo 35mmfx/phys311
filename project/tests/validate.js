@@ -693,7 +693,7 @@ H('Lunar difficulty and trajectory prediction');
     for (const [w, h] of [[900, 520], [320, 220]]) {
       gaugeCamera.resize(w, h);
       gaugeCamera.fit(-11, 11, -1, 21, 1.08, Math.min(118, w * 0.4));
-      const [left, top] = gaugeCamera.toScreen(world.bounds.xmin, world.bounds.ymax);
+      const [left, bottom] = gaugeCamera.toScreen(world.bounds.xmin, world.bounds.ymin);
       const initialFuel = world.landerDrive.maxFuel;
       for (const fuel of [initialFuel, 5.01, 5, 0]) {
         world.landerDrive.fuel = fuel;
@@ -704,14 +704,14 @@ H('Lunar difficulty and trajectory prediction');
         const color = fuel <= 5 ? '#ff6b6b' : '#7ee787';
         gaugeValid &&= gaugeRects.length === 0 && gaugeText.length === 3
           && label.x >= 0 && label.x + label.maxWidth <= left - 8
-          && label.y === top + 13
+          && label.y === bottom - 55 && gaugeText[2].y === bottom - 19
           && label.text === `FUEL ${fuel.toFixed(2)} kg`
           && label.color === color && label.alpha === 0.7;
       }
       world.landerDrive.fuel = initialFuel;
     }
   }
-  ok(gaugeValid, 'translucent fuel readout follows the arena corner and 5 kg warning threshold without a bar');
+  ok(gaugeValid, 'translucent readouts follow the bottom-left arena corner and retain the fuel warning');
   let speedValid = true;
   for (const [speed, color] of [
     [-1.8, '#7ee787'], [-1.801, '#7ee787'], [-1.802, '#ff6b6b'],

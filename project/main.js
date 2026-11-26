@@ -1,7 +1,7 @@
 // main.js — the only file that wires engine + render + ui together.
 // Everything DOM-related lives at or below this file; engine/ stays pure.
 import { Camera }       from './render/Camera.js?v=20261126a';
-import { Renderer }     from './render/Renderer.js?v=20261126a';
+import { Renderer }     from './render/Renderer.js?v=20261126b';
 import { HUD }          from './render/HUD.js?v=20261126a';
 import { Controls }     from './ui.js';
 import { PointerInput, KeyboardInput } from './input.js';

@@ -53,7 +53,7 @@ npm test
   `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The HUD's remaining-fuel percentage is relative
   to the selected difficulty's starting reserve. A translucent readout to the
-  left of the arena's upper-left corner shows fuel in kilograms and turns red
+  left of the arena's bottom-left corner shows fuel in kilograms and turns red
   at 5 kg or less. Below it, descent speed is positive downward and turns red
   when its magnitude exceeds the safe vertical landing limit. Horizontal speed
   is positive to the right and turns red when its magnitude exceeds the safe
