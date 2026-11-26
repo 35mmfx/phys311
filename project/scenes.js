@@ -1,6 +1,6 @@
 // scenes.js — every scene is a pure function (state) -> World.
 // Randomized scenes use a state seed, so a permalink reproduces the same run.
-import { World, Body, Vec2 } from './engine/World.js';
+import { World, Body, Vec2 } from './engine/World.js?v=20261126c';
 import { UniformGravity, QuadraticDrag, Spring, NewtonGravity, PointerSpring, LanderDrive }
   from './engine/Forces.js';
 
@@ -273,6 +273,32 @@ export const SCENES = {
         if (!onPad) w.mission.message = 'Crash: you missed the landing pad.';
         else if (!upright) w.mission.message = 'Crash: the lander was tilted at touchdown.';
         else w.mission.message = 'Crash: touchdown speed was too high.';
+      }
+    };
+    w.beforeWalls = () => {
+      if (w.conservativeMode) return;
+      const { padCenter, padHalfWidth } = w.mission;
+      for (const body of w.bodies) {
+        if (body.tag !== 'asteroid' || body.fixed) continue;
+        const clearance = padHalfWidth + body.radius + 0.1;
+        const relativeX = body.pos.x - padCenter;
+        const height = body.pos.y - bounds.ymin - body.radius - 0.3;
+        if (height <= 0 && Math.abs(relativeX) <= clearance) {
+          // Keep the asteroid above the pad even after a collision changes its course.
+          body.pos.y = bounds.ymin + body.radius + 0.3;
+          const speed = body.vel.len();
+          body.vel.x *= 0.5;
+          body.vel.y = Math.sqrt(Math.max(0, speed * speed - body.vel.x * body.vel.x));
+        } else if (height > 0 && height <= 2 && body.vel.y < 0) {
+          const impactX = relativeX + body.vel.x * height / -body.vel.y;
+          if (Math.abs(impactX) <= clearance) {
+            const side = relativeX < 0 ? -1 : relativeX > 0 ? 1 : body.vel.x < 0 ? -1 : 1;
+            const dx = side * (clearance + 0.1) - relativeX;
+            const distance = Math.hypot(dx, height);
+            const speed = body.vel.len();
+            body.vel.set(speed * dx / distance, -speed * height / distance);
+          }
+        }
       }
     };
     w.afterStep = () => {

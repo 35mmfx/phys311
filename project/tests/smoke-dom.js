@@ -99,7 +99,7 @@ globalThis.window = {
 };
 globalThis.performance = { now: () => frames * 16.6667 };
 globalThis.requestAnimationFrame = f => { cb = f; };
-globalThis.location = { search: '?scene=orbits&int=verlet&n=20&debug=1', hash: '', origin: 'x', pathname: '/y' };
+globalThis.location = { search: '?scene=orbits&int=verlet&n=20&debug=1&seed=2468', hash: '', origin: 'x', pathname: '/y' };
 globalThis.history  = { replaceState: noop };
 Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: () => Promise.resolve() } }, configurable: true });
 

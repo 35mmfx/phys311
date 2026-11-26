@@ -2,7 +2,7 @@
 
 The numerical measurements below were made with the headless JavaScript engine.
 The default lunar mission uses a fixed `DT = 1/240 s`; the controlled studies
-specify their own timestep. On 2026-11-26, `npm test` passed 88 physics and
+specify their own timestep. On 2026-11-26, `npm test` passed 92 physics and
 publishing checks and 48 mocked browser-entry checks. On the same date,
 `npm run convergence` reproduced the B1 study. These checks do not replace
 live-site or real-device testing.
@@ -82,6 +82,8 @@ permalink decoding for Nearly impossible, and the visible More games selector.
 They also check fuel and speed readout placement, transparency, warning
 thresholds, and preserved impact speeds. The mocked browser-entry checks verify
 that the readouts render and are accessible to screen readers.
+Pad-protection checks cover all difficulties, seeded waves, sliding asteroids,
+asteroid collisions, and the unchanged conservative-mode behavior.
 With a stationary lander and seed 2468, the Nearly impossible test launches
 its full 24-asteroid wave within the simulated test period. Mocked audio checks
 confirm thrust engages the engine layer without creating relay-click

@@ -27,6 +27,8 @@ fresh deployed-site check.
 
 - Fuel, descent speed, and horizontal speed appear to the left of the arena.
   The speed readouts use the same limits and tolerances as touchdown checks.
+- Asteroids are redirected away from the pad in all four difficulties, while
+  remaining hazardous to the lander in flight.
 - **Nearly impossible** adds 18 kg of fuel, a 1.3 m-wide pad, a starting
   altitude of 18–19 m, and up to 24 faster, more frequent asteroids.
 - **More games** is a visible selector for the five inherited physics
@@ -48,7 +50,7 @@ collision response, randomized isolated collisions, the terminal mission
 timer, and the fixed-step accumulator. Both 60 Hz and 144 Hz produce
 2,400 steps over 10 seconds; the
 jittered sequence produces 10.0083 seconds. A two-second stall is capped at
-eight substeps. On 2026-11-26, `npm test` passed **88 physics/publishing checks
+eight substeps. On 2026-11-26, `npm test` passed **92 physics/publishing checks
 and 48 mocked browser-entry checks**.
 
 ## Bonus convergence check
@@ -64,7 +66,7 @@ The lander now has a shaded metallic hull, canopy, and UT Mission side decal.
 A fading dust plume is rendered only when vertical or horizontal touchdown
 speed exceeds the safe limit; slow missed-pad and tilted crashes do not emit
 dust. Asteroid impacts emit 32 dust particles around the lander/contact point,
-and asteroids stop at the ground instead of bouncing. Asteroids launch in a
+and asteroids stop on ground outside the pad instead of bouncing. Asteroids launch in a
 dense opening burst with randomized directions and downward inclination,
 followed by seeded later launches.
 Touch controls sit below the canvas so they do not obscure the landing pad.

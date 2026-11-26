@@ -561,6 +561,93 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(floorHit && floorAsteroid.pos.y === 0.2
      && floorAsteroid.vel.y === 0,
      'asteroids stop at the ground instead of bouncing');
+  let padProtection = true;
+  for (const difficulty of ['easy', 'normal', 'hard', 'impossible']) {
+    const makeWorld = () => {
+      const protectedWorld = SCENES.lunar({ ...missionState, difficulty }).world;
+      protectedWorld.lander.pos.set(-8, 19);
+      protectedWorld.lander.fixed = true;
+      protectedWorld.lander.invMass = 0;
+      protectedWorld.mission.asteroidCount = 0;
+      return protectedWorld;
+    };
+    const world = makeWorld();
+    const asteroid = world.add(new Body({
+      pos: new Vec2(0, 1.5), vel: new Vec2(0, -3),
+      mass: 350, radius: 0.2, tag: 'asteroid'
+    }));
+    world.step(world.DT);
+    padProtection &&= asteroid.vel.x !== 0 && Math.abs(asteroid.vel.len() - 3) < 1e-10;
+    for (let i = 0; i < 900; i++) {
+      world.step(world.DT);
+      padProtection &&= asteroid.pos.y - asteroid.radius >= world.bounds.ymin + 0.3 - 1e-10
+        || Math.abs(asteroid.pos.x - world.mission.padCenter) > world.mission.padHalfWidth + asteroid.radius + 0.1;
+    }
+
+    for (const side of [-1, 1]) {
+      const sliding = makeWorld();
+      const rock = sliding.add(new Body({
+        pos: new Vec2(side * (sliding.mission.padHalfWidth + 0.21), 0.2),
+        vel: new Vec2(-side * 2, 0), mass: 350, radius: 0.2, tag: 'asteroid'
+      }));
+      for (let i = 0; i < 10; i++) {
+        sliding.step(sliding.DT);
+        padProtection &&= rock.pos.y - rock.radius >= sliding.bounds.ymin + 0.3 - 1e-10
+          || Math.abs(rock.pos.x - sliding.mission.padCenter) > sliding.mission.padHalfWidth + rock.radius + 0.1;
+      }
+      padProtection &&= rock.vel.y > 0;
+    }
+    const otherGround = makeWorld();
+    const rock = otherGround.add(new Body({
+      pos: new Vec2(otherGround.mission.padHalfWidth + 1, 0.21),
+      vel: new Vec2(0, -3), mass: 350, radius: 0.2, tag: 'asteroid'
+    }));
+    otherGround.step(otherGround.DT);
+    padProtection &&= rock.pos.y === rock.radius && rock.vel.y === 0;
+  }
+  ok(padProtection, 'asteroids are redirected from the pad on every difficulty but still stop on other ground');
+  const crowdedPad = SCENES.lunar(missionState).world;
+  crowdedPad.lander.pos.set(-8, 19);
+  crowdedPad.lander.fixed = true;
+  crowdedPad.lander.invMass = 0;
+  crowdedPad.mission.asteroidCount = 0;
+  const lowerRock = crowdedPad.add(new Body({
+    pos: new Vec2(0, 0.22), vel: new Vec2(0, -1), mass: 350, radius: 0.2, tag: 'asteroid'
+  }));
+  crowdedPad.add(new Body({
+    pos: new Vec2(0, 0.6), vel: new Vec2(0, -5), mass: 350, radius: 0.2, tag: 'asteroid'
+  }));
+  crowdedPad.step(crowdedPad.DT);
+  ok(crowdedPad.collisions > 0 && lowerRock.pos.y - lowerRock.radius >= crowdedPad.bounds.ymin + 0.3 - 1e-10
+     && lowerRock.vel.y > 0,
+     'pad protection also redirects asteroids pushed down by another asteroid');
+  const conservativePad = SCENES.lunar(missionState).world;
+  setConservativeMode(conservativePad, true);
+  const conservativeRock = conservativePad.add(new Body({
+    pos: new Vec2(0, 1.5), vel: new Vec2(0, -3), mass: 350, radius: 0.2, tag: 'asteroid'
+  }));
+  conservativePad.step(conservativePad.DT);
+  ok(conservativeRock.vel.x === 0 && conservativeRock.vel.y === -3,
+     'conservative mode leaves asteroid trajectories unchanged');
+  let randomPadProtection = true;
+  for (const difficulty of ['easy', 'normal', 'hard', 'impossible']) {
+    for (const seed of [1, 42, 2468]) {
+      const world = SCENES.lunar({ ...missionState, difficulty, seed }).world;
+      world.lander.pos.set(-8, 19);
+      world.lander.fixed = true;
+      world.lander.invMass = 0;
+      for (let i = 0; i < 2400; i++) {
+        world.step(world.DT);
+        for (const body of world.bodies) {
+          if (body.tag === 'asteroid') {
+            randomPadProtection &&= body.pos.y - body.radius >= world.bounds.ymin + 0.3 - 1e-10
+              || Math.abs(body.pos.x - world.mission.padCenter) > world.mission.padHalfWidth + body.radius + 0.1;
+          }
+        }
+      }
+    }
+  }
+  ok(randomPadProtection, 'seeded asteroid waves never reach the pad across all difficulties');
   const gradients = [];
   const drawContext = new Proxy({}, { get: (_, key) =>
     (key === 'createRadialGradient' || key === 'createLinearGradient')

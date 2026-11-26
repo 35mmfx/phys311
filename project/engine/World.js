@@ -31,6 +31,7 @@ export class World {
     this.momentumConserved = false;
     this.energyMode = 'closed';
     this.beforeCollisions = null;
+    this.beforeWalls = null;
     this.afterStep = null;
     this._E0     = null;                 // reference energy, set ONCE
   }
@@ -72,6 +73,7 @@ export class World {
         this.collisionsThisStep++;
       }
 
+    if (this.beforeWalls) this.beforeWalls(dt);
     if (this.bounds)
       for (const b of this.bodies)
         if (resolveWalls(b, this.bounds, this.restitution)) {

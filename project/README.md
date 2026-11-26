@@ -46,9 +46,11 @@ npm test
   Asteroids have a `0.2 m` radius and can destroy the lander on contact. The
   opening group launches quickly with randomized directions and a downward
   inclination; later asteroids arrive at longer, seeded-random intervals.
-  Asteroids stop at the ground instead of bouncing back. When an asteroid
-  strikes the lander, the impact dust is centered at the contact point rather
-  than on the landing pad.
+  Asteroids approaching the landing pad are redirected away from it as a game
+  simplification; they can still strike the lander in flight. They stop on
+  other ground instead of bouncing back. When an asteroid strikes the lander,
+  the impact dust is centered at the contact point rather than on the landing
+  pad. Conservative test mode disables the redirection.
 - The late-descent vehicle has an approximate non-descent-propellant mass of
   `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The HUD's remaining-fuel percentage is relative

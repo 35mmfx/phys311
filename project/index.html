@@ -106,6 +106,7 @@
       <p id="mission-settings" class="physics-note"></p>
       <p class="mission-copy">This lunar-landing simulation challenges you to steer a fuel-limited rocket onto a small pad.</p>
       <p class="mission-copy">Use the steerable rocket engine to slow your descent and reach the green pad. For a safe landing, touch down on the pad at no more than 1.8 m/s vertical speed and 1.1 m/s horizontal speed, tilted no more than 15° from upright.</p>
+      <p class="physics-note">Asteroids are redirected away from the pad, but can still strike the lander in flight.</p>
       <p class="physics-note"><strong>Scoring:</strong> A safe landing earns 50 points plus up to 50 points for the fraction of starting fuel remaining, rounded to the nearest point. For example, half your starting fuel remaining earns 75 points. Crashes earn 0; score stays 0 during flight.</p>
       <p class="physics-note"><strong>Variables to notice:</strong> Fuel burns during thrust, so remaining fuel and vehicle mass change together. A smaller lander mass produces greater acceleration from the same thrust; watch the speed, fuel, and mass readouts during a steady burn. Changing the integrator changes numerical accuracy: explicit Euler is least stable, Euler-Cromer is more stable, and Velocity Verlet is the most accurate of the three. Compare trajectories and touchdown timing at the fixed timestep.</p>
       <p class="physics-note">Lunar gravity is 1.62 m/s². Vacuum has no usable parachute braking, so this version uses an honest retro-thrust brake instead.</p>
@@ -203,6 +204,6 @@
   <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The other physics simulations and their original integrator/conservation demonstrations are available under “More games.”
 </footer>
 
-<script type="module" src="main.js?v=20261126b"></script>
+<script type="module" src="main.js?v=20261126c"></script>
 </body>
 </html>
