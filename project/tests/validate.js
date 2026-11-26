@@ -197,6 +197,7 @@ H('8. Permalink: encode/decode round trip');
      && StateURL.encode({ ...s, debug: true, conservative: true }).includes('conservative=1'),
      'debug and conservative test modes survive permalink updates');
   ok(StateURL.decode(StateURL.encode({ ...s, difficulty: 'hard' }), ST).difficulty === 'hard'
+     && StateURL.decode(StateURL.encode({ ...s, difficulty: 'impossible' }), ST).difficulty === 'impossible'
      && StateURL.decode('?difficulty=invalid', ST).difficulty === 'normal',
      'difficulty survives shared links and invalid difficulty falls back to normal');
 }
@@ -231,6 +232,11 @@ H('10. Publishing audit: safe for GitHub Pages');
      'Variables to notice explains fuel and integrator effects');
   ok(/Lunar Lander: Fuel for the Final Flare/.test(html),
      'page title uses the Lunar Lander showcase name');
+  ok(/<h2 id="more-games-heading">More games<\/h2>[\s\S]*?<select id="scene">/.test(html)
+     && html.indexOf('<select id="scene">') < html.indexOf('<details class="advanced">')
+     && ['billiards', 'chain', 'orbits', 'projectile', 'pendulums', 'lunar']
+       .every(scene => html.includes(`<option value="${scene}">`)),
+     'more games selector is visible outside settings and includes every scene');
 
   const refs = [...html.matchAll(/(?:src|href)="([^":#]+)"/g)].map(m => m[1].split(/[?#]/)[0]);
   const missing = refs.filter(r => { try { readFileSync(join(ROOT, r)); return false; }
@@ -657,13 +663,17 @@ H('Lunar difficulty and trajectory prediction');
   const easy = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
   const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
   const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
+  const impossible = SCENES.lunar({ ...ST, difficulty: 'impossible' }).world;
   ok(easy.landerDrive.fuel === 45 && normal.landerDrive.fuel === 39
      && hard.landerDrive.fuel === 30
+     && impossible.landerDrive.fuel === 18
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
+     && hard.mission.padHalfWidth > impossible.mission.padHalfWidth
      && easy.mission.asteroidCount === 5
      && normal.mission.asteroidCount === 9
-     && hard.mission.asteroidCount === 12,
+     && hard.mission.asteroidCount === 12
+     && impossible.mission.asteroidCount === 24,
      'difficulty changes fuel, pad width and asteroid availability');
   ok(hard.lander.pos.y - hard.lander.radius >= 15
      && hard.lander.pos.y - hard.lander.radius <= 18,
@@ -672,17 +682,23 @@ H('Lunar difficulty and trajectory prediction');
      'hard difficulty has a seeded asteroid launch schedule');
   let validGroups = true;
   for (let seed = 0; seed < 100; seed++) {
-    for (const [difficulty, count] of [['easy', 5], ['normal', 9], ['hard', 12]]) {
+    for (const [difficulty, count] of [
+      ['easy', 5], ['normal', 9], ['hard', 12], ['impossible', 24]
+    ]) {
       const world = SCENES.lunar({ ...ST, seed, difficulty }).world;
       validGroups &&= world.mission.asteroidCount === count
         && world.mission.asteroidChance === 1
-        && world.lander.pos.y - world.lander.radius >= 10;
+        && world.lander.pos.y - world.lander.radius >= 10
+        && world.lander.pos.y - world.lander.radius <= (difficulty === 'impossible' ? 19 : 18)
+        && world.lander.pos.y + world.lander.radius < 20;
       const repeat = SCENES.lunar({ ...ST, seed, difficulty }).world;
       validGroups &&= maxdiff(snap(world), snap(repeat)) === 0;
     }
   }
   ok(validGroups, 'smaller asteroid groups are seeded, non-overlapping, and sized by difficulty');
-  for (const [difficulty, count] of [['easy', 5], ['normal', 9]]) {
+  for (const [difficulty, count] of [
+    ['easy', 5], ['normal', 9], ['impossible', 24]
+  ]) {
     const world = SCENES.lunar({ ...ST, seed: 2468, difficulty }).world;
     world.lander.pos.set(0, 19);
     world.lander.vel.set(0, 0);

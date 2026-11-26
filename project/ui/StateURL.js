@@ -37,7 +37,7 @@ export const StateURL = {
       speed:       clamp(num('speed', defaults.speed),       0.25,  2),
       count:       Math.round(clamp(num('n', defaults.count), 3,   120)),
       throttle:    clamp(num('throttle', defaults.throttle), 0.1, 1),
-      difficulty:  ['easy', 'normal', 'hard'].includes(p.get('difficulty'))
+      difficulty:  ['easy', 'normal', 'hard', 'impossible'].includes(p.get('difficulty'))
         ? p.get('difficulty') : (defaults.difficulty || 'normal'),
       seed:        Math.round(clamp(num('seed', defaults.seed || 0), 0, 0xFFFFFFFF)),
       debug:       p.get('debug') === '1',

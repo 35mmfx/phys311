@@ -65,7 +65,23 @@
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>
   </main>
 
-  <aside class="panel" aria-label="Lunar lander controls">
+  <aside class="panel" aria-label="Game and simulation controls">
+
+    <section aria-labelledby="more-games-heading">
+      <h2 id="more-games-heading">More games</h2>
+      <p class="mission-copy">Explore Billiards, Spring chain, N-body orbits, Projectile, and Pendulum row. Choose below, or switch back to Lunar lander.</p>
+      <div class="row">
+        <label for="scene">Choose a game</label>
+        <select id="scene">
+          <option value="billiards">1 &mdash; Billiards in a box</option>
+          <option value="chain">2 &mdash; Spring chain</option>
+          <option value="orbits">3 &mdash; N-body orbits</option>
+          <option value="projectile">4 &mdash; Projectile (control case)</option>
+          <option value="pendulums">5 &mdash; Pendulum row</option>
+          <option value="lunar">6 &mdash; Lunar lander</option>
+        </select>
+      </div>
+    </section>
 
     <section id="lander-instructions" aria-labelledby="mission-heading">
       <h2 id="mission-heading">Mission</h2>
@@ -75,6 +91,7 @@
           <option value="easy">Easy</option>
           <option value="normal" selected>Normal</option>
           <option value="hard">Hard</option>
+          <option value="impossible">Nearly impossible</option>
         </select>
       </div>
       <div class="check sound-setting">
@@ -120,25 +137,13 @@
     </div>
 
     <details class="advanced">
-      <summary>Other scenes and simulation settings</summary>
+      <summary>Simulation settings</summary>
       <section class="url-examples" aria-labelledby="url-heading">
         <h2 id="url-heading">Example shareable configurations</h2>
         <p>Spring chain — Euler</p>
         <p>Projectile — Verlet, Mars gravity</p>
       </section>
 
-    <h2>Scene</h2>
-    <div class="row">
-      <label for="scene">Preset</label>
-      <select id="scene">
-        <option value="billiards">1 &mdash; Billiards in a box</option>
-        <option value="chain">2 &mdash; Spring chain</option>
-        <option value="orbits">3 &mdash; N-body orbits</option>
-        <option value="projectile">4 &mdash; Projectile (control case)</option>
-        <option value="pendulums">5 &mdash; Pendulum row</option>
-        <option value="lunar">6 &mdash; Lunar lander</option>
-      </select>
-    </div>
     <div class="row">
       <label for="count">Bodies <output id="count-out"></output></label>
       <input type="range" id="count" min="3" max="120" step="1" value="24">
@@ -195,7 +200,7 @@
 </div>
 
 <footer>
-  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The legacy scenes and their original integrator/conservation demonstrations remain available under “Other scenes and simulation settings.”
+  <strong>Physics notes.</strong> The lander uses fixed-step translational dynamics, lunar gravity, finite propellant, variable mass, and steerable rocket thrust. The energy readout remains visible, but is marked <em>open</em> because thrust transfers energy into the lander's motion; it is not a closed-system conservation test. Momentum is not conserved during powered flight. Touchdown is evaluated before the terrain collision response. The other physics simulations and their original integrator/conservation demonstrations are available under “More games.”
 </footer>
 
 <script type="module" src="main.js?v=20261125h"></script>

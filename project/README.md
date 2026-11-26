@@ -29,8 +29,8 @@ npm test
   `1.62 m/s²`.
 - The lander starts at a seeded-random `x` from `-7 m` to `7 m`. Easy and
   normal missions start from `10 m` to `14 m` altitude; hard missions start
-  from `15 m` to `18 m`. Restart chooses a new start; shared URLs preserve
-  their seed.
+  from `15 m` to `18 m`; Nearly impossible starts from `18 m` to `19 m`.
+  Restart chooses a new start; shared URLs preserve their seed.
 - The lander radius is `0.42 m`; the pad is centered at `x = 0`. Difficulty
   changes pad width, starting fuel, and asteroid frequency:
 
@@ -39,6 +39,7 @@ npm test
   | Easy | 4.4 m | 45 kg | Up to 5 per flight |
   | Normal (default) | 2.9 m | 39 kg | Up to 9 per flight |
   | Hard | 2.0 m | 30 kg | Up to 12 per flight |
+  | Nearly impossible | 1.3 m | 18 kg | Up to 24, faster and more frequent |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
   Asteroids have a `0.2 m` radius and can destroy the lander on contact. The
@@ -119,8 +120,9 @@ exterior rocket roar. Sound is off by default and starts only after an explicit
 click; no audio files or network requests are used. Muting suspends the audio
 context, and the engine audio updates only when thrust state changes.
 
-Expand **Other scenes and simulation settings** for the inherited Lab 10
-reference scenes. The required lunar mission is the default scene.
+Use **More games** to choose an inherited Lab 10 physics simulation or return
+to Lunar lander. The lunar mission is the default. Expand **Simulation settings**
+to adjust the solver, physics, and display controls.
 
 ## Diagnostics and test mode
 

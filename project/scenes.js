@@ -17,9 +17,26 @@ function mulberry32(seed) {                 // 8-line deterministic PRNG
 const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
 
 export const LUNAR_DIFFICULTIES = {
-  easy: { fuel: 45, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 5, startAltitudeMin: 10, startAltitudeMax: 14 },
-  normal: { fuel: 39, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 9, startAltitudeMin: 10, startAltitudeMax: 14 },
-  hard: { fuel: 30, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
+  easy: {
+    fuel: 45, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 5,
+    startAltitudeMin: 10, startAltitudeMax: 14,
+    asteroidCadenceScale: 1, asteroidSpeedScale: 1
+  },
+  normal: {
+    fuel: 39, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 9,
+    startAltitudeMin: 10, startAltitudeMax: 14,
+    asteroidCadenceScale: 1, asteroidSpeedScale: 1
+  },
+  hard: {
+    fuel: 30, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12,
+    startAltitudeMin: 15, startAltitudeMax: 18,
+    asteroidCadenceScale: 1, asteroidSpeedScale: 1
+  },
+  impossible: {
+    fuel: 18, padHalfWidth: 0.65, asteroidChance: 1, asteroidCount: 24,
+    startAltitudeMin: 18, startAltitudeMax: 19,
+    asteroidCadenceScale: 0.3, asteroidSpeedScale: 1.35
+  }
 };
 
 function base(state, opts) {
@@ -186,7 +203,7 @@ export const SCENES = {
       elapsedTime: null,
       initialFuel: drive.fuel,
       asteroidLaunched: 0,
-      nextAsteroidAt: 0.05 + rnd() * 0.08,
+      nextAsteroidAt: (0.05 + rnd() * 0.08) * difficulty.asteroidCadenceScale,
       asteroidRnd: rnd,
       debrief: null
     };
@@ -263,7 +280,7 @@ export const SCENES = {
         const rnd = w.mission.asteroidRnd;
         const fromLeft = rnd() < 0.5;
         const altitude = 5 + rnd() * 10;
-        const speed = 1.8 + rnd() * 2.4;
+        const speed = (1.8 + rnd() * 2.4) * difficulty.asteroidSpeedScale;
         const horizontalDirection = rnd() < 0.5 ? -1 : 1;
         const launchedEarly = w.mission.asteroidLaunched < 3;
         const verticalDirection = -(1.2 + rnd() * 1.8);
@@ -277,8 +294,8 @@ export const SCENES = {
         }));
         w.mission.asteroidLaunched++;
         w.mission.nextAsteroidAt = launchedEarly
-          ? w.time + 0.08 + rnd() * 0.10
-          : w.time + 0.35 + rnd() * 0.55;
+          ? w.time + (0.08 + rnd() * 0.10) * difficulty.asteroidCadenceScale
+          : w.time + (0.35 + rnd() * 0.55) * difficulty.asteroidCadenceScale;
       }
       if (w.mission.status === 'flying') {
         w.mission.elapsedTime = w.time;

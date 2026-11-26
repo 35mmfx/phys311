@@ -197,6 +197,13 @@ checks.push([/30 kg/.test(document.getElementById('mission-settings').textConten
   && /12 on every flight/.test(document.getElementById('mission-settings').textContent)
   && /Projected/.test(document.getElementById('trajectory-status').textContent),
   'difficulty control restarts the mission and displays the projected contact']);
+difficulty.value = 'impossible';
+difficulty._fire('change', { target: difficulty });
+frames++; cb(performance.now());
+checks.push([/18 kg/.test(document.getElementById('mission-settings').textContent)
+  && /1\.3 m/.test(document.getElementById('mission-settings').textContent)
+  && /24 on every flight/.test(document.getElementById('mission-settings').textContent),
+  'nearly impossible difficulty applies the reduced reserve, narrow pad, and asteroid swarm']);
 difficulty.value = 'normal';
 difficulty._fire('change', { target: difficulty });
 frames++; cb(performance.now());
