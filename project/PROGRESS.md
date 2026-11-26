@@ -1,14 +1,15 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-25 — local tests pass; the Apollo-inspired model,
-recent lunar-difficulty and asteroid updates, Week 13 validation report,
-README updates, and visitor explainer are complete locally.
+**Status date:** 2026-11-26 — local tests pass; the Apollo-inspired model,
+four lunar difficulty options, visible More games selector, Week 13 validation
+report, and visitor explainer are complete. The latest updates still need a
+fresh deployed-site check.
 
 ## MUST tier status
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 45/39/30 kg starting fuel by difficulty; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 45/39/30/18 kg starting fuel by difficulty; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
@@ -17,10 +18,21 @@ README updates, and visitor explainer are complete locally.
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |
 | Integrator explainer | done | The solver selector displays each method's accuracy, stability, and effect on lunar-lander motion. |
-| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `2.969e-15`. |
+| Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression verifies energy drift at `1.237e-15`. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
-| GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` is the deployed live site and has been checked with the recent lunar difficulty and asteroid updates. |
+| GitHub Pages deployment and live-site check | follow-up | `https://35mmfx.github.io/phys311/project/` was checked after earlier lunar updates; the latest changes need a fresh deployed-site check. |
+
+## Recent updates
+
+- Fuel, descent speed, and horizontal speed appear to the left of the arena.
+  The speed readouts use the same limits and tolerances as touchdown checks.
+- **Nearly impossible** adds 18 kg of fuel, a 1.3 m-wide pad, a starting
+  altitude of 18–19 m, and up to 24 faster, more frequent asteroids.
+- **More games** is a visible selector for the five inherited physics
+  sandboxes and Lunar lander; the other scenes are not scored missions.
+- The thrust on/off relay click was removed; engine rumble and other cockpit
+  sounds remain. The page title now includes “and More.”
 
 ## Proposal validation results
 
@@ -31,13 +43,13 @@ README updates, and visitor explainer are complete locally.
 | Fuel depletion | Fuel ≥ 0, mass ≥ 1,000 kg, thrust stops | Fuel = 0, mass = 1,000 kg, thrusting = false | pass |
 | Touchdown limits | Center case passes; each over-limit case fails | Center and exact inclusive limits pass; 1.46 m, 1.81 m/s, 1.11 m/s, and 16° fail | pass |
 
-The test runner also verifies seeded launch variation, the asteroid encounter
-rate and collision response, randomized isolated collisions, the terminal
-mission timer, and the fixed-step accumulator. Both 60 Hz and 144 Hz produce
+The test runner also verifies seeded launch variation, asteroid launches and
+collision response, randomized isolated collisions, the terminal mission
+timer, and the fixed-step accumulator. Both 60 Hz and 144 Hz produce
 2,400 steps over 10 seconds; the
 jittered sequence produces 10.0083 seconds. A two-second stall is capped at
-eight substeps. Final local test totals: **79 physics/publishing checks and
-38 browser-entry checks passed**.
+eight substeps. On 2026-11-26, `npm test` passed **88 physics/publishing checks
+and 48 mocked browser-entry checks**.
 
 ## Bonus convergence check
 
@@ -55,8 +67,8 @@ dust. Asteroid impacts emit 32 dust particles around the lander/contact point,
 and asteroids stop at the ground instead of bouncing. Asteroids launch in a
 dense opening burst with randomized directions and downward inclination,
 followed by seeded later launches.
-On narrow screens, touch controls overlay the bottom of the canvas to keep the
-lander visible during play. These effects do not change the simulation physics.
+Touch controls sit below the canvas so they do not obscure the landing pad.
+These visual effects do not change the simulation physics.
 
 ## Decisions
 
@@ -81,12 +93,14 @@ and conservative-mode behavior selected this week.
    despite conservative dynamics. Cause: the lander drive's potential energy
    summed every body although its gravity force applies only to the lander.
    Fix: account for potential energy on the driven lander only; the seeded
-   asteroid regression now passes at `2.969e-15` relative drift.
+   asteroid regression now passes at `1.237e-15` relative drift.
 
 ## Remaining Week 12 work
 
 - Test the touch controls on a real phone; the automated browser test is not a
   substitute for device testing.
+- Verify the latest title, More games selector, difficulty updates, and flight
+  readouts on the deployed site after the Pages deployment finishes.
 - Complete the Wednesday check-in and end-of-week beta-review discussion
   posts, peer reply, and Canvas submission; these external submissions are
   not represented as completed here.

@@ -1,26 +1,29 @@
 # Validation report
 
-All measurements below were made with the headless JavaScript engine. The
-default lunar mission uses a fixed `DT = 1/240 s`; the controlled studies
-specify their own timestep. `npm test` runs the automated physics and
-browser-entry checks, while `npm run convergence` reproduces the B1 study.
+The numerical measurements below were made with the headless JavaScript engine.
+The default lunar mission uses a fixed `DT = 1/240 s`; the controlled studies
+specify their own timestep. On 2026-11-26, `npm test` passed 88 physics and
+publishing checks and 48 mocked browser-entry checks. On the same date,
+`npm run convergence` reproduced the B1 study. These checks do not replace
+live-site or real-device testing.
 
 ## B1 — Headless convergence
 
 The observable is the lander's final height after a 2.0 s constant-throttle
 flight, with identical initial conditions and Velocity Verlet. The six runs
-use a common `dt` that divides the end time exactly. Error is measured against
-the finest run (`dt = 1/960 s`); each ratio is the previous row's error divided
-by the current row's error.
+use seed 1, normal difficulty, 60% throttle, and a common `dt` that divides the
+end time exactly. Seeded asteroids launch during the run, but the mission
+remains in flight. Error is measured against the finest run (`dt = 1/960 s`);
+each ratio is the previous row's error divided by the current row's error.
 
 | DT (s) | Steps | Final height (m) | Error vs. finest (m) | Successive error ratio |
 |---:|---:|---:|---:|---:|
-| 1/30 | 60 | 10.804909489 | 8.395e-7 | — |
-| 1/60 | 120 | 10.804908859 | 2.092e-7 | 4.012 |
-| 1/120 | 240 | 10.804908701 | 5.170e-8 | 4.048 |
-| 1/240 | 480 | 10.804908662 | 1.231e-8 | 4.200 |
-| 1/480 | 960 | 10.804908652 | 2.462e-9 | 5.000 |
-| 1/960 | 1,920 | 10.804908650 | 0 | — |
+| 1/30 | 60 | 13.076488404 | 9.038e-7 | — |
+| 1/60 | 120 | 13.076487725 | 2.253e-7 | 4.012 |
+| 1/120 | 240 | 13.076487556 | 5.566e-8 | 4.048 |
+| 1/240 | 480 | 13.076487513 | 1.325e-8 | 4.200 |
+| 1/480 | 960 | 13.076487503 | 2.651e-9 | 5.000 |
+| 1/960 | 1,920 | 13.076487500 | 0 | — |
 
 The estimated order is **2.00**, consistent with Velocity Verlet. The finest
 run has zero error by definition, so its successive error ratio is undefined.
@@ -72,15 +75,29 @@ two-body collisions with restitution sampled in `[0, 1)` was checked with the
 pair resolver. Maximum `|Δp|/|p₀|` was `1.036e-15`; kinetic energy increased in
 zero trials. The automated test is part of `npm test`.
 
+## Current feature checks
+
+The automated checks cover all four difficulty settings, seeded starts,
+permalink decoding for Nearly impossible, and the visible More games selector.
+They also check fuel and speed readout placement, transparency, warning
+thresholds, and preserved impact speeds. The mocked browser-entry checks verify
+that the readouts render and are accessible to screen readers.
+With a stationary lander and seed 2468, the Nearly impossible test launches
+its full 24-asteroid wave within the simulated test period. Mocked audio checks
+confirm thrust engages the engine layer without creating relay-click
+oscillators. These checks do not establish that every randomized flight is
+winnable or measure difficulty for players.
+
 ## B4 — Limitations
 
 - The convergence result covers a 2 s powered flight and `DT` values from
   1/30 through 1/960 s; it does not establish accuracy for every scene or
   timestep. The orbital stress result above demonstrates the failure at
   `DT = 1/30 s`.
-- The current lunar mission has one lander and dynamically launches up to twelve
-  asteroids (thirteen bodies total). A body-count performance threshold has not been measured
-  across devices; the larger inherited scenes are not a benchmark.
+- The current lunar mission has one lander and dynamically launches up to 24
+  asteroids on Nearly impossible (25 bodies total). A body-count performance
+  threshold has not been measured across devices; the larger inherited scenes
+  are not a benchmark.
 - The project models the final low-speed landing phase, not orbital braking,
   the preceding fuel burn, or a full-duration powered descent. Atmosphere,
   terrain shape, and rotational inertia are omitted. The README describes

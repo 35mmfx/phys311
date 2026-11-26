@@ -676,6 +676,84 @@ H('Lunar difficulty and trajectory prediction');
      && hard.mission.asteroidCount === 12
      && impossible.mission.asteroidCount === 24,
      'difficulty changes fuel, pad width and asteroid availability');
+  const gaugeRects = [], gaugeText = [];
+  const gaugeContext = {
+    save() {}, restore() {},
+    fillRect(x, y, width, height) {
+      gaugeRects.push({ x, y, width, height, color: this.fillStyle });
+    },
+    fillText(text, x, y, maxWidth) {
+      gaugeText.push({ text, x, y, maxWidth, color: this.fillStyle, alpha: this.globalAlpha });
+    }
+  };
+  const gaugeCamera = new Camera();
+  const gaugeRenderer = new Renderer({ getContext: () => gaugeContext }, gaugeCamera);
+  let gaugeValid = true;
+  for (const world of [easy, normal, hard, impossible]) {
+    for (const [w, h] of [[900, 520], [320, 220]]) {
+      gaugeCamera.resize(w, h);
+      gaugeCamera.fit(-11, 11, -1, 21, 1.08, Math.min(118, w * 0.4));
+      const [left, top] = gaugeCamera.toScreen(world.bounds.xmin, world.bounds.ymax);
+      const initialFuel = world.landerDrive.maxFuel;
+      for (const fuel of [initialFuel, 5.01, 5, 0]) {
+        world.landerDrive.fuel = fuel;
+        gaugeRects.length = 0;
+        gaugeText.length = 0;
+        gaugeRenderer._flightReadouts(world);
+        const [label] = gaugeText;
+        const color = fuel <= 5 ? '#ff6b6b' : '#7ee787';
+        gaugeValid &&= gaugeRects.length === 0 && gaugeText.length === 3
+          && label.x >= 0 && label.x + label.maxWidth <= left - 8
+          && label.y === top + 13
+          && label.text === `FUEL ${fuel.toFixed(2)} kg`
+          && label.color === color && label.alpha === 0.7;
+      }
+      world.landerDrive.fuel = initialFuel;
+    }
+  }
+  ok(gaugeValid, 'translucent fuel readout follows the arena corner and 5 kg warning threshold without a bar');
+  let speedValid = true;
+  for (const [speed, color] of [
+    [-1.8, '#7ee787'], [-1.801, '#7ee787'], [-1.802, '#ff6b6b'],
+    [1.802, '#ff6b6b']
+  ]) {
+    normal.lander.vel.y = speed;
+    gaugeText.length = 0;
+    gaugeRenderer._flightReadouts(normal);
+    const [fuelLabel, speedLabel] = gaugeText;
+    speedValid &&= speedLabel.text === `DESCENT ${(-speed).toFixed(2)} m/s`
+      && speedLabel.x === fuelLabel.x && speedLabel.y > fuelLabel.y
+      && speedLabel.alpha === 0.7 && speedLabel.color === color;
+  }
+  normal.mission.impact = { verticalSpeed: -3, horizontalSpeed: 0 };
+  normal.lander.vel.y = 0;
+  gaugeText.length = 0;
+  gaugeRenderer._flightReadouts(normal);
+  speedValid &&= gaugeText[1].text === 'DESCENT 3.00 m/s'
+    && gaugeText[1].color === '#ff6b6b';
+  delete normal.mission.impact;
+  ok(speedValid, 'descent readout uses landing limits and preserves impact speed after a crash');
+  let horizontalValid = true;
+  for (const [speed, color] of [
+    [0, '#7ee787'], [1.1, '#7ee787'], [-1.101, '#7ee787'],
+    [1.102, '#ff6b6b'], [-1.102, '#ff6b6b']
+  ]) {
+    normal.lander.vel.x = speed;
+    gaugeText.length = 0;
+    gaugeRenderer._flightReadouts(normal);
+    const [, descentLabel, horizontalLabel] = gaugeText;
+    horizontalValid &&= horizontalLabel.text === `HORIZONTAL ${speed.toFixed(2)} m/s`
+      && horizontalLabel.x === descentLabel.x && horizontalLabel.y > descentLabel.y
+      && horizontalLabel.alpha === 0.7 && horizontalLabel.color === color;
+  }
+  normal.mission.impact = { verticalSpeed: 0, horizontalSpeed: -2 };
+  normal.lander.vel.x = 0;
+  gaugeText.length = 0;
+  gaugeRenderer._flightReadouts(normal);
+  horizontalValid &&= gaugeText[2].text === 'HORIZONTAL -2.00 m/s'
+    && gaugeText[2].color === '#ff6b6b';
+  delete normal.mission.impact;
+  ok(horizontalValid, 'horizontal readout uses landing limits in both directions and preserves impact speed');
   ok(hard.lander.pos.y - hard.lander.radius >= 15
      && hard.lander.pos.y - hard.lander.radius <= 18,
      'hard difficulty starts between 15 and 18 m altitude');

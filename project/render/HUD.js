@@ -47,8 +47,8 @@ export class HUD {
       <span class="v">${cursor ? `x ${cursor[0].toFixed(2)}, y ${cursor[1].toFixed(2)} m` : 'outside canvas'}</span>
       <span class="k">fps</span><span class="v">${this.fps.toFixed(0)}</span>
       <span class="k">sub/frame</span><span class="v">${substeps}${paused ? ' (paused)' : ''}</span>`;
-    // Screen readers: announce only the physics honesty numbers, not fps.
+    // Screen readers: include mission fuel and physics honesty numbers, not fps.
     this.el.setAttribute('aria-label',
-      `time ${world.time.toFixed(1)} seconds, ${energyOpen ? 'open-system energy change' : 'energy drift'} ${(dE*100).toFixed(2)} percent`);
+      `time ${world.time.toFixed(1)} seconds, ${lander ? `fuel remaining ${drive.fuel.toFixed(2)} kilograms, descent speed ${(-(impact ? impact.verticalSpeed : lander.vel.y)).toFixed(2)} metres per second, horizontal speed ${(impact ? impact.horizontalSpeed : lander.vel.x).toFixed(2)} metres per second, ` : ''}${energyOpen ? 'open-system energy change' : 'energy drift'} ${(dE*100).toFixed(2)} percent`);
   }
 }

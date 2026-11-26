@@ -185,28 +185,48 @@ checks.push([/^Launched with speed/.test(document.getElementById('live').textCon
   'keyboard slingshot places, aims, and launches']);
 
 const sceneControl = document.getElementById('scene');
+checks.push([!drawnText.some(text => text.startsWith('FUEL ')),
+  'fuel gauge is absent from non-lunar scenes']);
 sceneControl.value = 'lunar';
 sceneControl._fire('change', { target: sceneControl });
 frames++; cb(performance.now());
 const difficulty = document.getElementById('difficulty');
+difficulty.value = 'easy';
+difficulty._fire('change', { target: difficulty });
+drawnText.length = 0;
+frames++; cb(performance.now());
+checks.push([drawnText.includes('FUEL 45.00 kg'),
+  'easy difficulty renders the fuel gauge']);
 difficulty.value = 'hard';
 difficulty._fire('change', { target: difficulty });
+drawnText.length = 0;
 frames++; cb(performance.now());
 checks.push([/30 kg/.test(document.getElementById('mission-settings').textContent)
   && /2\.0 m/.test(document.getElementById('mission-settings').textContent)
   && /12 on every flight/.test(document.getElementById('mission-settings').textContent)
+  && drawnText.includes('FUEL 30.00 kg')
   && /Projected/.test(document.getElementById('trajectory-status').textContent),
   'difficulty control restarts the mission and displays the projected contact']);
 difficulty.value = 'impossible';
 difficulty._fire('change', { target: difficulty });
+drawnText.length = 0;
 frames++; cb(performance.now());
 checks.push([/18 kg/.test(document.getElementById('mission-settings').textContent)
   && /1\.3 m/.test(document.getElementById('mission-settings').textContent)
   && /24 on every flight/.test(document.getElementById('mission-settings').textContent),
   'nearly impossible difficulty applies the reduced reserve, narrow pad, and asteroid swarm']);
+checks.push([drawnText.includes('FUEL 18.00 kg'),
+  'nearly impossible difficulty renders the fuel gauge']);
 difficulty.value = 'normal';
 difficulty._fire('change', { target: difficulty });
+drawnText.length = 0;
 frames++; cb(performance.now());
+checks.push([drawnText.includes('FUEL 39.00 kg')
+  && drawnText.some(text => /^DESCENT -?[\d.]+ m\/s$/.test(text))
+  && drawnText.some(text => /^HORIZONTAL -?[\d.]+ m\/s$/.test(text))
+  && /fuel remaining 39\.00 kilograms/.test(document.getElementById('hud').getAttribute('aria-label'))
+  && /horizontal speed -?[\d.]+ metres per second/.test(document.getElementById('hud').getAttribute('aria-label')),
+  'normal difficulty renders fuel and both speeds and exposes them to screen readers']);
 checks.push([drawnText.includes('UT Mission'),
   'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
@@ -259,6 +279,8 @@ windowListeners.keyup(keyEvent('ArrowDown'));
 const reserveAfter = fuelRemaining();
 checks.push([reserveAfter < reserveBefore,
   'down arrow thrusts and reduces remaining fuel']);
+checks.push([drawnText.includes(`FUEL ${reserveAfter.toFixed(2)} kg`),
+  'fuel gauge updates while thrust burns fuel']);
 const throttle = document.getElementById('throttle');
 throttle.value = '0.25';
 throttle._fire('input', {});

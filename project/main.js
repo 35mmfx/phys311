@@ -1,13 +1,13 @@
 // main.js — the only file that wires engine + render + ui together.
 // Everything DOM-related lives at or below this file; engine/ stays pure.
-import { Camera }       from './render/Camera.js';
-import { Renderer }     from './render/Renderer.js';
-import { HUD }          from './render/HUD.js';
+import { Camera }       from './render/Camera.js?v=20261126a';
+import { Renderer }     from './render/Renderer.js?v=20261126a';
+import { HUD }          from './render/HUD.js?v=20261126a';
 import { Controls }     from './ui.js';
 import { PointerInput, KeyboardInput } from './input.js';
 import { StateURL }     from './ui/StateURL.js';
 import { serializeSamples } from './ui/CSVExport.js';
-import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js?v=20261125h';
+import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js?v=20261126a';
 import { Body, Vec2 }   from './engine/World.js';
 import { CockpitSound } from './audio/CockpitSound.js';
 import { predictLanding } from './engine/Trajectory.js';
@@ -61,6 +61,11 @@ let nextSampleAt = 0;
 
 function announce(msg) { live.textContent = msg; }
 
+function fitView() {
+  const fuelGaugeSpace = world.landerDrive ? Math.min(118, cam.w * 0.4) : 0;
+  cam.fit(...view, 1.08, fuelGaugeSpace);
+}
+
 function recordSample(force = false) {
   if (!world || (!force && world.time < nextSampleAt) || samples.length >= 50000) return;
   samples.push({
@@ -97,7 +102,7 @@ function build() {
   world.setIntegrator(state.integrator);
   render.clearTrails();
   render.resize();
-  cam.fit(...view);
+  fitView();
   // Rebuilding replaces `world`, so re-point the input objects at the new one.
   if (pointer)  { pointer.world  = world; pointer.spring  = world.pointer; }
   if (keyboard) { keyboard._clearLanderControls(); keyboard.world = world; keyboard.spring = world.pointer;
@@ -253,7 +258,7 @@ pointer.spawnMode = state.spawnMode;
 pointer.slingshotMode = state.slingshotMode;
 keyboard.slingshotMode = state.slingshotMode;
 
-window.addEventListener('resize', () => { render.resize(); cam.fit(...view); });
+window.addEventListener('resize', () => { render.resize(); fitView(); });
 
 // ---- the frame loop: fixed physics step, variable render rate ----
 let last = performance.now();

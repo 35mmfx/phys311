@@ -1,10 +1,11 @@
 # Lunar Lander: Fuel for the Final Flare and More
 
-A single-scene lunar-landing challenge built for the Week 12 MUST tier. The
-lander uses finite propellant, variable mass, keyboard/touch controls, and
-fixed-step velocity-Verlet integration. The physics modules in `engine/` do
-not access the DOM or canvas; `render/` handles drawing, and `main.js` wires
-the app together. [Play the live demo](https://35mmfx.github.io/phys311/project/).
+A lunar-landing challenge built for the Week 12 MUST tier, with additional
+physics simulations. The lander uses finite propellant, variable mass,
+keyboard/touch controls, and fixed-step velocity-Verlet integration. The
+physics modules in `engine/` do not access the DOM or canvas; `render/`
+handles drawing, and `main.js` wires the app together.
+[Play the live demo](https://35mmfx.github.io/phys311/project/).
 
 ## Run locally
 
@@ -51,7 +52,13 @@ npm test
 - The late-descent vehicle has an approximate non-descent-propellant mass of
   `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The HUD's remaining-fuel percentage is relative
-  to the selected difficulty's starting reserve.
+  to the selected difficulty's starting reserve. A translucent readout to the
+  left of the arena's upper-left corner shows fuel in kilograms and turns red
+  at 5 kg or less. Below it, descent speed is positive downward and turns red
+  when its magnitude exceeds the safe vertical landing limit. Horizontal speed
+  is positive to the right and turns red when its magnitude exceeds the safe
+  horizontal limit. Both indicators include the numerical speed tolerance;
+  green speeds alone do not guarantee a safe landing.
 - Maximum descent thrust is `45,000 N` and specific impulse is `304 s`.
   The slider sets 10–100% thrust; holding a thrust control fires at that
   setting, and releasing it shuts the engine off. The continuous slider is a
@@ -62,16 +69,16 @@ npm test
   are game simplifications, not Apollo geometry or mission conditions.
 - Thrust points along `(-sin θ, cos θ)`. Fuel flow is
   `T / (Isp g0)`, with `g0 = 9.81 m/s²`. The integrator uses midpoint mass
-  during each fixed `1/240 s` step, then clamps fuel and mass at their lower
-  bounds.
+  during each fixed step (default `1/240 s`), then clamps fuel and mass at
+  their lower bounds.
 - Contact has restitution `e = 0.25`. Touchdown is evaluated before the
   collision response. To land safely, the lander must be on the pad, with
   vertical speed at most `1.8 m/s`, horizontal speed at most `1.1 m/s`, and
   angle within `15°` of upright (subject to the documented numerical tolerances).
   Safe landings score `50 + round(50 × fuel remaining / starting fuel)`, from
   50 to 100 points; half the starting fuel remaining earns 75. Crashes and
-  ongoing flights score 0. The score uses the mission's starting reserve,
-  not the HUD's percentage of the original tank.
+  ongoing flights score 0. Both the score and HUD fuel percentage use the
+  selected mission's starting reserve.
 - After landing or crashing, the debrief reports the outcome, score, frozen
   flight time, and fuel used and remaining.
 - Attitude is steered directly at a fixed rate; rotational inertia, terrain
@@ -115,14 +122,17 @@ Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
 a synthesized interior mix: ventilation and avionics hum, structure-borne
 engine rumble, pulsing propellant pumps, hull creaks, touchdown
 thuds, and a distinct rattling side-wall collision. Steering has no synthesized
-sound. The engine is heard as vibration through the cabin rather than an
+sound, and switching thrust on or off does not make a relay click. The engine
+is heard as vibration through the cabin rather than an
 exterior rocket roar. Sound is off by default and starts only after an explicit
 click; no audio files or network requests are used. Muting suspends the audio
-context, and the engine audio updates only when thrust state changes.
+context; the engine audio also responds to pause state and fuel level.
 
-Use **More games** to choose an inherited Lab 10 physics simulation or return
-to Lunar lander. The lunar mission is the default. Expand **Simulation settings**
-to adjust the solver, physics, and display controls.
+Use the visible **More games** selector to choose Billiards in a box, Spring
+chain, N-body orbits, Projectile, or Pendulum row, or return to Lunar lander.
+These inherited Lab 10 scenes are physics sandboxes rather than scored
+missions. The lunar mission is the default. Expand **Simulation settings** to
+adjust the solver, physics, and display controls.
 
 ## Diagnostics and test mode
 
@@ -155,8 +165,9 @@ physics suite includes the proposal's rocket-equation, 60-second
 free-fall-energy, fuel-bound, and touchdown checks, plus accumulator checks at
 60 Hz, 144 Hz, and jittered frame intervals, and a spring-chain DT-halving
 convergence check, randomized collision-conservation checks, and mission
-debrief accounting, difficulty, and trajectory prediction. The live-site check and real-device touch check
-remain part of deployment verification; see
+debrief accounting, difficulty, and trajectory prediction. The browser-entry
+smoke test uses mocked DOM and audio APIs. A fresh live-site check and
+real-device touch check remain part of deployment verification; see
 [`PROGRESS.md`](./PROGRESS.md).
 
 | Validation | Measured result |

@@ -197,6 +197,9 @@ export const SCENES = {
       message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake. Fuel is finite.',
       padCenter: 0,
       padHalfWidth: difficulty.padHalfWidth,
+      verticalSpeedLimit: 1.8,
+      horizontalSpeedLimit: 1.1,
+      speedTolerance: 0.001,
       asteroidCount: difficulty.asteroidCount,
       asteroidChance: difficulty.asteroidChance,
       score: 0,
@@ -252,12 +255,13 @@ export const SCENES = {
         angle: lander.angle
       };
       const positionTolerance = 0.001;
-      const speedTolerance = 0.001;
       const angleTolerance = 0.01 * Math.PI / 180;
       const onPad = Math.abs(lander.pos.x - w.mission.padCenter)
         <= w.mission.padHalfWidth + positionTolerance;
-      const softVerticalSpeed = Math.abs(lander.vel.y) <= 1.8 + speedTolerance;
-      const softHorizontalSpeed = Math.abs(lander.vel.x) <= 1.1 + speedTolerance;
+      const softVerticalSpeed = Math.abs(lander.vel.y)
+        <= w.mission.verticalSpeedLimit + w.mission.speedTolerance;
+      const softHorizontalSpeed = Math.abs(lander.vel.x)
+        <= w.mission.horizontalSpeedLimit + w.mission.speedTolerance;
       const upright = Math.abs(Math.atan2(Math.sin(lander.angle), Math.cos(lander.angle)))
         <= 15 * Math.PI / 180 + angleTolerance;
       if (onPad && softVerticalSpeed && softHorizontalSpeed && upright) {

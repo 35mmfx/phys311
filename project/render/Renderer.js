@@ -111,6 +111,32 @@ export class Renderer {
 
     if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+    if (world.landerDrive && world.lander && world.mission && world.bounds) this._flightReadouts(world);
+  }
+
+  _flightReadouts(world) {
+    const ctx = this.ctx, cam = this.cam, drive = world.landerDrive;
+    const [left, top] = cam.toScreen(world.bounds.xmin, world.bounds.ymax);
+    const width = Math.max(0, Math.min(110, left - 8));
+    const x = left - width - 8, y = top + 8;
+    const color = drive.fuel <= 5 ? '#ff6b6b' : '#7ee787';
+
+    ctx.save();
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(`FUEL ${drive.fuel.toFixed(2)} kg`, x + 5, y + 5, Math.max(0, width - 10));
+    const verticalSpeed = world.mission.impact ? world.mission.impact.verticalSpeed : world.lander.vel.y;
+    ctx.fillStyle = Math.abs(verticalSpeed) <= world.mission.verticalSpeedLimit + world.mission.speedTolerance
+      ? '#7ee787' : '#ff6b6b';
+    ctx.fillText(`DESCENT ${(-verticalSpeed).toFixed(2)} m/s`, x + 5, y + 23, Math.max(0, width - 10));
+    const horizontalSpeed = world.mission.impact ? world.mission.impact.horizontalSpeed : world.lander.vel.x;
+    ctx.fillStyle = Math.abs(horizontalSpeed) <= world.mission.horizontalSpeedLimit + world.mission.speedTolerance
+      ? '#7ee787' : '#ff6b6b';
+    ctx.fillText(`HORIZONTAL ${horizontalSpeed.toFixed(2)} m/s`, x + 5, y + 41, Math.max(0, width - 10));
+    ctx.restore();
   }
 
   _trajectory(prediction, world) {

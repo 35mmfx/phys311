@@ -17,11 +17,11 @@ export class Camera {
              (this.h / 2 - py) / this.scale + this.cy ];    // <-- exact inverse
   }
   // Fit a world rectangle with margin. Used by Reset and by the resize handler.
-  fit(xmin, xmax, ymin, ymax, margin = 1.08) {
-    const sx = this.w / ((xmax - xmin) * margin);
+  fit(xmin, xmax, ymin, ymax, margin = 1.08, paddingLeft = 0) {
+    const sx = (this.w - paddingLeft) / ((xmax - xmin) * margin);
     const sy = this.h / ((ymax - ymin) * margin);
     this.scale = Math.min(sx, sy);
-    this.cx = (xmin + xmax) / 2;
+    this.cx = (xmin + xmax) / 2 - paddingLeft / (2 * this.scale);
     this.cy = (ymin + ymax) / 2;
   }
 }
