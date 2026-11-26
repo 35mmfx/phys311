@@ -1,5 +1,19 @@
 # Week 12 Decisions
 
+## 2026-11-25 — Asteroid burst and difficulty fuel
+Did: set the hard, normal, and easy starting reserves to 30, 39, and 45 kg.
+Normal fuel is 30% above hard; easy fuel is 50% above hard. Each mission
+launches 12, 6, or 3 asteroids. The opening asteroids arrive quickly with
+random horizontal direction and downward vertical velocity; later launches
+use wider randomized intervals.
+Why: give each difficulty a clear reserve difference and make asteroid hazards
+build toward the mid-descent phase without relying on a fixed obstacle pattern.
+
+Did: stop asteroids at the ground by removing ground-floor vertical rebound,
+and place asteroid-impact dust at the lander-asteroid contact point.
+Why: prevent asteroids from bouncing off the lunar surface and keep impact
+effects visually associated with the collision rather than the pad.
+
 ## 2026-11-25 — Hard-mode altitude, fuel, and asteroid count
 Did: set hard mode to 30 kg starting fuel, normal to 39 kg (30% easier), easy to 45 kg (50% easier), 12/6/3 asteroids every start, and a
 15–18 m seeded starting altitude. Easy and normal retain 10–14 m starts.

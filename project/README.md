@@ -44,6 +44,9 @@ npm test
   Asteroids have a `0.2 m` radius and can destroy the lander on contact. The
   opening group launches quickly with randomized directions and a downward
   inclination; later asteroids arrive at longer, seeded-random intervals.
+  Asteroids stop at the ground instead of bouncing back. When an asteroid
+  strikes the lander, the impact dust is centered at the contact point rather
+  than on the landing pad.
 - The late-descent vehicle has an approximate non-descent-propellant mass of
   `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The HUD's remaining-fuel percentage is relative
@@ -72,6 +75,9 @@ npm test
   flight time, and fuel used and remaining.
 - Attitude is steered directly at a fixed rate; rotational inertia, terrain
   shape, and atmosphere are not modeled.
+- Euler, Euler-Cromer, and Velocity Verlet integrators all affect lunar
+  lander motion. They share the same forces and collisions, but differ in
+  numerical accuracy; Velocity Verlet is the default.
 - A yellow dashed trajectory and ground marker show approximate future contact
   if the current thrust on/off state and throttle continue and orientation is
   held fixed. The prediction uses the selected integrator, lunar gravity, and

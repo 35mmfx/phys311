@@ -1,6 +1,8 @@
 # Week 12 Progress Log
 
-**Status date:** 2026-11-23 — local tests pass; the Apollo-inspired model, Week 13 validation report, README updates, and visitor explainer are not yet deployed. The previous live site was freshly checked with zero console errors; CPU-throttled fixed-step check passes. Real-phone and external discussion checks remain.
+**Status date:** 2026-11-25 — local tests pass; the Apollo-inspired model,
+recent lunar-difficulty and asteroid updates, Week 13 validation report,
+README updates, and visitor explainer are complete locally.
 
 ## MUST tier status
 
@@ -10,14 +12,14 @@
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
-| HUD: altitude, speed, attitude, fuel, score | done | Safe landings score 50–100 according to remaining starting fuel; crashes score 0. |
+| HUD: altitude, speed, attitude, fuel, score | done | Safe landings score 50–100 according to remaining starting fuel; crashes score 0. The HUD reports fuel against the selected difficulty's starting reserve. |
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |
 | Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `2.969e-15`. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
-| GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` previously loaded in a fresh browser with zero console errors. The Apollo-inspired model in this worktree is not yet deployed. |
+| GitHub Pages deployment and live-site check | done | `https://35mmfx.github.io/phys311/project/` is the deployed live site and has been checked with the recent lunar difficulty and asteroid updates. |
 
 ## Proposal validation results
 
@@ -33,8 +35,8 @@ rate and collision response, randomized isolated collisions, the terminal
 mission timer, and the fixed-step accumulator. Both 60 Hz and 144 Hz produce
 2,400 steps over 10 seconds; the
 jittered sequence produces 10.0083 seconds. A two-second stall is capped at
-eight substeps. Final local test totals: **64 physics/publishing checks and
-37 browser-entry checks passed**.
+eight substeps. Final local test totals: **79 physics/publishing checks and
+38 browser-entry checks passed**.
 
 ## Bonus convergence check
 
@@ -48,9 +50,12 @@ position difference between runs decreases, confirming numerical convergence:
 The lander now has a shaded metallic hull, canopy, and UT Mission side decal.
 A fading dust plume is rendered only when vertical or horizontal touchdown
 speed exceeds the safe limit; slow missed-pad and tilted crashes do not emit
-dust. On narrow screens, touch controls overlay the bottom of the canvas to
-keep the lander visible during play. These effects do not change the simulation
-physics.
+dust. Asteroid impacts emit 32 dust particles around the lander/contact point,
+and asteroids stop at the ground instead of bouncing. Asteroids launch in a
+dense opening burst with randomized directions and downward inclination,
+followed by seeded later launches.
+On narrow screens, touch controls overlay the bottom of the canvas to keep the
+lander visible during play. These effects do not change the simulation physics.
 
 ## Decisions
 
