@@ -115,6 +115,15 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
 .mission-debrief[data-state=landed] #debrief-outcome{color:var(--ok)}
 .lander-controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.45rem;margin:.75rem 0 .75rem}
 .lander-controls[hidden]{display:none}
+.control-item{
+  display:grid;gap:.2rem;text-align:center;font-size:.78rem;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.control-item button{width:100%;display:grid;place-items:center}
+.control-item svg{
+  width:1.4rem;height:1.4rem;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
+}
 .lander-button{
   min-height:3rem;font-size:1.05rem;font-weight:700;
   touch-action:none;-webkit-user-select:none;user-select:none;
@@ -141,6 +150,7 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   max-width:28rem;margin:0 auto .75rem
 }
 .stage-actions button{min-height:2.5rem}
+#btn-play[aria-pressed=true] .play-icon,#btn-play[aria-pressed=false] .pause-icon{display:none}
 #btn-play{
   color:#fff;background:#6c4cc4;border-color:#a58af0;
 }

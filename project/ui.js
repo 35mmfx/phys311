@@ -121,7 +121,9 @@ export class Controls {
 
   setPlayLabel(paused) {
     const b = this.$('btn-play');
-    b.textContent = paused ? '▶ Play' : '⏸ Pause';
+    const label = paused ? 'Play' : 'Pause';
+    this.$('btn-play-label').textContent = label;
+    b.setAttribute('aria-label', label);
     b.setAttribute('aria-pressed', String(!paused));
   }
 }

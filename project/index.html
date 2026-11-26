@@ -39,14 +39,45 @@
     <p id="mission-status" class="mission-status" role="status" aria-live="polite"></p>
     <p id="trajectory-status" class="trajectory-status"></p>
     <div id="lander-controls" class="lander-controls" aria-label="Touch controls">
-      <button id="lander-left" class="lander-button" aria-label="Rotate left">↶</button>
-      <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">Thrust</button>
-      <button id="lander-right" class="lander-button" aria-label="Rotate right">↷</button>
+      <div class="control-item">
+        <button id="lander-left" class="lander-button" aria-label="Rotate left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10a8 8 0 1 1 2 7M5 10V4m0 6h6"/></svg>
+        </button>
+        <span aria-hidden="true">Rotate left</span>
+      </div>
+      <div class="control-item">
+        <button id="lander-thrust" class="lander-button" aria-label="Hold to thrust">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg>
+        </button>
+        <span aria-hidden="true">Thrust</span>
+      </div>
+      <div class="control-item">
+        <button id="lander-right" class="lander-button" aria-label="Rotate right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10a8 8 0 1 0-2 7m2-7V4m0 6h-6"/></svg>
+        </button>
+        <span aria-hidden="true">Rotate right</span>
+      </div>
     </div>
     <div class="stage-actions" aria-label="Simulation actions">
-      <button id="btn-play" aria-pressed="true">&#9208; Pause</button>
-      <button id="btn-reset">&#8635; Restart</button>
-      <button id="btn-step">&#9197; Step</button>
+      <div class="control-item">
+        <button id="btn-play" aria-label="Pause" aria-pressed="true">
+          <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+          <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 4 11 8-11 8z"/></svg>
+        </button>
+        <span id="btn-play-label" aria-hidden="true">Pause</span>
+      </div>
+      <div class="control-item">
+        <button id="btn-reset" aria-label="Restart">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10a8 8 0 1 1 2 7M5 10V4m0 6h6"/></svg>
+        </button>
+        <span aria-hidden="true">Restart</span>
+      </div>
+      <div class="control-item">
+        <button id="btn-step" aria-label="Step">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 10 7-10 7zM19 5v14"/></svg>
+        </button>
+        <span aria-hidden="true">Step</span>
+      </div>
     </div>
     <!-- polite live region: announces state changes without stealing focus -->
     <p id="live" class="sr-only" role="status" aria-live="polite"></p>

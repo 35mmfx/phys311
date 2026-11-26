@@ -14,6 +14,7 @@ const ctxStub = new Proxy({}, { get: (t, k) =>
 
 function el(id) {
   const listeners = {};
+  const attributes = {};
   return {
     id, value: '', checked: false, textContent: '', innerHTML: '', style: {},
     classList: { add: noop, remove: noop },
@@ -22,7 +23,9 @@ function el(id) {
     appendChild: child => child,
     remove: noop,
     click: noop,
-    setAttribute: noop, removeAttribute: noop, getAttribute: () => null, matches: () => false,
+    setAttribute: (name, value) => { attributes[name] = String(value); },
+    removeAttribute: name => { delete attributes[name]; },
+    getAttribute: name => attributes[name] ?? null, matches: () => false,
     closest: () => ({ hidden: false }),
     getBoundingClientRect: () => ({ width: 900, height: 520, left: 0, top: 0 }),
     getContext: () => ctxStub,
@@ -139,6 +142,10 @@ const keyEvent = (key, code = '', target = { matches: () => false }) => {
   };
 };
 windowListeners.keydown(keyEvent(' '));
+checks.push([document.getElementById('btn-play-label').textContent === 'Play'
+  && document.getElementById('btn-play').getAttribute('aria-label') === 'Play'
+  && document.getElementById('btn-play').getAttribute('aria-pressed') === 'false',
+  'paused simulation updates the play icon state and its label']);
 windowListeners.keydown(keyEvent('.'));
 frames++; cb(performance.now());
 const afterStep = Number(document.getElementById('hud').innerHTML.match(/<span class="v">(\d+)<\/span>\s*<span class="k">bodies/)[1]);
@@ -151,6 +158,10 @@ windowListeners.keydown(keyEvent('+'));
 checks.push([Number(document.getElementById('speed').value) === 1.25,
   'keyboard plus increases simulation speed by 0.25x']);
 document.getElementById('btn-play')._fire('click', {});
+checks.push([document.getElementById('btn-play-label').textContent === 'Pause'
+  && document.getElementById('btn-play').getAttribute('aria-label') === 'Pause'
+  && document.getElementById('btn-play').getAttribute('aria-pressed') === 'true',
+  'resuming updates the pause icon state and its label']);
 document.getElementById('btn-step')._fire('click', {});
 document.getElementById('btn-reset')._fire('click', {});
 frames++; cb(performance.now());
