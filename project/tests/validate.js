@@ -226,7 +226,7 @@ H('10. Publishing audit: safe for GitHub Pages');
   ok(abs.length === 0, 'no absolute paths (they break on a project-page subpath)',
      abs.join(', ') || 'all relative');
 
-  const refs = [...html.matchAll(/(?:src|href)="([^":#]+)"/g)].map(m => m[1]);
+  const refs = [...html.matchAll(/(?:src|href)="([^":#]+)"/g)].map(m => m[1].split(/[?#]/)[0]);
   const missing = refs.filter(r => { try { readFileSync(join(ROOT, r)); return false; }
                                      catch { return true; } });
   ok(missing.length === 0, 'every referenced file exists with EXACT case',
