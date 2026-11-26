@@ -36,16 +36,16 @@ npm test
 
   | Difficulty | Pad width | Starting fuel | Asteroids |
   |---|---:|---:|---|
-  | Easy | 4.4 m | 300 kg | None |
-  | Normal (default) | 2.9 m | 200 kg | 3 on about one in three starts |
-  | Hard | 2.0 m | 60 kg | 10 every start |
+  | Easy | 4.4 m | 120 kg | 3 every start |
+  | Normal (default) | 2.9 m | 100 kg | 6 every start |
+  | Hard | 2.0 m | 55 kg | 12 every start |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
   Asteroids have a `0.2 m` radius and can destroy the lander on contact.
 - The late-descent vehicle has an approximate non-descent-propellant mass of
   `6,900 kg` (including ascent propellant and equipment), plus the selected
-  remaining descent propellant. The `8,200 kg` tank capacity makes the HUD's
-  remaining-fuel percentage relative to the original load.
+  remaining descent propellant. The HUD's remaining-fuel percentage is relative
+  to the selected difficulty's starting reserve.
 - Maximum descent thrust is `45,000 N` and specific impulse is `304 s`.
   The slider sets 10–100% thrust; holding a thrust control fires at that
   setting, and releasing it shuts the engine off. The continuous slider is a

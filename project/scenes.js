@@ -17,9 +17,9 @@ function mulberry32(seed) {                 // 8-line deterministic PRNG
 const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
 
 export const LUNAR_DIFFICULTIES = {
-  easy: { fuel: 300, padHalfWidth: 2.2, asteroidChance: 0, asteroidCount: 0, startAltitudeMin: 10, startAltitudeMax: 14 },
-  normal: { fuel: 200, padHalfWidth: 1.45, asteroidChance: 1 / 3, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
-  hard: { fuel: 60, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 10, startAltitudeMin: 15, startAltitudeMax: 18 }
+  easy: { fuel: 120, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
+  normal: { fuel: 100, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 6, startAltitudeMin: 10, startAltitudeMax: 14 },
+  hard: { fuel: 55, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
 };
 
 function base(state, opts) {
@@ -152,7 +152,7 @@ export const SCENES = {
     const altitudeRange = difficulty.startAltitudeMax - difficulty.startAltitudeMin;
     const lander = w.add(new Body({
       pos: new Vec2(-7 + rnd() * 14, landerRadius + difficulty.startAltitudeMin + rnd() * altitudeRange),
-      vel: new Vec2(1.7, -1.8),
+      vel: new Vec2(1.7, -0.8),
       mass: 6900 + difficulty.fuel,
       radius: landerRadius,
       color: '#e6edf3',
@@ -163,26 +163,12 @@ export const SCENES = {
       gravity: 1.62,
       dryMass: 6900,
       fuelMass: difficulty.fuel,
-      maxFuel: 8200,
+      maxFuel: difficulty.fuel,
       thrust: 45000,
       throttle: state.throttle,
       isp: 304,
       g0: 9.81
     }));
-    if (rnd() < difficulty.asteroidChance) {
-      for (let i = 0; i < difficulty.asteroidCount; i++) {
-        const fromLeft = rnd() < 0.5;
-        const height = 5 + (i + 0.3 + 0.4 * rnd()) * 11 / difficulty.asteroidCount;
-        w.add(new Body({
-          pos: new Vec2(fromLeft ? -9.2 : 9.2, height),
-          vel: new Vec2(fromLeft ? 2.4 : -2.4, (rnd() - 0.5) * 0.4),
-          mass: 350,
-          radius: 0.2,
-          color: '#8e8578',
-          tag: 'asteroid'
-        }));
-      }
-    }
     w.lander = lander;
     w.landerDrive = drive;
     w.pointer = w.addForce(new PointerSpring());
@@ -199,6 +185,9 @@ export const SCENES = {
       score: 0,
       elapsedTime: null,
       initialFuel: drive.fuel,
+      asteroidLaunched: 0,
+      nextAsteroidAt: 0.8 + rnd() * 1.2,
+      asteroidRnd: rnd,
       debrief: null
     };
     w.beforeCollisions = () => {
@@ -262,6 +251,27 @@ export const SCENES = {
       }
     };
     w.afterStep = () => {
+      if (!w.conservativeMode
+          && w.mission.status === 'flying'
+          && w.mission.asteroidLaunched < w.mission.asteroidCount
+          && w.time >= w.mission.nextAsteroidAt
+          && w.time <= 8) {
+        const rnd = w.mission.asteroidRnd;
+        const fromLeft = rnd() < 0.5;
+        const altitude = 5 + rnd() * 10;
+        const speed = 1.8 + rnd() * 2.4;
+        const horizontalDirection = rnd() < 0.5 ? -1 : 1;
+        w.add(new Body({
+          pos: new Vec2(fromLeft ? -9.2 : 9.2, altitude),
+          vel: new Vec2(horizontalDirection * speed, (rnd() - 0.5) * 2.4),
+          mass: 350,
+          radius: 0.2,
+          color: '#8e8578',
+          tag: 'asteroid'
+        }));
+        w.mission.asteroidLaunched++;
+        w.mission.nextAsteroidAt = w.time + 0.08 + rnd() * 0.12;
+      }
       if (w.mission.status === 'flying') {
         w.mission.elapsedTime = w.time;
       } else if (w.mission.elapsedTime === null) {

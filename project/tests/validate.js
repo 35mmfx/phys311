@@ -350,8 +350,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
-  ok(drive.fuel === 200 && drive.maxFuel === 8200 && lander.mass === 7100,
-     'normal lunar final approach starts with 200 kg of fuel');
+  ok(drive.fuel === 100 && drive.maxFuel === 100 && lander.mass === 7000,
+     'normal lunar final approach starts with 100 kg of fuel');
 
   const repeat = SCENES.lunar(missionState).world;
   const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;
@@ -361,12 +361,12 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(lander.pos.x >= -7 && lander.pos.x <= 7
      && lander.pos.y - lander.radius >= 10 && lander.pos.y - lander.radius <= 14,
      'randomized starts stay within the documented x and altitude ranges');
-  let asteroidCount = 0;
-  for (let seed = 0; seed < 300; seed++)
-    if (SCENES.lunar({ ...missionState, seed }).world.find('asteroid')) asteroidCount++;
-  ok(asteroidCount > 70 && asteroidCount < 130,
-     'a group of asteroids appears on about one in three normal mission starts',
-     `${asteroidCount} of 300 seeded starts`);
+  const normalDynamic = SCENES.lunar({ ...missionState, difficulty: 'normal' }).world;
+  for (let i = 0; i < 3000 && normalDynamic.mission.status === 'flying'; i++)
+    normalDynamic.step(normalDynamic.DT);
+  ok(normalDynamic.mission.asteroidLaunched === 6
+     && normalDynamic.bodies.filter(body => body.tag === 'asteroid').length <= 6,
+     'normal missions launch six seeded mid-descent asteroids');
 
   const reserve = drive.charge;
   const fuelAtStart = drive.fuel;
@@ -462,13 +462,13 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(safe.mission.debrief.outcome === 'landed'
      && safe.mission.debrief.elapsedTime === safe.mission.elapsedTime
      && safe.mission.debrief.fuelUsed === 0
-     && safe.mission.debrief.fuelRemaining === 200
+     && safe.mission.debrief.fuelRemaining === 100
      && safe.mission.debrief.score === 100,
      'landing debrief records outcome, frozen time, and fuel');
-  const halfFuel = touchdown({ fuel: 100 });
+  const halfFuel = touchdown({ fuel: 50 });
   const emptyFuel = touchdown({ fuel: 0 });
-  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 30 });
-  const fuelRichCrash = touchdown({ x: 2, fuel: 200 });
+  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 27.5 });
+  const fuelRichCrash = touchdown({ x: 2, fuel: 100 });
   ok(halfFuel.mission.score === 75 && hardHalfFuel.mission.score === 75
      && emptyFuel.mission.score === 50 && fuelRichCrash.mission.score === 0
      && halfFuel.mission.debrief.score === 75 && fuelRichCrash.mission.debrief.score === 0,
@@ -489,7 +489,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(fueledLanding.mission.debrief.outcome === 'landed'
      && fueledLanding.mission.debrief.fuelUsed > 0
      && Math.abs(fueledLanding.mission.debrief.fuelUsed
-       + fueledLanding.mission.debrief.fuelRemaining - 200) < 1e-10,
+       + fueledLanding.mission.debrief.fuelRemaining - 100) < 1e-10,
      'landing debrief accounts for fuel consumed during the mission',
      `used=${fueledLanding.mission.debrief.fuelUsed.toFixed(3)} kg, remaining=${fueledLanding.mission.debrief.fuelRemaining.toFixed(3)} kg`);
   const thresholdSafe = touchdown({
@@ -517,9 +517,13 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'side-wall crashes preserve pre-impact speed for the crash sound');
   let asteroidCrash = null;
   for (let seed = 0; seed < 20 && !asteroidCrash; seed++) {
-    const candidate = SCENES.lunar({ ...missionState, seed }).world;
+    const candidate = SCENES.lunar({ ...missionState, seed, difficulty: 'hard' }).world;
+    for (let i = 0; i < 3000 && candidate.mission.status === 'flying'; i++)
+      candidate.step(candidate.DT);
     const asteroid = candidate.bodies.filter(body => body.tag === 'asteroid').slice(-1)[0];
     if (!asteroid) continue;
+    candidate.mission.status = 'flying';
+    candidate.mission.debrief = null;
     candidate.lander.pos.set(asteroid.pos.x, asteroid.pos.y);
     candidate.lander.vel.set(0, 0);
     candidate.step(candidate.DT);
@@ -603,6 +607,10 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
     ...ST, seed: 2010346869
   }).world;
   setConservativeMode(conservativeAsteroid, true);
+  conservativeAsteroid.add(new Body({
+    pos: new Vec2(8, 15), vel: new Vec2(0, 0),
+    mass: 350, radius: 0.2, tag: 'asteroid', fixed: true
+  }));
   for (let i = 0; i < 1574; i++) conservativeAsteroid.step(conservativeAsteroid.DT);
   ok(conservativeAsteroid.bodies.some(body => body.tag === 'asteroid')
      && Math.abs(conservativeAsteroid.driftE()) < 1e-8,
@@ -615,27 +623,26 @@ H('Lunar difficulty and trajectory prediction');
   const easy = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
   const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
   const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
-  ok(easy.landerDrive.fuel === 300 && normal.landerDrive.fuel === 200
-     && hard.landerDrive.fuel === 60
+  ok(easy.landerDrive.fuel === 120 && normal.landerDrive.fuel === 100
+     && hard.landerDrive.fuel === 55
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
-     && !easy.find('asteroid') && hard.find('asteroid'),
+     && easy.mission.asteroidCount === 3
+     && normal.mission.asteroidCount === 6
+     && hard.mission.asteroidCount === 12,
      'difficulty changes fuel, pad width and asteroid availability');
   ok(hard.lander.pos.y - hard.lander.radius >= 15
      && hard.lander.pos.y - hard.lander.radius <= 18,
      'hard difficulty starts between 15 and 18 m altitude');
-  ok(SCENES.lunar({ ...ST, difficulty: 'hard' }).world.find('asteroid').pos.x === hard.find('asteroid').pos.x,
-     'hard difficulty is reproducible with the same seed');
+  ok(hard.mission.asteroidRnd && hard.mission.nextAsteroidAt > 0,
+     'hard difficulty has a seeded asteroid launch schedule');
   let validGroups = true;
   for (let seed = 0; seed < 100; seed++) {
-    for (const [difficulty, count] of [['normal', 3], ['hard', 10]]) {
+    for (const [difficulty, count] of [['normal', 6], ['hard', 12]]) {
       const world = SCENES.lunar({ ...ST, seed, difficulty }).world;
-      const asteroids = world.bodies.filter(body => body.tag === 'asteroid');
-      if (difficulty === 'normal' && asteroids.length === 0) continue;
-      validGroups &&= asteroids.length === count
-        && asteroids.every(a => a.radius === 0.2
-          && a.pos.sub(world.lander.pos).len() > a.radius + world.lander.radius
-          && asteroids.every(b => a === b || a.pos.sub(b.pos).len() > a.radius + b.radius));
+      validGroups &&= world.mission.asteroidCount === count
+        && world.mission.asteroidChance === 1
+        && world.lander.pos.y - world.lander.radius >= 10;
       const repeat = SCENES.lunar({ ...ST, seed, difficulty }).world;
       validGroups &&= maxdiff(snap(world), snap(repeat)) === 0;
     }
