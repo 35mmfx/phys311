@@ -27,8 +27,9 @@ npm test
   `y` is up.
 - The arena is 20 m wide with a flat floor at `y = 0`; lunar gravity is
   `1.62 m/s²`.
-- The lander starts at a seeded-random `x` from `-7 m` to `7 m` and altitude
-  from `10 m` to `14 m`. Restart chooses a new start; shared URLs preserve
+- The lander starts at a seeded-random `x` from `-7 m` to `7 m`. Easy and
+  normal missions start from `10 m` to `14 m` altitude; hard missions start
+  from `15 m` to `18 m`. Restart chooses a new start; shared URLs preserve
   their seed.
 - The lander radius is `0.42 m`; the pad is centered at `x = 0`. Difficulty
   changes pad width, starting fuel, and asteroid frequency:
@@ -37,7 +38,7 @@ npm test
   |---|---:|---:|---|
   | Easy | 4.4 m | 300 kg | None |
   | Normal (default) | 2.9 m | 200 kg | 3 on about one in three starts |
-  | Hard | 2.0 m | 100 kg | 5 every start |
+  | Hard | 2.0 m | 60 kg | 10 every start |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
   Asteroids have a `0.2 m` radius and can destroy the lander on contact.

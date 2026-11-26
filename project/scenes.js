@@ -17,9 +17,9 @@ function mulberry32(seed) {                 // 8-line deterministic PRNG
 const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
 
 export const LUNAR_DIFFICULTIES = {
-  easy: { fuel: 300, padHalfWidth: 2.2, asteroidChance: 0, asteroidCount: 0 },
-  normal: { fuel: 200, padHalfWidth: 1.45, asteroidChance: 1 / 3, asteroidCount: 3 },
-  hard: { fuel: 100, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 5 }
+  easy: { fuel: 300, padHalfWidth: 2.2, asteroidChance: 0, asteroidCount: 0, startAltitudeMin: 10, startAltitudeMax: 14 },
+  normal: { fuel: 200, padHalfWidth: 1.45, asteroidChance: 1 / 3, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
+  hard: { fuel: 60, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 10, startAltitudeMin: 15, startAltitudeMax: 18 }
 };
 
 function base(state, opts) {
@@ -145,12 +145,13 @@ export const SCENES = {
   lunar(state) {
     Body.resetIds();
     const difficulty = LUNAR_DIFFICULTIES[state.difficulty] || LUNAR_DIFFICULTIES.normal;
-    const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 18 };
+    const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 20 };
     const w = base(state, { bounds, restitution: 0.25 });
     const rnd = mulberry32(state.seed || 0);
     const landerRadius = 0.42;
+    const altitudeRange = difficulty.startAltitudeMax - difficulty.startAltitudeMin;
     const lander = w.add(new Body({
-      pos: new Vec2(-7 + rnd() * 14, landerRadius + 10 + rnd() * 4),
+      pos: new Vec2(-7 + rnd() * 14, landerRadius + difficulty.startAltitudeMin + rnd() * altitudeRange),
       vel: new Vec2(1.7, -1.8),
       mass: 6900 + difficulty.fuel,
       radius: landerRadius,
@@ -287,7 +288,7 @@ export const SCENES = {
       drive.rotation = 0;
     };
     w.markReference();
-    return { world: w, view: [-11, 11, -1, 19] };
+    return { world: w, view: [-11, 11, -1, 21] };
   }
 };
 

@@ -467,7 +467,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'landing debrief records outcome, frozen time, and fuel');
   const halfFuel = touchdown({ fuel: 100 });
   const emptyFuel = touchdown({ fuel: 0 });
-  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 50 });
+  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 30 });
   const fuelRichCrash = touchdown({ x: 2, fuel: 200 });
   ok(halfFuel.mission.score === 75 && hardHalfFuel.mission.score === 75
      && emptyFuel.mission.score === 50 && fuelRichCrash.mission.score === 0
@@ -616,16 +616,19 @@ H('Lunar difficulty and trajectory prediction');
   const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
   const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
   ok(easy.landerDrive.fuel === 300 && normal.landerDrive.fuel === 200
-     && hard.landerDrive.fuel === 100
+     && hard.landerDrive.fuel === 60
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
      && !easy.find('asteroid') && hard.find('asteroid'),
      'difficulty changes fuel, pad width and asteroid availability');
+  ok(hard.lander.pos.y - hard.lander.radius >= 15
+     && hard.lander.pos.y - hard.lander.radius <= 18,
+     'hard difficulty starts between 15 and 18 m altitude');
   ok(SCENES.lunar({ ...ST, difficulty: 'hard' }).world.find('asteroid').pos.x === hard.find('asteroid').pos.x,
      'hard difficulty is reproducible with the same seed');
   let validGroups = true;
   for (let seed = 0; seed < 100; seed++) {
-    for (const [difficulty, count] of [['normal', 3], ['hard', 5]]) {
+    for (const [difficulty, count] of [['normal', 3], ['hard', 10]]) {
       const world = SCENES.lunar({ ...ST, seed, difficulty }).world;
       const asteroids = world.bodies.filter(body => body.tag === 'asteroid');
       if (difficulty === 'normal' && asteroids.length === 0) continue;
