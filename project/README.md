@@ -1,4 +1,4 @@
-# Lunar Lander: Fuel for the Final Flare
+# Lunar Lander: Fuel for the Final Flare and More
 
 A single-scene lunar-landing challenge built for the Week 12 MUST tier. The
 lander uses finite propellant, variable mass, keyboard/touch controls, and

@@ -230,7 +230,8 @@ H('10. Publishing audit: safe for GitHub Pages');
      && /Euler-Cromer/.test(html)
      && /touchdown timing/.test(html),
      'Variables to notice explains fuel and integrator effects');
-  ok(/Lunar Lander: Fuel for the Final Flare/.test(html),
+  ok(/<title>Lunar Lander: Fuel for the Final Flare and More<\/title>/.test(html)
+     && /<h1>Lunar Lander: Fuel for the Final Flare and More<\/h1>/.test(html),
      'page title uses the Lunar Lander showcase name');
   ok(/<h2 id="more-games-heading">More games<\/h2>[\s\S]*?<select id="scene">/.test(html)
      && html.indexOf('<select id="scene">') < html.indexOf('<details class="advanced">')
