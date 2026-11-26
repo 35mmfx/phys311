@@ -225,6 +225,10 @@ H('10. Publishing audit: safe for GitHub Pages');
   const abs = [...html.matchAll(/(?:src|href)="(\/[^"/][^"]*)"/g)].map(m => m[1]);
   ok(abs.length === 0, 'no absolute paths (they break on a project-page subpath)',
      abs.join(', ') || 'all relative');
+  ok(/Variables to notice/.test(html)
+     && /Euler-Cromer/.test(html)
+     && /touchdown timing/.test(html),
+     'Variables to notice explains fuel and integrator effects');
 
   const refs = [...html.matchAll(/(?:src|href)="([^":#]+)"/g)].map(m => m[1].split(/[?#]/)[0]);
   const missing = refs.filter(r => { try { readFileSync(join(ROOT, r)); return false; }
