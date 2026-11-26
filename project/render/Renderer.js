@@ -144,19 +144,22 @@ export class Renderer {
 
     if (!this.dustTriggered && mission.status === 'crashed' && mission.impact) {
       this.dustTriggered = true;
-      const { verticalSpeed, horizontalSpeed } = mission.impact;
-      if (Math.abs(verticalSpeed) > 1.8 || Math.abs(horizontalSpeed) > 1.1) {
+      const { verticalSpeed, horizontalSpeed, kind, point } = mission.impact;
+      const asteroidImpact = kind === 'asteroid';
+      if (asteroidImpact || Math.abs(verticalSpeed) > 1.8 || Math.abs(horizontalSpeed) > 1.1) {
         const impactSeverity = Math.min(1.7, Math.max(
-          Math.abs(verticalSpeed) / 1.8,
-          Math.abs(horizontalSpeed) / 1.1
+          asteroidImpact ? 1.2 : Math.abs(verticalSpeed) / 1.8,
+          asteroidImpact ? 1.2 : Math.abs(horizontalSpeed) / 1.1
         ));
         const count = 32;
         for (let i = 0; i < count; i++) {
-          const angle = Math.PI * (i + 0.5) / count;
+          const angle = asteroidImpact
+            ? 2 * Math.PI * (i + 0.5) / count
+            : Math.PI * (i + 0.5) / count;
           const speed = 1.1 + ((i * 7) % 11) / 10 * (1 + impactSeverity * 0.3);
           this.dustParticles.push({
-            x: world.lander.pos.x,
-            y: world.bounds.ymin + 0.025,
+            x: asteroidImpact ? point.x : world.lander.pos.x,
+            y: asteroidImpact ? point.y : world.bounds.ymin + 0.025,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             age: 0,

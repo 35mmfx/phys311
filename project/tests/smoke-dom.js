@@ -181,7 +181,7 @@ const difficulty = document.getElementById('difficulty');
 difficulty.value = 'hard';
 difficulty._fire('change', { target: difficulty });
 frames++; cb(performance.now());
-checks.push([/55 kg/.test(document.getElementById('mission-settings').textContent)
+checks.push([/27\.5 kg/.test(document.getElementById('mission-settings').textContent)
   && /2\.0 m/.test(document.getElementById('mission-settings').textContent)
   && /12 on every flight/.test(document.getElementById('mission-settings').textContent)
   && /Projected/.test(document.getElementById('trajectory-status').textContent),

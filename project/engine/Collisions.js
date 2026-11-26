@@ -32,7 +32,16 @@ export function resolveWalls(body, bounds, e) {
   const r = body.radius;
   if (body.pos.x - r < xmin) { body.pos.x = xmin + r; body.vel.x = -body.vel.x * e; hit = true; }
   if (body.pos.x + r > xmax) { body.pos.x = xmax - r; body.vel.x = -body.vel.x * e; hit = true; }
-  if (body.pos.y - r < ymin) { body.pos.y = ymin + r; body.vel.y = -body.vel.y * e; hit = true; }
+  if (body.pos.y - r < ymin) {
+    body.pos.y = ymin + r;
+    if (body.tag === 'asteroid') {
+      body.vel.y = 0;
+      body.vel.x *= 0.7;
+    } else {
+      body.vel.y = -body.vel.y * e;
+    }
+    hit = true;
+  }
   if (body.pos.y + r > ymax) { body.pos.y = ymax - r; body.vel.y = -body.vel.y * e; hit = true; }
   return hit;
 }

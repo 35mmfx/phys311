@@ -19,7 +19,7 @@ const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea
 export const LUNAR_DIFFICULTIES = {
   easy: { fuel: 120, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
   normal: { fuel: 100, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 6, startAltitudeMin: 10, startAltitudeMax: 14 },
-  hard: { fuel: 55, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
+  hard: { fuel: 27.5, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
 };
 
 function base(state, opts) {
@@ -202,7 +202,11 @@ export const SCENES = {
           verticalSpeed: lander.vel.y,
           horizontalSpeed: lander.vel.x,
           angle: lander.angle,
-          kind: 'asteroid'
+          kind: 'asteroid',
+          point: new Vec2(
+            (lander.pos.x + asteroid.pos.x) * 0.5,
+            (lander.pos.y + asteroid.pos.y) * 0.5
+          )
         };
         w.mission.status = 'crashed';
         w.mission.message = 'Crash: the lander struck an asteroid.';

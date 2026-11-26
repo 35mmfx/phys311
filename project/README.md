@@ -38,7 +38,7 @@ npm test
   |---|---:|---:|---|
   | Easy | 4.4 m | 120 kg | 3 every start |
   | Normal (default) | 2.9 m | 100 kg | 6 every start |
-  | Hard | 2.0 m | 55 kg | 12 every start |
+  | Hard | 2.0 m | 27.5 kg (50% reserve) | 12 every start |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
   Asteroids have a `0.2 m` radius and can destroy the lander on contact.

@@ -3,7 +3,7 @@
 // because engine/ never touches the DOM. That is the Week 9 layering rule
 // paying its final dividend.
 import { World, Body, Vec2 } from '../engine/World.js';
-import { resolvePair } from '../engine/Collisions.js';
+import { resolvePair, resolveWalls } from '../engine/Collisions.js';
 import { UniformGravity, Spring, NewtonGravity, PointerSpring, LanderDrive } from '../engine/Forces.js';
 import { Camera }   from '../render/Camera.js';
 import { Renderer } from '../render/Renderer.js';
@@ -467,7 +467,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'landing debrief records outcome, frozen time, and fuel');
   const halfFuel = touchdown({ fuel: 50 });
   const emptyFuel = touchdown({ fuel: 0 });
-  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 27.5 });
+  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 13.75 });
   const fuelRichCrash = touchdown({ x: 2, fuel: 100 });
   ok(halfFuel.mission.score === 75 && hardHalfFuel.mission.score === 75
      && emptyFuel.mission.score === 50 && fuelRichCrash.mission.score === 0
@@ -532,6 +532,16 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(asteroidCrash && asteroidCrash.mission.status === 'crashed'
      && asteroidCrash.mission.impact.kind === 'asteroid',
      'asteroid contact crashes the lander');
+  const floorAsteroid = new Body({
+    pos: new Vec2(0, 0.1), vel: new Vec2(2, -3),
+    mass: 350, radius: 0.2, tag: 'asteroid'
+  });
+  const floorHit = resolveWalls(floorAsteroid, {
+    xmin: -10, xmax: 10, ymin: 0, ymax: 20
+  }, 0.25);
+  ok(floorHit && floorAsteroid.pos.y === 0.2
+     && floorAsteroid.vel.y === 0,
+     'asteroids stop at the ground instead of bouncing');
   const gradients = [];
   const drawContext = new Proxy({}, { get: (_, key) =>
     (key === 'createRadialGradient' || key === 'createLinearGradient')
@@ -540,12 +550,24 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const renderer = new Renderer({ getContext: () => drawContext }, new Camera({ scale: 24 }));
   renderer.cam.resize(800, 600);
   renderer.showTrails = false;
-  renderer.draw(fast, { frameSeconds: 0 });
-  const dustPuffs = gradients.filter(name => name === 'createRadialGradient').length;
+  if (asteroidCrash) renderer.draw(asteroidCrash, { frameSeconds: 0 });
+  const asteroidDustPuffs = gradients.filter(name => name === 'createRadialGradient').length;
+  ok(asteroidDustPuffs === 32, 'asteroid impact emits dust around the lander',
+     `${asteroidDustPuffs} impact particles`);
+  const touchdownGradients = [];
+  const touchdownContext = new Proxy({}, { get: (_, key) =>
+    (key === 'createRadialGradient' || key === 'createLinearGradient')
+      ? () => { touchdownGradients.push(key); return { addColorStop() {} }; }
+      : () => {} });
+  const touchdownRenderer = new Renderer({ getContext: () => touchdownContext }, new Camera({ scale: 24 }));
+  touchdownRenderer.cam.resize(800, 600);
+  touchdownRenderer.showTrails = false;
+  touchdownRenderer.draw(fast, { frameSeconds: 0 });
+  const dustPuffs = touchdownGradients.filter(name => name === 'createRadialGradient').length;
   ok(dustPuffs === 32, 'fast touchdown emits a one-shot dust burst',
      `${dustPuffs} fading particles`);
-  renderer.draw(safe, { frameSeconds: 0 });
-  ok(gradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
+  touchdownRenderer.draw(safe, { frameSeconds: 0 });
+  ok(touchdownGradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
      'safe touchdown does not emit dust');
   const lateralFast = touchdown({ vx: 1.11, vy: -1 });
   ok(lateralFast.mission.status === 'crashed' && /speed was too high/.test(lateralFast.mission.message),
@@ -554,9 +576,9 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const tilted = touchdown({ vx: 0, angle: 16 });
   ok(tilted.mission.status === 'crashed' && /tilted/.test(tilted.mission.message),
      'proposal attitude just beyond 15 degrees crashes');
-  renderer.draw(missed, { frameSeconds: 0 });
-  renderer.draw(tilted, { frameSeconds: 0 });
-  ok(gradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
+  touchdownRenderer.draw(missed, { frameSeconds: 0 });
+  touchdownRenderer.draw(tilted, { frameSeconds: 0 });
+  ok(touchdownGradients.filter(name => name === 'createRadialGradient').length === dustPuffs,
      'slow missed-pad and tilted crashes do not emit dust');
 
   const isolated = new World({ dt: ST.dt, integrator: 'verlet' });
@@ -624,7 +646,7 @@ H('Lunar difficulty and trajectory prediction');
   const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
   const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
   ok(easy.landerDrive.fuel === 120 && normal.landerDrive.fuel === 100
-     && hard.landerDrive.fuel === 55
+     && hard.landerDrive.fuel === 27.5
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
      && easy.mission.asteroidCount === 3
