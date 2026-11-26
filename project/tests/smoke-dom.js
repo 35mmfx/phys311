@@ -267,9 +267,9 @@ for (let i = 0; i < 20; i++) { frames++; cb(performance.now()); }
 windowListeners.keyup(keyEvent('ArrowUp'));
 checks.push([fuelRemaining() < keypadFuelBefore,
   'thrust stays active while another thrust key is still held']);
-checks.push([audioContexts[0].oscillators.length > soundsBeforeThrust &&
+checks.push([audioContexts[0].oscillators.length === soundsBeforeThrust &&
   audioContexts[0].gainNodes.some(node => node.gain.targets.includes(0.2)),
-  'thrust engages the synthesized relay sound']);
+  'thrust changes engine rumble without a relay click']);
 const touchReserveBefore = reserveAfter;
 document.getElementById('lander-thrust')._fire('pointerdown', {
   pointerId: 7, cancelable: true, preventDefault: noop

@@ -50,7 +50,6 @@ export class CockpitSound {
            impactSpeed = 0, impactKind = '', fuelFraction = 1 } = {}) {
     if (!this.enabled || !this.context) return;
 
-    if (thrusting !== this.thrusting) this.relayClick(thrusting);
     if (paused !== this.paused) this.switchClick();
     if (missionStatus !== this.missionStatus && missionStatus !== 'flying') {
       if (impactKind === 'side-wall') this.sideImpact(impactSpeed);
@@ -72,11 +71,6 @@ export class CockpitSound {
   switchClick() {
     if (!this.enabled || !this.context) return;
     this._click(1280, 0.045, 0.035, 0.09);
-  }
-
-  relayClick(closing) {
-    if (!this.enabled || !this.context) return;
-    this._click(closing ? 1850 : 920, 0.075, 0.05, closing ? 0.14 : 0.1);
   }
 
   creak() {

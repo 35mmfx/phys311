@@ -112,7 +112,7 @@ steer or fire the engine; release to stop.
 
 Enable **Cockpit sound** in the Mission panel and adjust **Cockpit volume** for
 a synthesized interior mix: ventilation and avionics hum, structure-borne
-engine rumble, pulsing propellant pumps, relay clicks, hull creaks, touchdown
+engine rumble, pulsing propellant pumps, hull creaks, touchdown
 thuds, and a distinct rattling side-wall collision. Steering has no synthesized
 sound. The engine is heard as vibration through the cabin rather than an
 exterior rocket roar. Sound is off by default and starts only after an explicit
