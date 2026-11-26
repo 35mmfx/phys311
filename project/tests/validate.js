@@ -350,8 +350,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
-  ok(drive.fuel === 100 && drive.maxFuel === 100 && lander.mass === 7000,
-     'normal lunar final approach starts with 100 kg of fuel');
+  ok(drive.fuel === 39 && drive.maxFuel === 39 && lander.mass === 6939,
+     'normal lunar final approach starts with 39 kg of fuel');
 
   const repeat = SCENES.lunar(missionState).world;
   const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;
@@ -462,13 +462,13 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(safe.mission.debrief.outcome === 'landed'
      && safe.mission.debrief.elapsedTime === safe.mission.elapsedTime
      && safe.mission.debrief.fuelUsed === 0
-     && safe.mission.debrief.fuelRemaining === 100
+     && safe.mission.debrief.fuelRemaining === 39
      && safe.mission.debrief.score === 100,
      'landing debrief records outcome, frozen time, and fuel');
-  const halfFuel = touchdown({ fuel: 50 });
+  const halfFuel = touchdown({ fuel: 19.5 });
   const emptyFuel = touchdown({ fuel: 0 });
-  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 13.75 });
-  const fuelRichCrash = touchdown({ x: 2, fuel: 100 });
+  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 15 });
+  const fuelRichCrash = touchdown({ x: 2, fuel: 39 });
   ok(halfFuel.mission.score === 75 && hardHalfFuel.mission.score === 75
      && emptyFuel.mission.score === 50 && fuelRichCrash.mission.score === 0
      && halfFuel.mission.debrief.score === 75 && fuelRichCrash.mission.debrief.score === 0,
@@ -489,7 +489,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(fueledLanding.mission.debrief.outcome === 'landed'
      && fueledLanding.mission.debrief.fuelUsed > 0
      && Math.abs(fueledLanding.mission.debrief.fuelUsed
-       + fueledLanding.mission.debrief.fuelRemaining - 100) < 1e-10,
+       + fueledLanding.mission.debrief.fuelRemaining - 39) < 1e-10,
      'landing debrief accounts for fuel consumed during the mission',
      `used=${fueledLanding.mission.debrief.fuelUsed.toFixed(3)} kg, remaining=${fueledLanding.mission.debrief.fuelRemaining.toFixed(3)} kg`);
   const thresholdSafe = touchdown({
@@ -645,8 +645,8 @@ H('Lunar difficulty and trajectory prediction');
   const easy = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
   const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
   const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
-  ok(easy.landerDrive.fuel === 120 && normal.landerDrive.fuel === 100
-     && hard.landerDrive.fuel === 27.5
+  ok(easy.landerDrive.fuel === 45 && normal.landerDrive.fuel === 39
+     && hard.landerDrive.fuel === 30
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
      && easy.mission.asteroidCount === 3

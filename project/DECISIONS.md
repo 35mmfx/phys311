@@ -1,14 +1,14 @@
 # Week 12 Decisions
 
 ## 2026-11-25 — Hard-mode altitude, fuel, and asteroid count
-Did: set hard mode to 27.5 kg starting fuel (50% reserve), 12 asteroids every start, and a
+Did: set hard mode to 30 kg starting fuel, normal to 39 kg (30% easier), easy to 45 kg (50% easier), 12/6/3 asteroids every start, and a
 15–18 m seeded starting altitude. Easy and normal retain 10–14 m starts.
 Why: make hard mode increase both final-descent time and obstacle density
 without changing the safe-touchdown limits.
 
 ## 2026-11-23 — Fuel efficiency score and difficulty reserves
 Planned: award 100 points for any safe landing.
-Did: award 50–100 points for safe landings based on the fraction of starting fuel remaining; crashes score 0. Set Easy/Normal/Hard starting fuel to 120/100/27.5 kg.
+Did: award 50–100 points for safe landings based on the fraction of starting fuel remaining; crashes score 0. Set Easy/Normal/Hard starting fuel to 45/39/30 kg.
 Why: make fuel efficiency meaningful and increase the challenge while explaining the score to players.
 
 ## 2026-11-18 — Apollo-inspired final approach

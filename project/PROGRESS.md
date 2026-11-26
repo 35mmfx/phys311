@@ -6,7 +6,7 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 120/100/27.5 kg starting fuel by difficulty; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 45/39/30 kg starting fuel by difficulty; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |

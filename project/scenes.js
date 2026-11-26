@@ -17,9 +17,9 @@ function mulberry32(seed) {                 // 8-line deterministic PRNG
 const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
 
 export const LUNAR_DIFFICULTIES = {
-  easy: { fuel: 120, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
-  normal: { fuel: 100, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 6, startAltitudeMin: 10, startAltitudeMax: 14 },
-  hard: { fuel: 27.5, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
+  easy: { fuel: 45, padHalfWidth: 2.2, asteroidChance: 1, asteroidCount: 3, startAltitudeMin: 10, startAltitudeMax: 14 },
+  normal: { fuel: 39, padHalfWidth: 1.45, asteroidChance: 1, asteroidCount: 6, startAltitudeMin: 10, startAltitudeMax: 14 },
+  hard: { fuel: 30, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 12, startAltitudeMin: 15, startAltitudeMax: 18 }
 };
 
 function base(state, opts) {
