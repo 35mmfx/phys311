@@ -142,8 +142,7 @@ const keyEvent = (key, code = '', target = { matches: () => false }) => {
   };
 };
 windowListeners.keydown(keyEvent(' '));
-checks.push([document.getElementById('btn-play-label').textContent === 'Play'
-  && document.getElementById('btn-play').getAttribute('aria-label') === 'Play'
+checks.push([document.getElementById('btn-play').getAttribute('aria-label') === 'Play'
   && document.getElementById('btn-play').getAttribute('aria-pressed') === 'false',
   'paused simulation updates the play icon state and its label']);
 windowListeners.keydown(keyEvent('.'));
@@ -158,8 +157,7 @@ windowListeners.keydown(keyEvent('+'));
 checks.push([Number(document.getElementById('speed').value) === 1.25,
   'keyboard plus increases simulation speed by 0.25x']);
 document.getElementById('btn-play')._fire('click', {});
-checks.push([document.getElementById('btn-play-label').textContent === 'Pause'
-  && document.getElementById('btn-play').getAttribute('aria-label') === 'Pause'
+checks.push([document.getElementById('btn-play').getAttribute('aria-label') === 'Pause'
   && document.getElementById('btn-play').getAttribute('aria-pressed') === 'true',
   'resuming updates the pause icon state and its label']);
 document.getElementById('btn-step')._fire('click', {});

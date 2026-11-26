@@ -113,12 +113,8 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
 .mission-debrief dd{margin:0;font-variant-numeric:tabular-nums}
 .mission-debrief[data-state=crashed] #debrief-outcome{color:var(--bad)}
 .mission-debrief[data-state=landed] #debrief-outcome{color:var(--ok)}
-.lander-controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.2rem .45rem;margin:.75rem 0 .75rem}
+.lander-controls{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:.45rem;margin:.75rem 0 .75rem}
 .lander-controls[hidden]{display:none}
-.lander-controls>span,.stage-actions>span{
-  text-align:center;font-size:.78rem;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
-}
 .lander-controls svg,.stage-actions svg{
   width:1.4rem;height:1.4rem;fill:none;stroke:currentColor;
   stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
@@ -146,7 +142,7 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   #lander-thrust:active{background:#d96f00}
 }
 .stage-actions{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:.2rem .45rem;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;
   max-width:28rem;margin:0 auto .75rem
 }
 .stage-actions button{min-height:2.5rem}
