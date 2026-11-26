@@ -150,6 +150,10 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
   max-width:28rem;margin:0 auto .75rem
 }
 .stage-actions button{min-height:2.5rem}
+@media (max-width:860px){
+  .lander-button{min-height:4rem}
+  .stage-actions button{min-height:3rem}
+}
 #btn-play[aria-pressed=true] .play-icon,#btn-play[aria-pressed=false] .pause-icon{display:none}
 #btn-play{
   color:#fff;background:#6c4cc4;border-color:#a58af0;
