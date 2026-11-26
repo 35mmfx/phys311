@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physics 311 -- Student Project Showcase</title>
+<style>
+  :root { --ut-orange: #ff8200; --ut-smokey: #58595b; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         line-height: 1.65; color: #2d3b45; margin: 0; background: #fafafa; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+
+  header.hero { background: linear-gradient(135deg, #ff8200 0%, #e36414 100%);
+                color: #fff; padding: 46px 20px 40px; text-align: center; }
+  header.hero h1 { margin: 0 0 10px; font-size: 2.3em; letter-spacing: -0.5px; }
+  header.hero .sub { font-size: 1.12em; opacity: 0.96; max-width: 760px; margin: 0 auto; }
+  header.hero .course { text-transform: uppercase; letter-spacing: 2px; font-size: 0.8em;
+                        opacity: 0.9; margin-bottom: 8px; }
+
+  .intro { background: #fff; border: 1px solid #e3e3e3; border-left: 5px solid var(--ut-orange);
+           border-radius: 6px; padding: 22px 26px; margin: 34px 0 10px; }
+  .intro h2 { margin-top: 0; color: var(--ut-smokey); font-size: 1.25em; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .badge { background: #fff3e0; border: 1px solid #ffcc80; color: #a85400;
+           border-radius: 20px; padding: 5px 14px; font-size: 0.85em; font-weight: 600; }
+
+  h2.section { color: var(--ut-smokey); border-bottom: 2px solid var(--ut-orange);
+               padding-bottom: 8px; margin-top: 46px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+
+  .card { background: #fff; border: 1px solid #e3e3e3; border-radius: 10px; overflow: hidden;
+          display: flex; flex-direction: column; transition: box-shadow .18s, transform .18s; }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.11); transform: translateY(-2px); }
+  .card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #222; display: block; }
+  .card .body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+  .card h3 { margin: 0 0 4px; font-size: 1.1em; color: #1a1a1a; line-height: 1.3; }
+  .card .author { color: #777; font-size: 0.86em; margin-bottom: 10px; }
+  .card p.desc { margin: 0 0 14px; font-size: 0.94em; flex: 1; }
+
+  .validation { background: #e8f5e9; border-left: 3px solid #4caf50; border-radius: 4px;
+                padding: 8px 12px; font-size: 0.85em; font-family: "SF Mono","Consolas",monospace;
+                color: #1b5e20; margin-bottom: 14px; }
+  .validation strong { font-family: inherit; display: block; font-size: 0.9em;
+                       text-transform: uppercase; letter-spacing: 0.5px; color: #2e7d32; margin-bottom: 2px; }
+
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .links a { text-decoration: none; font-size: 0.86em; font-weight: 600; border-radius: 5px;
+             padding: 7px 13px; border: 1px solid transparent; }
+  .btn-live { background: var(--ut-orange); color: #fff; }
+  .btn-live:hover { background: #e36414; }
+  .btn-alt { background: #fff; color: #006c93; border-color: #cfd8dc; }
+  .btn-alt:hover { background: #f1f8fb; }
+
+  .tags { margin-top: 12px; }
+  .tag { display: inline-block; background: #eceff1; color: #546e7a; border-radius: 4px;
+         padding: 2px 9px; font-size: 0.75em; margin: 2px 4px 2px 0; }
+
+  .about { background: #fff; border: 1px solid #e3e3e3; border-radius: 8px; padding: 24px 28px; margin-top: 20px; }
+  .about table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+  .about th, .about td { border: 1px solid #e0e0e0; padding: 9px 13px; text-align: left; font-size: 0.93em; }
+  .about th { background: var(--ut-orange); color: #fff; font-weight: 600; }
+  .about tr:nth-child(even) { background: #fafafa; }
+
+  .note { background: #d1ecf1; border-left: 4px solid #17a2b8; border-radius: 4px;
+          padding: 14px 18px; margin: 20px 0; font-size: 0.94em; }
+
+  footer { border-top: 1px solid #e0e0e0; margin-top: 50px; padding-top: 22px;
+           font-size: 0.88em; color: #777; }
+  footer a { color: #006c93; }
+  a { color: #006c93; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="course">University of Tennessee, Knoxville &middot; Department of Physics &amp; Astronomy</div>
+  <h1>Physics 311 -- Student Project Showcase</h1>
+  <p class="sub">Interactive physics simulations built from scratch by junior-level mechanics students.
+  No physics libraries. Every project below states a measured accuracy.</p>
+</header>
+
+<div class="wrap">
+
+<div class="intro">
+  <h2>What you're looking at</h2>
+  <p><strong>Physics 311 (Mechanics)</strong> is an asynchronous online course in which students learn classical
+  mechanics by computing it.&nbsp; Over fourteen weeks they build numerical solvers in Python, assemble them
+  into a modular physics engine, port that engine to JavaScript, and publish an interactive simulation or
+  simple game to the open web.</p>
+
+  <p>The projects below are the final deliverable.&nbsp; Each one was written by a single undergraduate using only
+  the browser's built-in Canvas API &mdash; <strong>no game engine, no physics library</strong>.&nbsp; The dynamics,
+  collision handling, and numerical integration are the student's own code.</p>
+
+  <p>One thing distinguishes this gallery from most student project pages: <strong>every entry reports a
+  validated number.</strong>&nbsp; Students are required to measure their simulation's accuracy 
+  -- energy drift,
+  momentum conservation, convergence order, or agreement with an analytic limit 
+  -- and to publish that
+  measurement alongside the work.&nbsp; A simulation nobody validated is just an animation.</p>
+
+  <div class="badge-row">
+    <span class="badge">Python &rarr; JavaScript</span>
+    <span class="badge">HTML5 Canvas</span>
+    <span class="badge">Symplectic integrators</span>
+    <span class="badge">Published on GitHub Pages</span>
+    <span class="badge">Validated &amp; documented</span>
+  </div>
+</div>
+
+<!-- ================= PROJECT GRID ================= -->
+<h2 class="section">Final Projects</h2>
+
+<div class="grid">
+
+  <!-- ===== TEMPLATE CARD — duplicate this block per student ===== -->
+  <article class="card">
+    <img src="images/project-lunar-lander.png"
+         alt="Screenshot of a lunar lander simulation showing a spacecraft descending toward jagged terrain, with an energy readout in the corner.">
+    <div class="body">
+      <h3>Mare Tranquillitatis</h3>
+      <div class="author">A. Student &middot; Fall 2026</div>
+      <p class="desc">Land a thrust-driven spacecraft on procedurally generated lunar terrain.
+      Mass decreases as fuel burns, and contact with the surface is resolved against line segments.</p>
+
+      <div class="validation">
+        <strong>Validated</strong>
+        |&Delta;E/E&#8320;| &lt; 0.63% over 30 s (conservative mode, Verlet, dt = 1/240)
+      </div>
+
+      <div class="links">
+        <a class="btn-live" href="#">Run it &rarr;</a>
+        <a class="btn-alt" href="#">Presentation</a>
+        <a class="btn-alt" href="#">Source</a>
+      </div>
+
+      <div class="tags">
+        <span class="tag">thrust &amp; variable mass</span>
+        <span class="tag">terrain collision</span>
+        <span class="tag">Velocity Verlet</span>
+      </div>
+    </div>
+  </article>
+  <!-- ===== END TEMPLATE CARD ===== -->
+
+  <article class="card">
+    <img src="images/project-orbital.png"
+         alt="Screenshot of a three-body orbital simulation with colored trajectory trails against a dark background.">
+    <div class="body">
+      <h3>Three-Body Sandbox</h3>
+      <div class="author">B. Student &middot; Fall 2026</div>
+      <p class="desc">Drag planets into place and release them. Trails reveal chaotic divergence;
+      a live Kepler check confirms orbital periods against the analytic prediction.</p>
+      <div class="validation">
+        <strong>Validated</strong>
+        |&Delta;L/L&#8320;| = 7.5&times;10&#8315;&#185;&#8309; over 4 periods; T within 0.003% of Kepler
+      </div>
+      <div class="links">
+        <a class="btn-live" href="#">Run it &rarr;</a>
+        <a class="btn-alt" href="#">Presentation</a>
+        <a class="btn-alt" href="#">Source</a>
+      </div>
+      <div class="tags">
+        <span class="tag">N-body gravity</span>
+        <span class="tag">chaos</span>
+        <span class="tag">interactive</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="card">
+    <img src="images/project-pool.png"
+         alt="Screenshot of a billiards simulation showing numbered balls on a green table with a momentum readout.">
+    <div class="body">
+      <h3>Conservation Pool</h3>
+      <div class="author">C. Student &middot; Fall 2026</div>
+      <p class="desc">A billiards table with an adjustable coefficient of restitution and a live
+      momentum ledger, built to make conservation laws visible rather than assumed.</p>
+      <div class="validation">
+        <strong>Validated</strong>
+        |&Delta;p|/|p&#8320;| &lt; 2&times;10&#8315;&#185;&#8310; across 500 randomized collisions
+      </div>
+      <div class="links">
+        <a class="btn-live" href="#">Run it &rarr;</a>
+        <a class="btn-alt" href="#">Presentation</a>
+        <a class="btn-alt" href="#">Source</a>
+      </div>
+      <div class="tags">
+        <span class="tag">collisions</span>
+        <span class="tag">restitution</span>
+        <span class="tag">spatial hashing</span>
+      </div>
+    </div>
+  </article>
+
+</div>
+
+<div class="note">
+  <strong>&#128065; Viewing tip.</strong> Most projects include a <em>debug mode</em> (press <kbd>D</kbd> or add
+  <code>?debug=1</code> to the URL) that displays live energy drift, momentum, and contact counts &mdash;
+  and a <em>conservative test mode</em> that switches off all dissipation so you can verify the integrator
+  yourself. You are encouraged to try to break them.
+</div>
+
+<!-- ================= ABOUT THE COURSE ================= -->
+<h2 class="section">About the Course</h2>
+
+<div class="about">
+  <p>Physics 311 covers the standard junior-level mechanics sequence from Taylor's <em>Classical Mechanics</em>,
+  but reorganizes it so that every topic is implemented numerically. Students write the solver, then validate
+  it against a conservation law or an analytic limit, then build on it.</p>
+
+  <table>
+    <thead><tr><th>Block</th><th>Weeks</th><th>Focus</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>1&ndash;3</td><td>Newton's laws, projectile motion, energy as a diagnostic, oscillations and phase space &mdash; in Python</td></tr>
+      <tr><td>2</td><td>4&ndash;7</td><td>Momentum, central forces, angular momentum; assembling a modular physics engine</td></tr>
+      <tr><td>3</td><td>8&ndash;10</td><td>Porting the engine to JavaScript; HTML5 Canvas; interactivity and publishing</td></tr>
+      <tr><td>4</td><td>11&ndash;13</td><td>Scoping, building, validating, documenting, and launching a public project</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:18px;"><strong>Tools:</strong> VS Code, Python (NumPy / Matplotlib / Jupyter),
+  JavaScript with HTML5 Canvas, Git and GitHub, GitHub Pages.</p>
+
+  <p><strong>The recurring theme:</strong> a conservation law is a test suite. Students spend the semester
+  learning that the hard part of computational physics is not making something move &mdash; it is knowing
+  whether what you made is right, and being able to prove it to someone else.</p>
+
+</div>
+
+<footer>
+  <p><strong>Note on authorship and privacy.</strong> All projects are published with student consent.&nbsp; Some students have chosen to appear under a display name or without attribution; participation in this
+  showcase is optional and carries no effect on course grades.&nbsp; Source repositories and license terms are
+  linked from each project.</p>
+  <p>Physics 311 &middot; Department of Physics &amp; Astronomy &middot; University of Tennessee, Knoxville &middot;
+  Instructor: Marianne Breinig &middot; <a href="mailto:mbreinig@utk.edu">mbreinig@utk.edu</a></p>
+</footer>
+
+</div>
+</body>
+</html>

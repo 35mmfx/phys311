@@ -6,11 +6,11 @@
 
 | Item | Status | Notes |
 |---|---|---|
-| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 300 kg remaining descent fuel; mass updates at the step midpoint. |
+| Single lunar scene, finite fuel, variable mass | done | Apollo-inspired final approach: 6,900 kg other mass + 300/200/100 kg starting fuel by difficulty; mass updates at the step midpoint. |
 | Clear landing/crash outcomes | done | Pad, speed, and attitude checks run before contact response. |
 | Keyboard and touch controls | done | Arrow/WASD and numeric keypad controls, press-and-hold touch buttons, and a mobile restart directly below Thrust; smoke-tested. |
 | Pause, step, reset | done | Reset rebuilds the scene and re-baselines `E₀`. |
-| HUD: altitude, speed, attitude, fuel, score | done | Score is 100 for a safe landing and 0 otherwise. |
+| HUD: altitude, speed, attitude, fuel, score | done | Safe landings score 50–100 according to remaining starting fuel; crashes score 0. |
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |

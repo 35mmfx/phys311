@@ -177,6 +177,18 @@ const sceneControl = document.getElementById('scene');
 sceneControl.value = 'lunar';
 sceneControl._fire('change', { target: sceneControl });
 frames++; cb(performance.now());
+const difficulty = document.getElementById('difficulty');
+difficulty.value = 'hard';
+difficulty._fire('change', { target: difficulty });
+frames++; cb(performance.now());
+checks.push([/100 kg/.test(document.getElementById('mission-settings').textContent)
+  && /2\.0 m/.test(document.getElementById('mission-settings').textContent)
+  && /5 on every flight/.test(document.getElementById('mission-settings').textContent)
+  && /Projected/.test(document.getElementById('trajectory-status').textContent),
+  'difficulty control restarts the mission and displays the projected contact']);
+difficulty.value = 'normal';
+difficulty._fire('change', { target: difficulty });
+frames++; cb(performance.now());
 checks.push([drawnText.includes('UT Mission'),
   'lander renderer draws the UT Mission side decal']);
 document.getElementById('btn-play')._fire('click', {});
@@ -309,6 +321,7 @@ checks.push([endedMission && stoppedTime && laterTime && stoppedTime[1] === late
 const debrief = document.getElementById('mission-debrief');
 checks.push([!debrief.hidden
   && /^(Safe landing|Crash)$/.test(document.getElementById('debrief-outcome').textContent)
+  && /^\d+ \/ 100$/.test(document.getElementById('debrief-score').textContent)
   && /[\d.]+ s/.test(document.getElementById('debrief-time').textContent)
   && /[\d.]+ kg/.test(document.getElementById('debrief-fuel-used').textContent)
   && /[\d.]+ kg/.test(document.getElementById('debrief-fuel-remaining').textContent),

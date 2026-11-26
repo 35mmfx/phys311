@@ -30,32 +30,51 @@ npm test
 - The lander starts at a seeded-random `x` from `-7 m` to `7 m` and altitude
   from `10 m` to `14 m`. Restart chooses a new start; shared URLs preserve
   their seed.
-- The lander radius is `0.42 m`; the pad is centered at `x = 0` with a
-  `1.45 m` half-width. One moving asteroid appears on about one in three starts
-  and can destroy the lander on contact.
+- The lander radius is `0.42 m`; the pad is centered at `x = 0`. Difficulty
+  changes pad width, starting fuel, and asteroid frequency:
+
+  | Difficulty | Pad width | Starting fuel | Asteroids |
+  |---|---:|---:|---|
+  | Easy | 4.4 m | 300 kg | None |
+  | Normal (default) | 2.9 m | 200 kg | 3 on about one in three starts |
+  | Hard | 2.0 m | 100 kg | 5 every start |
+
+  Changing difficulty restarts the mission; restart and shared links retain it.
+  Asteroids have a `0.2 m` radius and can destroy the lander on contact.
 - The late-descent vehicle has an approximate non-descent-propellant mass of
-  `6,900 kg` (including ascent propellant and equipment), plus `300 kg` of
+  `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The `8,200 kg` tank capacity makes the HUD's
-  remaining-fuel percentage relative to the original load, not 300 kg.
+  remaining-fuel percentage relative to the original load.
 - Maximum descent thrust is `45,000 N` and specific impulse is `304 s`.
   The slider sets 10–100% thrust; holding a thrust control fires at that
   setting, and releasing it shuts the engine off. The continuous slider is a
   simplification and does not model Apollo's restricted throttle regions.
 - This starts in the final metres with low horizontal speed; it does **not**
   simulate orbital-speed braking, the preceding fuel burn, or a full 12–13
-  minute powered descent. The small lander, flat arena, and asteroid hazard
+  minute powered descent. The small lander, flat arena, and asteroid hazards
   are game simplifications, not Apollo geometry or mission conditions.
 - Thrust points along `(-sin θ, cos θ)`. Fuel flow is
   `T / (Isp g0)`, with `g0 = 9.81 m/s²`. The integrator uses midpoint mass
   during each fixed `1/240 s` step, then clamps fuel and mass at their lower
   bounds.
 - Contact has restitution `e = 0.25`. Touchdown is evaluated before the
-  collision response. A score of 100 is awarded for a safe landing; flight or
-  crash scores 0.
-- After landing or crashing, the debrief reports the outcome, frozen flight
-  time, and fuel used and remaining.
+  collision response. To land safely, the lander must be on the pad, with
+  vertical speed at most `1.8 m/s`, horizontal speed at most `1.1 m/s`, and
+  angle within `15°` of upright (subject to the documented numerical tolerances).
+  Safe landings score `50 + round(50 × fuel remaining / starting fuel)`, from
+  50 to 100 points; half the starting fuel remaining earns 75. Crashes and
+  ongoing flights score 0. The score uses the mission's starting reserve,
+  not the HUD's percentage of the original tank.
+- After landing or crashing, the debrief reports the outcome, score, frozen
+  flight time, and fuel used and remaining.
 - Attitude is steered directly at a fixed rate; rotational inertia, terrain
   shape, and atmosphere are not modeled.
+- A yellow dashed trajectory and ground marker show approximate future contact
+  if the current thrust on/off state and throttle continue and orientation is
+  held fixed. The prediction uses the selected integrator, lunar gravity, and
+  fuel depletion, with a timestep no finer than `1/60 s`. It stops at the first
+  wall, ceiling, or ground contact (or 30 seconds), and ignores asteroids.
+  It does not predict future steering or guarantee a safe touchdown.
 
 ## Architecture
 
@@ -116,7 +135,7 @@ Orbital evolution loses accuracy at coarse timesteps, and body-count
 performance has not been benchmarked across devices. The lunar scenario is a
 short final-approach game, not a full Apollo descent; it omits orbital braking,
 atmosphere, terrain shape, and rotational inertia. Its continuous throttle
-and asteroid are deliberate simplifications.
+and asteroids are deliberate simplifications.
 
 ## Validation
 
@@ -125,8 +144,7 @@ physics suite includes the proposal's rocket-equation, 60-second
 free-fall-energy, fuel-bound, and touchdown checks, plus accumulator checks at
 60 Hz, 144 Hz, and jittered frame intervals, and a spring-chain DT-halving
 convergence check, randomized collision-conservation checks, and mission
-debrief accounting. The current run passes **64 physics/publishing checks and
-37 browser-entry checks**. The live-site check and real-device touch check
+debrief accounting, difficulty, and trajectory prediction. The live-site check and real-device touch check
 remain part of deployment verification; see
 [`PROGRESS.md`](./PROGRESS.md).
 

@@ -11,6 +11,7 @@ import { StateURL } from '../ui/StateURL.js';
 import { serializeSamples } from '../ui/CSVExport.js';
 import { eventToWorld, slingshotVelocity } from '../input.js';
 import { SCENES, setConservativeMode } from '../scenes.js';
+import { predictLanding } from '../engine/Trajectory.js';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -195,6 +196,9 @@ H('8. Permalink: encode/decode round trip');
   ok(StateURL.encode({ ...s, debug: true, conservative: true }).includes('debug=1')
      && StateURL.encode({ ...s, debug: true, conservative: true }).includes('conservative=1'),
      'debug and conservative test modes survive permalink updates');
+  ok(StateURL.decode(StateURL.encode({ ...s, difficulty: 'hard' }), ST).difficulty === 'hard'
+     && StateURL.decode('?difficulty=invalid', ST).difficulty === 'normal',
+     'difficulty survives shared links and invalid difficulty falls back to normal');
 }
 
 // ---------------------------------------------------------------- 9
@@ -346,8 +350,8 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   const { lander, landerDrive: drive, mission } = world;
   ok(lander.tag === 'lander' && drive instanceof LanderDrive && mission.status === 'flying',
      'lunar scene builds one controllable lander with an active mission');
-  ok(drive.fuel === 300 && drive.maxFuel === 8200 && lander.mass === 7200,
-     'lunar final approach starts with 300 kg of fuel');
+  ok(drive.fuel === 200 && drive.maxFuel === 8200 && lander.mass === 7100,
+     'normal lunar final approach starts with 200 kg of fuel');
 
   const repeat = SCENES.lunar(missionState).world;
   const otherStart = SCENES.lunar({ ...missionState, seed: missionState.seed + 1 }).world;
@@ -361,7 +365,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   for (let seed = 0; seed < 300; seed++)
     if (SCENES.lunar({ ...missionState, seed }).world.find('asteroid')) asteroidCount++;
   ok(asteroidCount > 70 && asteroidCount < 130,
-     'one moving asteroid appears on about one in three mission starts',
+     'a group of asteroids appears on about one in three normal mission starts',
      `${asteroidCount} of 300 seeded starts`);
 
   const reserve = drive.charge;
@@ -437,9 +441,13 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && depletionBody.vel.y > 0 && !depletionDrive.thrusting,
      'final partial burn clamps fuel and mass at their lower bounds and cuts thrust');
 
-  const touchdown = ({ x = 0, vx = 0.5, vy = -1, angle = 0 } = {}) => {
-    const world = SCENES.lunar(missionState).world;
+  const touchdown = ({ x = 0, vx = 0.5, vy = -1, angle = 0, fuel, difficulty = 'normal' } = {}) => {
+    const world = SCENES.lunar({ ...missionState, difficulty }).world;
     world.bodies = world.bodies.filter(body => body.tag !== 'asteroid');
+    if (fuel !== undefined) {
+      world.landerDrive.fuel = fuel;
+      world.landerDrive._syncMassCharge();
+    }
     world.lander.pos.set(x, world.lander.radius + 0.001);
     world.lander.vel.set(vx, vy + 1.62 * world.DT);
     world.lander.angle = angle * Math.PI / 180;
@@ -454,8 +462,17 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(safe.mission.debrief.outcome === 'landed'
      && safe.mission.debrief.elapsedTime === safe.mission.elapsedTime
      && safe.mission.debrief.fuelUsed === 0
-     && safe.mission.debrief.fuelRemaining === 300,
+     && safe.mission.debrief.fuelRemaining === 200
+     && safe.mission.debrief.score === 100,
      'landing debrief records outcome, frozen time, and fuel');
+  const halfFuel = touchdown({ fuel: 100 });
+  const emptyFuel = touchdown({ fuel: 0 });
+  const hardHalfFuel = touchdown({ difficulty: 'hard', fuel: 50 });
+  const fuelRichCrash = touchdown({ x: 2, fuel: 200 });
+  ok(halfFuel.mission.score === 75 && hardHalfFuel.mission.score === 75
+     && emptyFuel.mission.score === 50 && fuelRichCrash.mission.score === 0
+     && halfFuel.mission.debrief.score === 75 && fuelRichCrash.mission.debrief.score === 0,
+     'scores reward remaining fuel relative to each difficulty only after a safe landing');
   const frozenLandingTime = safe.mission.elapsedTime;
   safe.step(safe.DT);
   ok(frozenLandingTime > 0 && safe.mission.elapsedTime === frozenLandingTime,
@@ -472,7 +489,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   ok(fueledLanding.mission.debrief.outcome === 'landed'
      && fueledLanding.mission.debrief.fuelUsed > 0
      && Math.abs(fueledLanding.mission.debrief.fuelUsed
-       + fueledLanding.mission.debrief.fuelRemaining - 300) < 1e-10,
+       + fueledLanding.mission.debrief.fuelRemaining - 200) < 1e-10,
      'landing debrief accounts for fuel consumed during the mission',
      `used=${fueledLanding.mission.debrief.fuelUsed.toFixed(3)} kg, remaining=${fueledLanding.mission.debrief.fuelRemaining.toFixed(3)} kg`);
   const thresholdSafe = touchdown({
@@ -501,7 +518,7 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
   let asteroidCrash = null;
   for (let seed = 0; seed < 20 && !asteroidCrash; seed++) {
     const candidate = SCENES.lunar({ ...missionState, seed }).world;
-    const asteroid = candidate.find('asteroid');
+    const asteroid = candidate.bodies.filter(body => body.tag === 'asteroid').slice(-1)[0];
     if (!asteroid) continue;
     candidate.lander.pos.set(asteroid.pos.x, asteroid.pos.y);
     candidate.lander.vel.set(0, 0);
@@ -591,6 +608,78 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && Math.abs(conservativeAsteroid.driftE()) < 1e-8,
      'conservative lunar energy excludes gravity-free asteroid potential',
      `|dE/E0|=${Math.abs(conservativeAsteroid.driftE()).toExponential(3)}`);
+}
+
+H('Lunar difficulty and trajectory prediction');
+{
+  const easy = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
+  const normal = SCENES.lunar({ ...ST, difficulty: 'normal' }).world;
+  const hard = SCENES.lunar({ ...ST, difficulty: 'hard' }).world;
+  ok(easy.landerDrive.fuel === 300 && normal.landerDrive.fuel === 200
+     && hard.landerDrive.fuel === 100
+     && easy.mission.padHalfWidth > normal.mission.padHalfWidth
+     && normal.mission.padHalfWidth > hard.mission.padHalfWidth
+     && !easy.find('asteroid') && hard.find('asteroid'),
+     'difficulty changes fuel, pad width and asteroid availability');
+  ok(SCENES.lunar({ ...ST, difficulty: 'hard' }).world.find('asteroid').pos.x === hard.find('asteroid').pos.x,
+     'hard difficulty is reproducible with the same seed');
+  let validGroups = true;
+  for (let seed = 0; seed < 100; seed++) {
+    for (const [difficulty, count] of [['normal', 3], ['hard', 5]]) {
+      const world = SCENES.lunar({ ...ST, seed, difficulty }).world;
+      const asteroids = world.bodies.filter(body => body.tag === 'asteroid');
+      if (difficulty === 'normal' && asteroids.length === 0) continue;
+      validGroups &&= asteroids.length === count
+        && asteroids.every(a => a.radius === 0.2
+          && a.pos.sub(world.lander.pos).len() > a.radius + world.lander.radius
+          && asteroids.every(b => a === b || a.pos.sub(b.pos).len() > a.radius + b.radius));
+      const repeat = SCENES.lunar({ ...ST, seed, difficulty }).world;
+      validGroups &&= maxdiff(snap(world), snap(repeat)) === 0;
+    }
+  }
+  ok(validGroups, 'smaller asteroid groups are seeded, non-overlapping, and sized by difficulty');
+
+  const projectAndFly = (thrusting, fuel, angle) => {
+    const world = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
+    world.lander.pos.set(-1, 8);
+    world.lander.vel.set(0.5, -2);
+    world.lander.angle = angle;
+    world.landerDrive.fuel = fuel;
+    world.landerDrive._syncMassCharge();
+    world.landerDrive.thrusting = thrusting;
+    const before = [world.time, ...snap(world).flat(), world.landerDrive.fuel, world.lander.angle];
+    const prediction = predictLanding(world);
+    const unchanged = JSON.stringify(before) === JSON.stringify(
+      [world.time, ...snap(world).flat(), world.landerDrive.fuel, world.lander.angle]);
+    while (world.mission.status === 'flying' && world.time < 30) world.stepOnce();
+    return { world, prediction, unchanged };
+  };
+  const coast = projectAndFly(false, 300, 0);
+  const powered = projectAndFly(true, 5, 0.3);
+  ok([coast, powered].every(({ world, prediction, unchanged }) =>
+    unchanged && prediction.kind === 'floor'
+      && Math.abs(prediction.position.x - world.lander.pos.x) < 0.03
+      && Math.abs(prediction.time - world.time) < 0.03),
+    'coasting and fuel-limited powered projections match actual ground contact without mutating the world');
+  ok(Math.abs(powered.prediction.position.x - coast.prediction.position.x) > 0.01
+     && powered.world.landerDrive.fuel === 0,
+     'projection responds to angled thrust and accounts for fuel exhaustion');
+  const wall = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
+  wall.lander.pos.set(9, 10); wall.lander.vel.set(4, 0);
+  ok(predictLanding(wall).kind === 'wall',
+     'wall impact is reported instead of a misleading ground landing');
+  const ceiling = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
+  ceiling.lander.pos.set(0, 17); ceiling.lander.vel.set(0, 4);
+  ok(predictLanding(ceiling).kind === 'ceiling',
+     'ceiling impact is reported instead of a misleading ground landing');
+  const noContact = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;
+  noContact.lander.pos.set(0, 5); noContact.lander.vel.set(0, 0);
+  noContact.landerDrive.g = 0;
+  ok(predictLanding(noContact).kind === 'none',
+     'a flight with no contact within the horizon has no landing marker');
+  wall.mission.status = 'crashed';
+  ok(predictLanding(wall) === null && predictLanding(SCENES.chain(ST).world) === null,
+     'prediction is hidden after a mission or in another scene');
 }
 
 // --------------------------------------------------------------- 15

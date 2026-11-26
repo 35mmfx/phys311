@@ -16,6 +16,12 @@ function mulberry32(seed) {                 // 8-line deterministic PRNG
 
 const PALETTE = ['#ff8200', '#58a6ff', '#7ee787', '#f778ba', '#ffd866', '#c792ea'];
 
+export const LUNAR_DIFFICULTIES = {
+  easy: { fuel: 300, padHalfWidth: 2.2, asteroidChance: 0, asteroidCount: 0 },
+  normal: { fuel: 200, padHalfWidth: 1.45, asteroidChance: 1 / 3, asteroidCount: 3 },
+  hard: { fuel: 100, padHalfWidth: 1.0, asteroidChance: 1, asteroidCount: 5 }
+};
+
 function base(state, opts) {
   const w = new World({
     dt: state.dt, integrator: state.integrator,
@@ -138,6 +144,7 @@ export const SCENES = {
 
   lunar(state) {
     Body.resetIds();
+    const difficulty = LUNAR_DIFFICULTIES[state.difficulty] || LUNAR_DIFFICULTIES.normal;
     const bounds = { xmin: -10, xmax: 10, ymin: 0, ymax: 18 };
     const w = base(state, { bounds, restitution: 0.25 });
     const rnd = mulberry32(state.seed || 0);
@@ -145,7 +152,7 @@ export const SCENES = {
     const lander = w.add(new Body({
       pos: new Vec2(-7 + rnd() * 14, landerRadius + 10 + rnd() * 4),
       vel: new Vec2(1.7, -1.8),
-      mass: 7200,
+      mass: 6900 + difficulty.fuel,
       radius: landerRadius,
       color: '#e6edf3',
       tag: 'lander',
@@ -154,23 +161,26 @@ export const SCENES = {
     const drive = w.addForce(new LanderDrive(lander, {
       gravity: 1.62,
       dryMass: 6900,
-      fuelMass: 300,
+      fuelMass: difficulty.fuel,
       maxFuel: 8200,
       thrust: 45000,
       throttle: state.throttle,
       isp: 304,
       g0: 9.81
     }));
-    if (rnd() < 1 / 3) {
-      const fromLeft = rnd() < 0.5;
-      w.add(new Body({
-        pos: new Vec2(fromLeft ? -9.2 : 9.2, 5 + rnd() * 11),
-        vel: new Vec2(fromLeft ? 2.4 : -2.4, (rnd() - 0.5) * 0.4),
-        mass: 350,
-        radius: 0.65,
-        color: '#8e8578',
-        tag: 'asteroid'
-      }));
+    if (rnd() < difficulty.asteroidChance) {
+      for (let i = 0; i < difficulty.asteroidCount; i++) {
+        const fromLeft = rnd() < 0.5;
+        const height = 5 + (i + 0.3 + 0.4 * rnd()) * 11 / difficulty.asteroidCount;
+        w.add(new Body({
+          pos: new Vec2(fromLeft ? -9.2 : 9.2, height),
+          vel: new Vec2(fromLeft ? 2.4 : -2.4, (rnd() - 0.5) * 0.4),
+          mass: 350,
+          radius: 0.2,
+          color: '#8e8578',
+          tag: 'asteroid'
+        }));
+      }
     }
     w.lander = lander;
     w.landerDrive = drive;
@@ -182,7 +192,9 @@ export const SCENES = {
       status: 'flying',
       message: 'Find the pad. Rotate to steer; hold ↑ to thrust and brake. Fuel is finite.',
       padCenter: 0,
-      padHalfWidth: 1.45,
+      padHalfWidth: difficulty.padHalfWidth,
+      asteroidCount: difficulty.asteroidCount,
+      asteroidChance: difficulty.asteroidChance,
       score: 0,
       elapsedTime: null,
       initialFuel: drive.fuel,
@@ -239,7 +251,7 @@ export const SCENES = {
         <= 15 * Math.PI / 180 + angleTolerance;
       if (onPad && softVerticalSpeed && softHorizontalSpeed && upright) {
         w.mission.status = 'landed';
-        w.mission.score = 100;
+        w.mission.score = 50 + Math.round(50 * drive.fuel / w.mission.initialFuel);
         w.mission.message = 'Touchdown! The lander is safely on the pad.';
       } else {
         w.mission.status = 'crashed';
@@ -257,6 +269,7 @@ export const SCENES = {
       if (w.mission.status !== 'flying' && w.mission.debrief === null) {
         w.mission.debrief = {
           outcome: w.mission.status,
+          score: w.mission.score,
           elapsedTime: w.mission.elapsedTime,
           fuelUsed: w.mission.initialFuel - drive.fuel,
           fuelRemaining: drive.fuel

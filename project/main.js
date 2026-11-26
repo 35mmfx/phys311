@@ -10,13 +10,14 @@ import { serializeSamples } from './ui/CSVExport.js';
 import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js';
 import { Body, Vec2 }   from './engine/World.js';
 import { CockpitSound } from './audio/CockpitSound.js';
+import { predictLanding } from './engine/Trajectory.js';
 
 const DEFAULTS = {
   scene: 'lunar', integrator: 'verlet', dt: 1 / 240,
   restitution: 0.95, gravity: 9.81, drag: 0.0,
   speed: 1.0, count: 24, throttle: 0.6, trails: true, spawnMode: false,
   velocityVectors: false, forceVectors: false, slingshotMode: false,
-  debug: false, conservative: false,
+  debug: false, conservative: false, difficulty: 'normal',
   seed: Math.floor(Math.random() * 0x100000000)
 };
 
@@ -25,11 +26,14 @@ const live   = document.getElementById('live');       // aria-live announcer
 const missionStatus = document.getElementById('mission-status');
 const missionDebrief = document.getElementById('mission-debrief');
 const debriefOutcome = document.getElementById('debrief-outcome');
+const debriefScore = document.getElementById('debrief-score');
 const debriefTime = document.getElementById('debrief-time');
 const debriefFuelUsed = document.getElementById('debrief-fuel-used');
 const debriefFuelRemaining = document.getElementById('debrief-fuel-remaining');
 const landerControls = document.getElementById('lander-controls');
 const landerInstructions = document.getElementById('lander-instructions');
+const trajectoryStatus = document.getElementById('trajectory-status');
+const missionSettings = document.getElementById('mission-settings');
 const cam    = new Camera();
 const render = new Renderer(canvas, cam);
 const hud    = new HUD(document.getElementById('hud'));
@@ -75,6 +79,12 @@ function recordSample(force = false) {
 function build() {
   const made = SCENES[state.scene] ? SCENES[state.scene](state) : SCENES.billiards(state);
   world = made.world; view = made.view;
+  if (world.mission) {
+    const { asteroidCount, asteroidChance } = world.mission;
+    const asteroids = asteroidCount === 0 ? 'none' :
+      `${asteroidCount} on ${asteroidChance === 1 ? 'every flight' : 'about one in three flights'}`;
+    missionSettings.textContent = `Starting fuel: ${world.landerDrive.fuel} kg; pad width: ${(2 * world.mission.padHalfWidth).toFixed(1)} m; asteroids: ${asteroids}.`;
+  }
   cockpitSound.reset();
   if (!world.mission && soundToggle.checked) {
     soundToggle.checked = false;
@@ -274,6 +284,7 @@ function frame(now) {
         missionDebrief.hidden = false;
         missionDebrief.setAttribute('data-state', debrief.outcome);
         debriefOutcome.textContent = debrief.outcome === 'landed' ? 'Safe landing' : 'Crash';
+        debriefScore.textContent = `${debrief.score} / 100`;
         debriefTime.textContent = `${debrief.elapsedTime.toFixed(2)} s`;
         debriefFuelUsed.textContent = `${debrief.fuelUsed.toFixed(2)} kg`;
         debriefFuelRemaining.textContent = `${debrief.fuelRemaining.toFixed(2)} kg`;
@@ -306,11 +317,19 @@ function frame(now) {
       : world.lander?.vel.len() || 0
   });
 
+  const prediction = predictLanding(world);
+  if (prediction) {
+    trajectoryStatus.textContent = prediction.kind === 'floor'
+      ? `Projected ground contact: x = ${prediction.position.x.toFixed(2)} m in ${prediction.time.toFixed(1)} s.`
+      : prediction.kind === 'none'
+        ? 'No surface contact projected within 30 seconds.'
+        : `Projected ${prediction.kind} impact in ${prediction.time.toFixed(1)} s; no landing projected.`;
+  } else trajectoryStatus.textContent = '';
   render.draw(world, {
     grabbed: world.pointer.grabbed,
     target : world.pointer.active ? world.pointer.target : null,
     cursor,
-    frameSeconds: dtFrame,
+    frameSeconds: dtFrame, prediction,
     slingshot: pointer && pointer.launch ? pointer.launch
       : keyboard && keyboard.launch ? keyboard.launch : null
   });

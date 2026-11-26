@@ -1,5 +1,10 @@
 # Week 12 Decisions
 
+## 2026-11-23 — Fuel efficiency score and difficulty reserves
+Planned: award 100 points for any safe landing.
+Did: award 50–100 points for safe landings based on the fraction of starting fuel remaining; crashes score 0. Set Easy/Normal/Hard starting fuel to 300/200/100 kg.
+Why: make fuel efficiency meaningful and increase the challenge while explaining the score to players.
+
 ## 2026-11-18 — Apollo-inspired final approach
 Planned: use the simplified lander with 15 kg of propellant.
 Did: start a short final approach with 300 kg remaining from an 8,200 kg

@@ -34,6 +34,9 @@ export class Controls {
     this.$('scene').addEventListener('change', e => {
       s.scene = e.target.value; this.onRebuild();
     });
+    this.$('difficulty').addEventListener('change', e => {
+      s.difficulty = e.target.value; this.onRebuild();
+    });
 
     this.$('trails').addEventListener('change', e => {
       s.trails = e.target.checked; this.onChange('trails');
@@ -76,6 +79,7 @@ export class Controls {
     set('dt', s.dt); set('rest', s.restitution); set('grav', s.gravity);
     set('drag', s.drag); set('speed', s.speed); set('count', s.count);
     set('throttle', s.throttle);
+    set('difficulty', s.difficulty);
     set('integrator', s.integrator); set('scene', s.scene);
     this.$('trails').checked = s.trails;
     this.$('vel').checked    = s.velocityVectors;

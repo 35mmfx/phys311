@@ -104,6 +104,7 @@ kbd{background:#0d1117;border:1px solid var(--line);border-bottom-width:2px;
 .mission-status{min-height:1.5rem;margin:.45rem 0;color:var(--ok);font-weight:650}
 .mission-status[data-state=crashed]{color:var(--bad)}
 .mission-status[data-state=landed]{color:var(--ok)}
+.trajectory-status{min-height:1.2rem;margin:.25rem 0;color:#ffd866;font-size:.82rem}
 .mission-debrief{margin:.65rem 0;padding:.65rem;background:#0d1117;border:1px solid var(--line);border-radius:6px}
 .mission-debrief[hidden]{display:none}
 .mission-debrief h3{margin:0 0 .4rem;color:var(--ut-orange);font-size:.85rem}

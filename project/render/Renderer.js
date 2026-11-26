@@ -44,7 +44,7 @@ export class Renderer {
 
   draw(world, {
     grabbed = null, target = null, cursor = null, slingshot = null,
-    frameSeconds = 1 / 60
+    frameSeconds = 1 / 60, prediction = null
   } = {}) {
     const ctx = this.ctx, cam = this.cam;
     ctx.clearRect(0, 0, cam.w, cam.h);
@@ -52,6 +52,7 @@ export class Renderer {
     this._grid(world);
     if (world.bounds) this._bounds(world.bounds);
     if (world.lander) this._landerScene(world);
+    if (prediction) this._trajectory(prediction, world);
 
     if (this.showTrails && !this.reducedMotion) {
       ctx.save();
@@ -110,6 +111,27 @@ export class Renderer {
 
     if (slingshot && slingshot.origin && slingshot.current) this._slingshot(slingshot, world);
     if (cursor) this._crosshair(cursor);
+  }
+
+  _trajectory(prediction, world) {
+    const ctx = this.ctx, cam = this.cam;
+    ctx.save();
+    ctx.strokeStyle = '#ffd866';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    prediction.points.forEach((point, index) => {
+      const [x, y] = cam.toScreen(point.x, point.y);
+      if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    if (prediction.kind === 'floor') {
+      const [x, y] = cam.toScreen(prediction.position.x, world.bounds.ymin);
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   _drawImpactDust(world, frameSeconds) {

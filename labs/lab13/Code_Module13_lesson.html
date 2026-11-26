@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 13 Lesson — Validation, Documentation &amp; Communicating Physics</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .number { color: #b5cea8; }
+  pre .function { color: #dcdcaa; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  .eq { text-align: center; margin: 15px 0; font-size: 1.1em; font-style: italic; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .objectives { background-color: #f0f7ff; border: 1px solid #b8d4f0; padding: 15px 20px; border-radius: 6px; margin: 15px 0; }
+  .objectives ul { margin: 5px 0; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .nav-box a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 13 -- Validation, Documentation &amp; Launch</h1>
+
+<div class="objectives">
+  <strong>🎯 By the end of this lesson, you will be able to:</strong>
+  <ul>
+    <li>Write a <strong>validation report</strong> that would convince a skeptical physicist</li>
+    <li>Run and interpret a convergence study on your own project</li>
+    <li>State the limits of your model honestly, and turn limitations into credibility</li>
+    <li>Write a README and an on-page explainer that a stranger can actually use</li>
+    <li>Design visuals that communicate physics rather than decorate it</li>
+    <li>Give and receive beta peer review that changes the product</li>
+      <li>Publish to the public Course Showcase (optional)and close out the semester</li>
+  </ul>
+</div>
+
+<div class="key-idea">
+  <strong>💡 This is the week your project becomes trustworthy.</strong> Week 12 made it exist. Anyone can put a moving picture on the internet. What distinguishes a physics simulation from an animation is that <strong>someone measured whether it's right and published the numbers.</strong> That's the whole difference, and it's the part of this course that transfers most directly to research.
+</div>
+
+<!-- ============================================================ -->
+<h2>1 &nbsp; The Validation Report</h2>
+
+<p>Your final submission includes a validation section. It is worth more than 
+any other single piece of the write-up. It feels like homework about work they've already done.&nbsp; It isn't.&nbsp; 
+It is the evidence that the work means anything.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.1 &nbsp; What a validation claim looks like</h3>
+
+<table><caption>Quantitative validation of energy conservation, pendulum period accuracy, timestep convergence, and momentum conservation in collision simulations</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Not validation</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Validation</th></tr></thead>
+  <tbody>
+    <tr><td>"Energy is conserved."</td><td>"Conservative mode, Verlet, DT = 1/240: |ΔE/E₀| = 0.08% over 300 s (measured, n = 72,000 steps). Target was &lt; 0.5%."</td></tr>
+    <tr><td>"The pendulum period matches theory."</td><td>"At θ₀ = 0.05 rad, measured T = 2.0071 s vs. 2π√(L/g) = 2.0064 s — 0.03% high, consistent with the expected +θ₀²/16 correction of 0.016%."</td></tr>
+    <tr><td>"It's stable at small timesteps."</td><td>"Halving DT from 1/120 → 1/240 → 1/480 changed landing speed by 0.41% then 0.10% — ratio 4.1, consistent with second-order convergence."</td></tr>
+    <tr><td>"Collisions conserve momentum."</td><td>"Over 500 randomized two-body collisions at e ∈ [0, 1]: max |Δp|/|p₀| = 3.1×10⁻¹⁵; KE never increased (max ΔKE = −1.2×10⁻¹⁶ J)."</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 The pattern: quantity, condition, number, comparison.</strong> Every claim names <em>what</em> was measured, <em>under what conditions</em>, the <em>actual value</em>, and <em>what it should have been</em>. If any of the four is missing, it isn't a validation claim — it's a hope.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.2 &nbsp; Four tests, and which apply to you</h3>
+
+<table><caption>Recommended validation tests for dynamical simulations, when to apply them, and the quantities to report</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Test</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Applies when</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What to report</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Conservation</strong></td><td>Always — use conservative mode if your system is dissipative</td><td>Drift as % of E₀ over a stated duration; also |Δp| and L if relevant</td></tr>
+    <tr><td><strong>Analytic limit</strong></td><td>Almost always — some limit of your system 
+		probably has a formula</td><td>Measured vs. formula, with % error and the reason for any residual</td></tr>
+    <tr><td><strong>Convergence</strong></td><td>Always</td><td>An observable at 3+ timesteps; the error ratio; the implied order</td></tr>
+    <tr><td><strong>Dissipation ledger</strong></td><td>When drag, friction, thrust, or <em>e</em> &lt; 1 is present</td><td>ΔE vs. accumulated work done by the non-conservative force</td></tr>
+  </tbody>
+</table>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.3 &nbsp; Running a convergence study on a real-time simulation</h3>
+
+<p>Your simulation runs at 60 fps with user input, which isn't a controlled experiment. The fix is a <strong>headless mode</strong> — and this is where the Week 9 layering rule finally pays for itself completely.</p>
+
+<pre style="font-size: 12pt;"><span class="comment" style="font-size: 12pt;">// convergence.js — no canvas, no rendering, pure physics.</span>
+<span class="comment" style="font-size: 12pt;">// Possible ONLY because nothing in engine/ mentions ctx or document.</span>
+<span class="keyword" style="font-size: 12pt;">import</span> { buildScene } <span class="keyword" style="font-size: 12pt;">from</span> <span class="string" style="font-size: 12pt;">"./scene.js"</span>;
+
+<span class="keyword" style="font-size: 12pt;">function</span> <span class="function" style="font-size: 12pt;">runTo</span>(tEnd, dt) {
+  <span class="keyword" style="font-size: 12pt;">const</span> world = buildScene();          <span class="comment" style="font-size: 12pt;">// identical initial conditions</span>
+  <span class="keyword" style="font-size: 12pt;">const</span> n = Math.round(tEnd / dt);
+  <span class="keyword" style="font-size: 12pt;">for</span> (<span class="keyword" style="font-size: 12pt;">let</span> i = <span class="number" style="font-size: 12pt;">0</span>; i &lt; n; i++) world.step(dt);
+  <span class="keyword" style="font-size: 12pt;">return</span> world;                        <span class="comment" style="font-size: 12pt;">// measure whatever you like</span>
+}
+
+<span class="keyword" style="font-size: 12pt;">for</span> (<span class="keyword" style="font-size: 12pt;">const</span> dt <span class="keyword" style="font-size: 12pt;">of</span> [<span class="number" style="font-size: 12pt;">1</span>/<span class="number" style="font-size: 12pt;">60</span>, <span class="number" style="font-size: 12pt;">1</span>/<span class="number" style="font-size: 12pt;">120</span>, <span class="number" style="font-size: 12pt;">1</span>/<span class="number" style="font-size: 12pt;">240</span>, <span class="number" style="font-size: 12pt;">1</span>/<span class="number" style="font-size: 12pt;">480</span>]) {
+  <span class="keyword" style="font-size: 12pt;">const</span> w = runTo(<span class="number" style="font-size: 12pt;">20.0</span>, dt);
+  console.log(dt.toFixed(<span class="number" style="font-size: 12pt;">5</span>), w.bodies[<span class="number" style="font-size: 12pt;">0</span>].pos.y.toFixed(<span class="number" style="font-size: 12pt;">8</span>), w.energy().toFixed(<span class="number" style="font-size: 12pt;">8</span>));
+}
+</pre>
+
+<p>Treat the smallest DT as your reference, compute error against it, and check the ratio. Halving DT should shrink the error by ~4× for a second-order method (Euler-Cromer, Verlet) and ~2× for first-order Euler.</p>
+
+<div class="physics-note">
+  <strong>🔬 If your convergence order is wrong, you have a bug — and this test just found it.</strong> Verlet measuring first-order almost always means the acceleration ordering is wrong (reusing the old acceleration for the second half-step). A method that <em>doesn't converge at all</em> usually means something in your loop depends on wall-clock time rather than DT. This is the most sensitive bug detector in the course, and it's why the test is required rather than optional.
+</div>
+
+<div class="try-it">
+  <strong>✍️ Try it:</strong> Run your headless convergence script before you do anything else this week. It takes twenty minutes to write and it will either confirm your integrator is correct or hand you a specific, findable bug. Either outcome is worth having on Monday rather than Friday.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">1.4 &nbsp; Reporting honestly</h3>
+
+<div class="key-idea">
+  <strong>💡 A limitation you state costs you nothing. </strong>&nbsp;"Energy drifts up to 1.8% during multi-body pileups because I resolve contacts sequentially rather than simultaneously; single and pairwise collisions stay under 0.02%" is a strong sentence.&nbsp; It shows you measured the failure mode, understand its cause, and bounded it.&nbsp; Silence on the same issue reads as either not knowing or hoping nobody checks.
+</div>
+
+<p>Every real simulation has limits. Yours should list them: where the model breaks down, what DT range is valid, what body count degrades performance, what physics you deliberately left out.</p>
+
+<!-- ============================================================ -->
+<h2>2 &nbsp; Documentation for Strangers</h2>
+
+<p>Your project goes on the public web. Assume the reader has no idea who you are, hasn't taken this course, and will leave in fifteen seconds if confused.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.1 &nbsp; The two documents</h3>
+
+<table><caption>Comparison of the on-page explainer and README.md by audience, length, content, and tone.</caption>
+  <thead><tr><th></th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">On-page explainer</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">README.md</th></tr></thead>
+  <tbody>
+    <tr><td>Audience</td><td>A curious visitor</td><td>A developer or physicist</td></tr>
+    <tr><td>Length</td><td>A short paragraph + a controls list</td><td>A page</td></tr>
+    <tr><td>Contains</td><td>What this is, what to try, what to notice</td><td>Physics &amp; equations, architecture, validation summary, how to run locally, limitations, credits</td></tr>
+    <tr><td>Tone</td><td>Inviting</td><td>Precise</td></tr>
+  </tbody>
+</table>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.2 &nbsp; The fifteen-second test</h3>
+
+<p>A visitor should learn three things without scrolling or reading carefully:</p>
+
+<ol>
+  <li><strong>What am I looking at?</strong> — one sentence, above or beside the canvas</li>
+  <li><strong>What do I do?</strong> — visible controls, or a one-line prompt ("Drag the planet to launch it")</li>
+  <li><strong>What should I notice?</strong> — the physics payoff ("Watch the energy readout as you increase drag")</li>
+</ol>
+
+<div class="warning-box">
+  <strong>⚠️ The most common documentation failure is assuming your controls are obvious.</strong> They are obvious to you because you wrote them. If a control isn't labeled on the page, it doesn't exist.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">2.3 &nbsp; A README skeleton</h3>
+
+<pre style="font-size: 12pt;"># Project Title
+One-sentence pitch. <span class="comment" style="font-size: 12pt;">[Live demo](https://user.github.io/phys311/project/)</span>
+
+## What it does
+Two or three sentences. What the user does; what they learn.
+
+## The physics
+Forces and equations. Integrator and why. Units and scales.
+The one thing that's more than a textbook exercise.
+
+## Validation
+| Test | Condition | Expected | Measured | Pass |
+|---|---|---|---|---|
+Short paragraph interpreting the table.
+
+## Limitations
+Where the model breaks down. Valid DT range. Known issues.
+
+## Architecture
+engine/ — physics, no rendering. render/ — drawing, no state changes.
+One line per module.
+
+## Run locally
+Clone, open with a local server (ES modules need HTTP), open index.html.
+
+## Credits &amp; references
+Textbook sections, papers, any borrowed technique, AI assistance per course policy.
+</pre>
+
+<div class="physics-note">
+  <strong>🔬 The validation table in your README is the single highest-value thing on the page.</strong> It's what turns "student project" into "instrument with stated accuracy." It's also, practically speaking, what makes this repo worth linking on a résumé — anyone technical who opens it sees immediately that you validate your own work.
+</div>
+
+<!-- ============================================================ -->
+<h2>3 &nbsp; Visuals That Communicate Physics</h2>
+
+<p>You've had this rule since Week 10: every visual element should carry information. Week 13 is when you apply it ruthlessly and remove what doesn't.</p>
+
+<table><caption>Visual elements in physics simulations, what they communicate, and best practices for presenting them</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Element</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Communicates</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Do it well by…</th></tr></thead>
+  <tbody>
+    <tr><td>Trails</td><td>History — orbit shape, chaos divergence</td><td>Fading opacity; length tied to a physical time, not a frame count</td></tr>
+    <tr><td>Force / velocity arrows</td><td>Vector quantities that are otherwise invisible</td><td>Consistent scale, stated in a legend; toggleable</td></tr>
+    <tr><td>Color</td><td>A scalar field — speed, energy, mass</td><td>One meaning per channel; never color alone as the only cue</td></tr>
+    <tr><td>Size</td><td>Mass or radius — if it's physical</td><td>Say whether radius is to scale; note if it isn't</td></tr>
+    <tr><td>Live plot / HUD</td><td>Conserved quantities and drift</td><td>Fixed axes so the eye can compare over time</td></tr>
+    <tr><td>Grid &amp; scale bar</td><td>Units — the difference between "a picture" and "a measurement"</td><td>A labeled 1 m (or 1 AU) bar. Cheap, and hugely credibility-building</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 The subtraction pass.</strong> Go through your renderer and ask of every drawn element: <em>if I deleted this, would the viewer understand less physics?</em> 
+	If no, delete it. Glow effects, particle sparkles, and gradient backgrounds 
+	usually fail this test. A clean scene with a scale bar and honest arrows 
+	looks more professional than a busy one.
+</div>
+
+<!-- ============================================================ -->
+<h2>4 &nbsp; Peer Review</h2>
+
+<p>You posted your beta at the end of Week 12 and hopefully received feedback.&nbsp; 
+This week you review two classmates' projects by December 2 </p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.1 &nbsp; Reviewing well</h3>
+
+<table><caption>Examples contrasting vague, low-actionability reviews with specific, actionable feedback on usability, physics, and accessibility.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Weak review</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Useful review</th></tr></thead>
+  <tbody>
+    <tr><td>"Looks great!"</td><td>"I didn't realize I could drag the planet until I read your README — add a one-line prompt on the canvas."</td></tr>
+    <tr><td>"Maybe add sound?"</td><td>"Your energy drift hit 4% within 20 s when I stacked five bodies — worth checking whether contacts are resolved more than once."</td></tr>
+    <tr><td>"The physics seems right."</td><td>"I set restitution to 1.0 and KE still dropped ~2% per bounce, which shouldn't happen — possible positional-correction leak."</td></tr>
+    <tr><td>"Nice interface."</td><td>"Tab order skips the integrator dropdown, so I couldn't reach it by keyboard."</td></tr>
+  </tbody>
+</table>
+
+<div class="key-idea">
+  <strong>💡 Try to break their physics.</strong> The most valuable review you can give is not aesthetic. Crank a slider to its extreme. Stack twenty bodies. Set drag to zero and watch energy. Set DT high. Reviewers who stress-test find real bugs, and finding one for a classmate in Week 13 is worth more to them than any compliment.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">4.2 &nbsp; Receiving well</h3>
+
+<p>You'll get more feedback than you can act on. Triage it:</p>
+
+<ol>
+  <li><strong>Physics errors</strong> — fix these, always, first.</li>
+  <li><strong>"I didn't understand what to do"</strong> — fix these; they're cheap and they're the difference between a project people use and one they close.</li>
+  <li><strong>Accessibility gaps</strong> — fix these; usually a small change.</li>
+  <li><strong>Feature suggestions</strong> — almost always decline. It's the last week. Note them in your write-up as future work, which is a legitimate and professional response.</li>
+</ol>
+
+<div class="physics-note">
+  <strong>🔬 Write down what you did with the feedback.</strong>&nbsp; "Two reviewers couldn't find the launch control, so I added an on-canvas prompt and a labeled button" is evidence of a real iteration cycle — and iteration in response to users is a professional skill. A <em>declined</em> suggestion with a one-line reason counts just as much as an accepted one.
+</div>
+
+<!-- ============================================================ -->
+
+<!-- ============================================================ -->
+<h2>5&nbsp; The Public Showcase</h2>
+
+<p>Your final project goes on a <strong>public Course Showcase page</strong> linked from the department site — visible to faculty, to students considering this course, and to anyone you send it to.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">5.1 &nbsp; What you submit for it</h3>
+
+<ul>
+  <li><strong>Title</strong> — a real one. "Mare Tranquillitatis: a lunar lander with terrain collision" beats "Final Project."</li>
+  <li><strong>One-sentence description</strong> for a general audience</li>
+  <li><strong>A still image</strong> — a clean screenshot, 1200×675 or similar, showing the simulation at its most legible moment</li>
+  <li><strong>Your live URL</strong>, your <strong>repo URL</strong>, and your <strong>presentation link</strong></li>
+  <li><strong>One validation number</strong> you're willing to stand behind in public (e.g. "ΔE/E₀ &lt; 0.1% over 300 s")</li>
+</ul>
+
+<div class="physics-note">
+  <strong>🔬 That last item is the course's signature.</strong> Most student project galleries show pictures. Ours shows pictures <em>with a stated accuracy</em>. A visitor who scrolls the Showcase should come away understanding that every one of these was measured, not just made. That is the thing worth being known for.
+</div>
+
+<div class="key-idea">
+  <strong>🔒 Your privacy is yours to control.</strong> You may use a display name instead of your full name, and you may ask to have your project listed without your name at all. If you would rather not appear on the public page, tell me — you can submit everything privately in Canvas with no grade penalty whatsoever. Participation in the Showcase is encouraged, not required.
+</div>
+
+<!-- ============================================================ -->
+<h2>7 &nbsp; What Good Looks Like This Week</h2>
+
+<table><caption>End-of-week deliverables and their completion requirements</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">By end of week</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Status</th></tr></thead>
+  <tbody>
+    <tr><td>Two beta reviews given</td><td>Required</td></tr>
+    <tr><td>SHOULD tier implemented (or explicitly deferred with reasoning)</td><td>Required</td></tr>
+    <tr><td>Convergence study run headless, order confirmed</td><td>Required</td></tr>
+    <tr><td>Validation table populated with real measured numbers</td><td>Required</td></tr>
+    <tr><td>README + on-page explainer written for strangers</td><td>Required</td></tr>
+    <tr><td>Limitations section written honestly</td><td>Required</td></tr>
+    <tr><td>Showcase post submitted</td><td>Required (opt-out available)</td></tr>
+    <tr><td>Final reflection submitted in Journal</td><td>Required</td></tr>
+    <tr><td>COULD tier items</td><td>Only if all the above is done</td></tr>
+  </tbody>
+</table>
+
+<div class="warning-box">
+  <strong>⚠️ Do not start new features this week.</strong> The temptation is strong: the project works, you feel fast, and the COULD list is right there. But a new feature added now arrives <em>unvalidated 
+	and undocumented. </em>&nbsp;Validation abd documentation are worth far more 
+	than an additional scene.</div>
+
+<div class="key-idea">
+  <strong>💡 One last thing, and it's the point of the whole semester.</strong> In Week 1 you wrote a loop that dropped a ball and you checked it against <em>y</em> = ½<em>gt</em>². This week you will publish an interactive simulation, state its accuracy with a number, and explain to a stranger how you know. Those two things are the same skill. Everything in between was practice. Say so in your reflection — and then send someone the link.
+</div>
+
+
+
+</body></html>

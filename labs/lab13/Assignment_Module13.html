@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Week 13 — Validation, Documentation &amp; Beta Review</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.7; color: #2d3b45; max-width: 880px; margin: 0 auto; padding: 20px; }
+  h1 { color: #ff8200; border-bottom: 3px solid #ff8200; padding-bottom: 10px; }
+  h2 { color: #58595b; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: #ff8200; margin-top: 28px; }
+  h4 { color: #58595b; margin-top: 20px; }
+  .concept-box { background-color: #fff3cd; border-left: 4px solid #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .key-idea { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .physics-note { background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .warning-box { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .try-it { background-color: #e8d5f5; border-left: 4px solid #6f42c1; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .bonus-box { background-color: #fff8e1; border: 2px dashed #ff8200; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+  .rubric-box { background-color: #f0f7ff; border: 2px solid #b8d4f0; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  .deliverable-box { background-color: #e8f5e9; border: 2px solid #4caf50; padding: 20px; margin: 25px 0; border-radius: 8px; }
+  code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.9em; }
+  pre { background-color: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 6px; overflow-x: auto; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; line-height: 1.55; }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+  th, td { border: 1px solid #ddd; padding: 10px 14px; text-align: left; }
+  th { background-color: #ff8200; color: white; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  details { margin: 12px 0; padding: 10px 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+  details summary { cursor: pointer; font-weight: bold; color: #ff8200; }
+  a { color: #006c93; }
+  .breadcrumb { color: #888; font-size: 0.9em; margin-bottom: 5px; }
+  .nav-box { display: flex; justify-content: space-between; padding: 15px 0; border-top: 2px solid #ddd; margin-top: 40px; }
+  .nav-box a { color: #ff8200; font-weight: bold; text-decoration: none; }
+  .part-label { display: inline-block; padding: 4px 14px; border-radius: 4px; font-weight: bold; font-size: 0.9em; margin-bottom: 8px; }
+  .part-a { background-color: #d4edda; color: #155724; }
+  .part-b { background-color: #d1ecf1; color: #0c5460; }
+  .part-c { background-color: #e8d5f5; color: #4a1a6b; }
+  ul.checklist { list-style: none; padding-left: 5px; }
+  ul.checklist li { padding: 4px 0; }
+  ul.checklist li::before { content: "\2610  "; font-size: 1.15em; }
+</style>
+</head>
+<body>
+
+<h1 style="color: #000000 !important; background-color: #ffffff !important;">Week 13 -- Final Submission: Validation, Launch &amp; Presentation</h1>
+
+<div class="concept-box">
+  <strong>📋 Assignment Overview</strong><br>
+  <strong>Due:</strong> End of Week 13 — <strong>the final deadline of the course</strong> (see Canvas calendar)<br>
+  <strong>Submit:</strong> Live URL + <code style="font-size: 12pt;">VALIDATION.md</code> 
+	+ README By November 29<br><strong>Submit:</strong> Showcase entry by 
+	December 4<br>
+  <strong>Points:</strong> 100 (+ up to 10 bonus) — <em>the largest single component of the Final Project grade</em><br>
+  <strong>Estimated time:</strong> 10–12 hours
+</div>
+
+<div class="warning-box">
+  <strong>📅 This is the last week of the course.</strong> There is no Week 14. Everything listed above is due at the end of this week, and <strong>no new features</strong> should be started. Your project is what it is; this week you prove it's right, explain it, and launch it.
+</div>
+
+<p>Your project runs. This week you make it <strong>trustworthy</strong>, <strong>usable by strangers</strong>, and <strong>public</strong> — and you find out what real users think.</p>
+
+<div class="key-idea">
+  <strong>💡 The big idea this week:</strong> A simulation nobody validated is an animation. A simulation nobody can figure out how to use is a private toy. A simulation nobody can find is neither. This week converts your working code into a piece of public scientific work: measured, documented, reviewed, explained, and published.
+</div>
+
+<h2>Before You Start</h2>
+<ul class="checklist">
+  <li>Week 12 complete: MUST tier deployed and running on a live URL</li>
+  <li>Debug HUD and conservative test mode working (Week 12, Part B)</li>
+  <li>Your beta posted to <strong>Discussion: Beta Review</strong> at the end of Week 12</li>
+  <li>Week 13 Lesson: <em>Validation, Documentation &amp; Launch</em></li>
+  <li>Your proposal's validation plan in front of you</li>
+</ul>
+
+<div class="physics-note">
+  <strong>🔬 Suggested order.</strong> Run <code style="font-size: 12pt;">convergence.js</code> on day one (if it finds a bug you want the whole week). Then validation runs, then documentation. Your <code style="font-size: 12pt;">VALIDATION.md</code> is effectively the script.
+</div>
+
+<!-- ============================ PART A ============================ -->
+<h2>Part A — SHOULD Tier &amp; Polish (20 points)</h2>
+<span class="part-label part-a" style="font-size: 12pt;">INDEPENDENT</span>
+
+<ol>
+  <li><strong>Implement your SHOULD tier</strong> as written in the proposal. Anything you defer must get a <code style="font-size: 12pt;">DECISIONS.md</code> entry with reasoning — deferral with reasoning loses little; silent omission loses the full item.</li>
+  <li><strong>Run the subtraction pass</strong> from the lesson: delete every drawn element that doesn't convey physics. Note in your write-up what you removed.</li>
+  <li><strong>Add a scale bar and units</strong> — a labeled 1 m (or 1 AU, 1 km) reference on the canvas. Cheap, and it changes how the whole thing reads.</li>
+    <li><strong>Mobile check:</strong> open the live URL on a phone. It doesn't have to be beautiful, but it must not be broken. Record what you found.</li>
+</ol>
+
+<!-- ============================ PART B ============================ -->
+<h2>Part B — The Validation Report (40points)</h2>
+<span class="part-label part-b" style="font-size: 12pt;">INDEPENDENT — Highest Value</span>
+
+<p>This is the most heavily weighted part of the week. Submit it as <code style="font-size: 12pt;">project/VALIDATION.md</code> and summarize it in your README.</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B1 — Headless convergence study (15 pts)</h3>
+<ol>
+  <li><strong>Write <code style="font-size: 12pt;">project/convergence.js</code></strong> — no canvas, no rendering. It builds your scene, steps a fixed physical duration at several timesteps, and prints an observable.</li>
+  <li><strong>Run at least four timesteps</strong> (e.g. 1/60, 1/120, 1/240, 1/480) to a fixed physical end time.</li>
+  <li><strong>Report a table:</strong> DT, observable, error vs. the finest run, and the error ratio between successive rows.</li>
+  <li><strong>State the implied order</strong> and whether it matches your integrator (~2 for Euler-Cromer and Verlet, ~1 for Euler). If it doesn't match, investigate — that's a bug, and finding it is worth more than the points.</li>
+</ol>
+
+<div class="physics-note">
+  <strong>🔬 This test is only possible because of the layering rule.</strong> If <code style="font-size: 12pt;">engine/</code> is clean of <code style="font-size: 12pt;">ctx</code> and <code style="font-size: 12pt;">document</code>, this script is twenty lines. If it isn't, you'll have to untangle the renderer first — which is precisely the Week 9 warning coming due. Either way, do the test; the difficulty of writing it is itself a finding worth reporting.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B2 — Conservation results (12 pts)</h3>
+<ol>
+  <li><strong>Conservative mode, long run:</strong> report |ΔE/E₀| over a stated duration and step count, with your DT and integrator named.</li>
+  <li><strong>Momentum:</strong> report |Δp|/|p₀| for an isolated configuration. Should be at round-off level.</li>
+  <li><strong>Angular momentum</strong> if your system has a central force or free rotation.</li>
+  <li><strong>Integrator comparison:</strong> run the same scene with two integrators and report the drift difference. This is your Lab 5 showdown, on your own system.</li>
+  <li><strong>Stress case:</strong> find the configuration where conservation is <em>worst</em> (pileups, near-misses, high speed) and report that number too.</li>
+</ol>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B3 — Analytic limit + dissipation ledger (8 pts)</h3>
+<ol>
+  <li><strong>At least one analytic comparison.</strong> Reduce your system to a case with a formula and report measured vs. predicted with % error. Explain any residual physically.</li>
+  <li><strong>If your system is dissipative or driven,</strong> include the ledger: ΔE compared against accumulated −∫<strong>F</strong>·<strong>v</strong> dt (or Δp vs. ∫<strong>F</strong> dt for thrust). Agreement to a stated tolerance.</li>
+  <li><strong>If inelastic collisions are present:</strong> confirm momentum conserved to round-off and KE monotonically non-increasing across many randomized collisions.</li>
+</ol>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">B4 — Limitations (5 pts)</h3>
+<p>A short honest section: where the model breaks down, the valid DT range, the body count at which performance degrades, physics deliberately omitted, and any known bug you didn't fix. Bound each one with a number where you can.</p>
+
+<div class="key-idea">
+  <strong>💡 Full credit here does not require passing every test.</strong> It requires <em>measuring</em> every test and reporting it accurately. A project that documents 3% energy drift in pileups, explains the cause, and bounds when it occurs scores higher than one claiming perfection with no numbers behind it.
+</div>
+
+<details><summary style="color: #000000 !important; background-color: #f9f9f9 !important;">💡 Hint: what if a test fails?</summary>
+<p>Good — you found a bug with a week to spare, which is exactly what this exercise is for. Work the Week 12 decision tree. Most Week 13 failures fall into four buckets: (1) a conservative force with no <code style="font-size: 12pt;">potentialEnergy()</code>, so PE is missing from E; (2) Verlet reusing the old acceleration for the second half-step, which shows up as first-order convergence; (3) collisions resolved more than once per step, which shows up as energy gain on contact; (4) something in the loop keyed to wall-clock time rather than DT, which shows up as no convergence at all. If you can't fix it, <em>report it precisely</em> in Limitations.</p>
+</details>
+
+<!-- ============================ PART C ============================ -->
+<h2>Part C — Documentation (20 points)</h2>
+<span class="part-label part-c" style="font-size: 12pt;">DOCUMENTATION + PEER</span>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">C1 — README for developers (10 pts)</h3>
+<p>Write <code style="font-size: 12pt;">project/README.md</code> following the lesson skeleton: pitch + live link, what it does, the physics with equations, <strong>the validation table</strong>, limitations, architecture, how to run locally, credits and references (including any AI assistance per the course policy).</p>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">C2 — On-page explainer for visitors (10 pts)</h3>
+<p>On the page itself, beside or below the canvas:</p>
+<ul>
+  <li>One sentence on what this is</li>
+  <li>A labeled controls list (keyboard <em>and</em> pointer)</li>
+  <li>"What to notice" — the physics payoff, in one or two sentences</li>
+  <li>A link to your README and repo</li>
+</ul>
+
+<div class="warning-box">
+  <strong>⚠️ The fifteen-second test is graded.</strong> A reviewer who lands on your page must be able to tell what it is, what to do, and what to look for — without scrolling and without reading your README. If your beta reviewers report confusion, fix it before submission; that's what the beta is for.
+</div>
+
+<h2 style="color: #000000 !important; background-color: #ffffff !important;">Part 
+D — Peer Review (Discussion forum)</h2>
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">
+Review two peers --&nbsp; Due December 2</h3>
+<p>Your classmates posted their betas at the end of Week 12.&nbsp; For the two 
+assigned to you and answer all three questions for each:</p>
+<ol>
+  <li><strong>Fifteen-second test.</strong> Without reading their README: what did you think it was, and what did you try? Report honestly where you got stuck.</li>
+  <li><strong>Stress-test the physics.</strong> Push a parameter to an extreme, stack bodies, set drag to zero, raise DT. Report the worst energy drift or momentum error you could produce, and how.</li>
+  <li><strong>Check a validation claim.</strong> Pick one claim from their README and try to reproduce it. Did you get the same number?</li>
+</ol>
+
+<div class="key-idea">
+  <strong>💡 Reviews are graded.</strong> A review that finds a reproducible physics bug, or reports "I clicked around for a minute and never figured out the goal," is worth full marks. A review that praises the color scheme is not. Try to break their simulation, that is the kindest thing you can do for a classmate this week.
+</div>
+
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Respond to your own feedback</h3>
+<p>Add a short <code style="font-size: 12pt;">project/REVIEW-RESPONSE.md</code>: what your two reviewers 
+said, what you changed, and what you deliberately declined with a one-line 
+reason. </p>
+
+<!-- ============================ PART D ============================ -->
+
+<h2>Part E — Showcase (due December 4) (20 points)</h2>
+<h3 style="color: #000000 !important; background-color: #ffffff !important;">Showcase submission (20 pts)</h3>
+
+<p>Submit to <strong>Discussion: Course Showcase</strong> (which populates the public Showcase page):</p>
+<ul>
+  <li>A real <strong>title</strong> and a one-sentence description for a general audience</li>
+  <li>A clean <strong>screenshot</strong> (~1200×675) at the simulation's most legible moment</li>
+  <li><strong>Live URL</strong>, <strong>repo URL</strong>, and <strong>presentation link</strong></li>
+  <li><strong>One validation number</strong> you'll stand behind publicly</li>
+</ul>
+
+<p>Then watch and comment on <strong>at least two</strong> classmates' presentations — one genuine question or observation each. This is the course's closing conversation.</p>
+
+<div class="key-idea">
+  <strong>🔒 Opting out is free.</strong> You may use a display name, or ask to be listed without a name, or skip the public page entirely and submit everything privately in Canvas. There is <strong>no grade penalty</strong> for opting out — the points are for producing the materials, not for publishing them.
+</div>
+
+<h2 style="color: #000000 !important; background-color: #ffffff !important;">
+Journal — Final reflection (due December 4)</h2>
+
+<p>Submit as <code style="font-size: 12pt;">project/REFLECTION.md</code> and in Canvas.&nbsp; About 600–900 words:</p>
+<ol>
+  <li><strong>What you built</strong> and how the final version differs from your Week 11 proposal — reference your <code style="font-size: 12pt;">DECISIONS.md</code>.</li>
+  <li><strong>The hardest bug</strong> of the semester: symptom, how you diagnosed it, what it actually was.</li>
+  <li><strong>What peer review changed</strong> — summarize <code style="font-size: 12pt;">REVIEW-RESPONSE.md</code> in a paragraph.</li>
+  <li><strong>What you'd do with another month</strong>, specifically.</li>
+  <li><strong>Week 1 to now.</strong> You started by checking a falling ball against <em>y</em> = ½<em>gt</em>². What do you understand about numerical physics now that you didn't then?</li>
+</ol>
+
+<div class="bonus-box">
+    <strong>⭐ Bonus (up to +10)&nbsp; Choose one:</strong>
+  <ul>
+    <li><strong>Python cross-check.</strong> Run one configuration in your Block 2 Python engine and your JS project, and show they agree to several digits. The Lab 8 agreement test, applied to your own project.</li>
+    <li><strong>In-page convergence panel.</strong> Let a visitor run the DT study themselves and see the table update live.</li>
+    <li><strong>Reproduce a published or textbook result</strong> quantitatively, with the source cited and the comparison shown.</li>
+  </ul>
+</div>
+
+<!-- ============================ RUBRIC ============================ -->
+<div class="rubric-box">
+<h2 style="margin-top:0; border:none;">Grading Rubric (100 points + 10 bonus)</h2>
+<table><caption>Assessment rubric for project polish, validation, documentation and peer review, and presentation and reflection, with point allocations and full-credit criteria.</caption>
+  <thead><tr><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Component</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">Pts</th><th style="color: #000000 !important; background-color: #ff8200 !important;" scope="col">What earns full marks</th></tr></thead>
+  <tbody>
+    <tr><td colspan="3"><strong>Part A — SHOULD tier &amp; polish (20)</strong></td></tr>
+    <tr><td>SHOULD tier</td><td>9</td><td>Implemented, or deferred with reasoning in <code style="font-size: 12pt;">DECISIONS.md</code></td></tr>
+    <tr><td>Subtraction pass + scale bar</td><td>4</td><td>Non-informative visuals removed; labeled units on canvas</td></tr>
+    <tr><td>Accessibility</td><td>4</td><td>Keyboard-complete, sensible tab order, no color-only info, adequate contrast</td></tr>
+    <tr><td>Mobile check</td><td>3</td><td>Tested on a real device; findings reported</td></tr>
+    <tr><td colspan="3"><strong>Part B — Validation report (35)</strong></td></tr>
+    <tr><td>Convergence study</td><td>12</td><td>Headless script, ≥4 timesteps, error ratios, implied order stated and interpreted</td></tr>
+    <tr><td>Conservation results</td><td>12</td><td>Energy, momentum, (L if applicable), integrator comparison, worst-case stress number</td></tr>
+    <tr><td>Analytic limit + ledger</td><td>8</td><td>≥1 formula comparison with % error; dissipation/impulse ledger where applicable</td></tr>
+    <tr><td>Limitations</td><td>3</td><td>Specific, bounded, honest — with numbers</td></tr>
+    <tr><td colspan="3"><strong>Part C — Documentation &amp; peer review (25)</strong></td></tr>
+    <tr><td>README</td><td>8</td><td>All sections; validation table present; references and AI use cited</td></tr>
+    <tr><td>On-page explainer</td><td>7</td><td>Passes the fifteen-second test; controls labeled; "what to notice" stated</td></tr>
+    <tr><td>Two peer reviews</td><td>10</td><td>Delivered <strong>by midweek</strong>; all five questions answered; ≥1 reproducible finding per review</td></tr>
+    <tr><td colspan="3"><strong>Part D — Presentation, Showcase &amp; reflection (20)</strong></td></tr>
+    <tr><td>Recorded presentation</td><td>10</td><td>5–7 min, captioned, all six sections — <strong>validation segment required for full credit</strong></td></tr>
+    <tr><td>Showcase submission</td><td>5</td><td>Title, description, screenshot, three links, one public validation number + two peer comments</td></tr>
+    <tr><td>Final reflection</td><td>5</td><td>All five prompts; specific about what changed in your thinking</td></tr>
+  </tbody>
+</table>
+<p style="margin-bottom:0;"><strong>Note:</strong> <code style="font-size: 12pt;">REVIEW-RESPONSE.md</code> is graded inside the reflection and presentation scores — a project showing no response to peer feedback loses credit in both.</p>
+</div>
+
+<div class="deliverable-box">
+<h3 style="margin-top: 0; color: #000000 !important; background-color: #e8f5e9 !important;">📦 Submission Checklist</h3>
+<ul class="checklist">
+  <li>Live URL updated and working in a fresh browser</li>
+  <li>SHOULD tier done, or deferred in <code style="font-size: 12pt;">DECISIONS.md</code></li>
+  <li><code style="font-size: 12pt;">project/convergence.js</code> runs headless; results recorded</li>
+  <li><code style="font-size: 12pt;">project/VALIDATION.md</code> complete with all four sections and real numbers</li>
+  <li><code style="font-size: 12pt;">project/README.md</code> complete, including the validation table</li>
+  <li>On-page explainer with labeled controls and "what to notice"</li>
+  <li>Scale bar and units on canvas</li>
+  <li>Mobile check done</li>
+  <li><strong>Two peer reviews delivered by </strong>December 2</li>
+  <li><strong>Showcase entry submitted</strong> — title, description, screenshot, three links, one validation number, 
+  delivered by December 4</li>
+  <li>Final journal entry submitted; everything pushed (deadline December 4)</li>
+</ul>
+</div>
+
+<div class="key-idea">
+  <strong>🚀 That's the course.</strong> When you submit, your work is live on the public web with a stated accuracy, a repository anyone can read, and a recording of you explaining how you know it's right. In Week 1 you checked a falling ball against <em>y</em> = ½<em>gt</em>². Same skill, bigger system, public audience. Send the link to someone.
+</div>
+
+
+
+</body></html>

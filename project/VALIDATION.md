@@ -78,8 +78,8 @@ zero trials. The automated test is part of `npm test`.
   1/30 through 1/960 s; it does not establish accuracy for every scene or
   timestep. The orbital stress result above demonstrates the failure at
   `DT = 1/30 s`.
-- The shipped lunar mission has one lander and may add one asteroid (one or
-  two bodies total). A body-count performance threshold has not been measured
+- The current lunar mission has one lander and up to five asteroids (one to
+  six bodies total). A body-count performance threshold has not been measured
   across devices; the larger inherited scenes are not a benchmark.
 - The project models the final low-speed landing phase, not orbital braking,
   the preceding fuel burn, or a full-duration powered descent. Atmosphere,
