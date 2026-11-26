@@ -1,5 +1,12 @@
 # Week 12 Decisions
 
+## 2026-11-25 — Player-facing integrator explanation
+Did: add a solver-properties note below the integrator selector. It explains
+explicit Euler, Euler-Cromer, and Velocity Verlet in terms of accuracy,
+stability, and expected lunar-lander behavior, and updates when the selection changes.
+Why: let players understand why changing integrators can alter thrust flight,
+asteroid responses, and the fixed-step numerical result.
+
 ## 2026-11-25 — Asteroid burst and difficulty fuel
 Did: set the hard, normal, and easy starting reserves to 30, 39, and 45 kg.
 Normal fuel is 30% above hard; easy fuel is 50% above hard. Each mission

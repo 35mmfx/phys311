@@ -7,7 +7,7 @@ import { Controls }     from './ui.js';
 import { PointerInput, KeyboardInput } from './input.js';
 import { StateURL }     from './ui/StateURL.js';
 import { serializeSamples } from './ui/CSVExport.js';
-import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js?v=20261125e';
+import { SCENES, SCENE_LIST, mulberry32, setConservativeMode } from './scenes.js?v=20261125f';
 import { Body, Vec2 }   from './engine/World.js';
 import { CockpitSound } from './audio/CockpitSound.js';
 import { predictLanding } from './engine/Trajectory.js';

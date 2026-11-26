@@ -29,7 +29,9 @@ export class Controls {
     slider('throttle', 'throttle', v => `${Math.round(v * 100)}%`);
 
     this.$('integrator').addEventListener('change', e => {
-      s.integrator = e.target.value; this.onChange('integrator');
+      s.integrator = e.target.value;
+      this.updateIntegratorProperties();
+      this.onChange('integrator');
     });
     this.$('scene').addEventListener('change', e => {
       s.scene = e.target.value; this.onRebuild();
@@ -103,6 +105,18 @@ export class Controls {
     put('speed', `${s.speed.toFixed(2)}×`);
     put('count', `${s.count} bodies`);
     put('throttle', `${Math.round(s.throttle * 100)}%`);
+    this.updateIntegratorProperties();
+  }
+
+  updateIntegratorProperties() {
+    const property = this.$('integrator-properties');
+    if (!property) return;
+    const descriptions = {
+      euler: 'Euler (explicit): first-order accuracy. It updates position using the old velocity and is least stable for changing thrust or gravity; smaller timesteps reduce position and velocity error.',
+      ec: 'Euler-Cromer: first-order accuracy, but velocity is updated before position. It is symplectic and usually more stable than explicit Euler for lunar thrust and gravity.',
+      verlet: 'Velocity Verlet: second-order accuracy and symplectic. It evaluates forces at both ends of a step, giving the most accurate trajectory and asteroid/thrust response at the fixed timestep.'
+    };
+    property.textContent = descriptions[this.state.integrator] || descriptions.verlet;
   }
 
   setPlayLabel(paused) {

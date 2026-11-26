@@ -112,6 +112,8 @@ const checks = [
   [canvas.width === 1800,                    'canvas backed at 2x device pixels (1800 px)'],
   [document.getElementById('scene').value === 'orbits', 'query string set the scene select'],
   [document.getElementById('integrator').value === 'verlet', 'query string set the integrator'],
+  [/second-order accuracy/.test(document.getElementById('integrator-properties').textContent),
+    'integrator properties explain the selected solver'],
   [!document.getElementById('debug-panel').hidden &&
     /total energy/.test(document.getElementById('debug-hud').innerHTML) &&
     /contacts this step/.test(document.getElementById('debug-hud').innerHTML) &&

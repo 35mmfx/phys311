@@ -16,6 +16,7 @@ README updates, and visitor explainer are complete locally.
 | Fixed timestep | done | `DT = 1/240 s`; automated 60 Hz, 144 Hz, and jittered-frame checks pass. |
 | DevTools CPU-throttling verification | done | At 8× CPU throttling, 4,318 fixed steps correspond to 17.9917 s; displayed time was 17.99 s (1.67 ms rounding difference). |
 | Debug HUD | done | All seven required diagnostics; 1% drift tolerance is identified and color-coded. |
+| Integrator explainer | done | The solver selector displays each method's accuracy, stability, and effect on lunar-lander motion. |
 | Conservative test mode | done | Thrust/steering disabled, restitution set to 1, and scripted impact freeze disabled. A seeded-asteroid regression now verifies energy drift at `2.969e-15`. |
 | Proposal physics checks | done | Rocket equation, 60 s unpowered free fall, fuel bounds, and touchdown boundaries pass. |
 | Controls/model documentation | done | See [`README.md`](./README.md). |
