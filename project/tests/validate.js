@@ -362,6 +362,12 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      && lander.pos.y - lander.radius >= 10 && lander.pos.y - lander.radius <= 14,
      'randomized starts stay within the documented x and altitude ranges');
   const normalDynamic = SCENES.lunar({ ...missionState, difficulty: 'normal' }).world;
+  for (let i = 0; i < 120 && normalDynamic.mission.status === 'flying'; i++)
+    normalDynamic.step(normalDynamic.DT);
+  const earlyAsteroids = normalDynamic.bodies.filter(body => body.tag === 'asteroid');
+  ok(earlyAsteroids.length >= 3
+     && earlyAsteroids.every(asteroid => asteroid.vel.y < 0),
+     'opening asteroid burst is dense and inclined toward the surface');
   for (let i = 0; i < 3000 && normalDynamic.mission.status === 'flying'; i++)
     normalDynamic.step(normalDynamic.DT);
   ok(normalDynamic.mission.asteroidLaunched === 6

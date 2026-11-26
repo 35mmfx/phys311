@@ -186,7 +186,7 @@ export const SCENES = {
       elapsedTime: null,
       initialFuel: drive.fuel,
       asteroidLaunched: 0,
-      nextAsteroidAt: 0.8 + rnd() * 1.2,
+      nextAsteroidAt: 0.05 + rnd() * 0.08,
       asteroidRnd: rnd,
       debrief: null
     };
@@ -265,16 +265,20 @@ export const SCENES = {
         const altitude = 5 + rnd() * 10;
         const speed = 1.8 + rnd() * 2.4;
         const horizontalDirection = rnd() < 0.5 ? -1 : 1;
+        const launchedEarly = w.mission.asteroidLaunched < 3;
+        const verticalDirection = -(1.2 + rnd() * 1.8);
         w.add(new Body({
           pos: new Vec2(fromLeft ? -9.2 : 9.2, altitude),
-          vel: new Vec2(horizontalDirection * speed, (rnd() - 0.5) * 2.4),
+          vel: new Vec2(horizontalDirection * speed, verticalDirection),
           mass: 350,
           radius: 0.2,
           color: '#8e8578',
           tag: 'asteroid'
         }));
         w.mission.asteroidLaunched++;
-        w.mission.nextAsteroidAt = w.time + 0.08 + rnd() * 0.12;
+        w.mission.nextAsteroidAt = launchedEarly
+          ? w.time + 0.08 + rnd() * 0.10
+          : w.time + 0.35 + rnd() * 0.55;
       }
       if (w.mission.status === 'flying') {
         w.mission.elapsedTime = w.time;

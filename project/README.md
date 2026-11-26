@@ -41,7 +41,9 @@ npm test
   | Hard | 2.0 m | 30 kg | 12 every start |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
-  Asteroids have a `0.2 m` radius and can destroy the lander on contact.
+  Asteroids have a `0.2 m` radius and can destroy the lander on contact. The
+  opening group launches quickly with randomized directions and a downward
+  inclination; later asteroids arrive at longer, seeded-random intervals.
 - The late-descent vehicle has an approximate non-descent-propellant mass of
   `6,900 kg` (including ascent propellant and equipment), plus the selected
   remaining descent propellant. The HUD's remaining-fuel percentage is relative
