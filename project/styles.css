@@ -17,10 +17,14 @@ header .sub{color:var(--dim);font-size:.85rem}
 
 .layout{position:relative;display:grid;grid-template-columns:220px minmax(320px,1fr) 290px;gap:1rem;padding:1rem;align-items:start}
 @media (max-width:860px){
-  .layout{grid-template-columns:1fr}
-  .left-panel{order:2}
-  .stage{order:1}
-  .panel{order:3}
+  .layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .layout .left-panel{order:2;position:static;min-width:0;padding:.55rem}
+  .stage{order:1;grid-column:1 / -1}
+  .layout .panel{order:3;min-width:0;padding:.55rem;overflow-wrap:break-word}
+  .layout #hud{padding:.4rem}
+  .layout #hud > *{flex-wrap:wrap;gap:.1rem .5rem}
+  .layout #debug-hud{grid-template-columns:1fr}
+  .layout .btns{grid-template-columns:1fr}
 }
 
 .stage{min-width:0}
