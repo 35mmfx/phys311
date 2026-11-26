@@ -229,6 +229,8 @@ H('10. Publishing audit: safe for GitHub Pages');
      && /Euler-Cromer/.test(html)
      && /touchdown timing/.test(html),
      'Variables to notice explains fuel and integrator effects');
+  ok(/Lunar Lander: Fuel for the Final Flare/.test(html),
+     'page title uses the Lunar Lander showcase name');
 
   const refs = [...html.matchAll(/(?:src|href)="([^":#]+)"/g)].map(m => m[1].split(/[?#]/)[0]);
   const missing = refs.filter(r => { try { readFileSync(join(ROOT, r)); return false; }

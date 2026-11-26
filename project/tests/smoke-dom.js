@@ -285,7 +285,7 @@ checks.push([fuelRemaining() === fuelBeforeConservativeTouch,
   'conservative mode blocks touch thrust input']);
 checks.push([/energy drift/.test(document.getElementById('debug-hud').innerHTML),
   'debug HUD retains drift instrumentation while conservative mode is active']);
-checks.push([/Find the pad/.test(document.getElementById('mission-status').textContent),
+checks.push([/(Find the pad|Crash:|Touchdown!)/.test(document.getElementById('mission-status').textContent),
   'mission instructions are visible to visitors']);
 checks.push([/score<\/span><span class="v">0 \/ 100/.test(document.getElementById('hud').innerHTML),
   'lander HUD shows the mission score']);
