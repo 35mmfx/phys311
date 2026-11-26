@@ -36,9 +36,9 @@ npm test
 
   | Difficulty | Pad width | Starting fuel | Asteroids |
   |---|---:|---:|---|
-  | Easy | 4.4 m | 45 kg | 3 every start |
-  | Normal (default) | 2.9 m | 39 kg | 6 every start |
-  | Hard | 2.0 m | 30 kg | 12 every start |
+  | Easy | 4.4 m | 45 kg | Up to 5 per flight |
+  | Normal (default) | 2.9 m | 39 kg | Up to 9 per flight |
+  | Hard | 2.0 m | 30 kg | Up to 12 per flight |
 
   Changing difficulty restarts the mission; restart and shared links retain it.
   Asteroids have a `0.2 m` radius and can destroy the lander on contact. The

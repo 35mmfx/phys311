@@ -376,9 +376,9 @@ H('14. Lunar lander: variable mass, finite fuel, and touchdown');
      'opening asteroid burst is dense and inclined toward the surface');
   for (let i = 0; i < 3000 && normalDynamic.mission.status === 'flying'; i++)
     normalDynamic.step(normalDynamic.DT);
-  ok(normalDynamic.mission.asteroidLaunched === 6
-     && normalDynamic.bodies.filter(body => body.tag === 'asteroid').length <= 6,
-     'normal missions launch six seeded mid-descent asteroids');
+  ok(normalDynamic.mission.asteroidLaunched > 6 && normalDynamic.mission.asteroidLaunched <= 9
+     && normalDynamic.bodies.filter(body => body.tag === 'asteroid').length <= 9,
+     'normal missions launch more asteroids during a seeded descent');
 
   const reserve = drive.charge;
   const fuelAtStart = drive.fuel;
@@ -661,8 +661,8 @@ H('Lunar difficulty and trajectory prediction');
      && hard.landerDrive.fuel === 30
      && easy.mission.padHalfWidth > normal.mission.padHalfWidth
      && normal.mission.padHalfWidth > hard.mission.padHalfWidth
-     && easy.mission.asteroidCount === 3
-     && normal.mission.asteroidCount === 6
+     && easy.mission.asteroidCount === 5
+     && normal.mission.asteroidCount === 9
      && hard.mission.asteroidCount === 12,
      'difficulty changes fuel, pad width and asteroid availability');
   ok(hard.lander.pos.y - hard.lander.radius >= 15
@@ -672,7 +672,7 @@ H('Lunar difficulty and trajectory prediction');
      'hard difficulty has a seeded asteroid launch schedule');
   let validGroups = true;
   for (let seed = 0; seed < 100; seed++) {
-    for (const [difficulty, count] of [['normal', 6], ['hard', 12]]) {
+    for (const [difficulty, count] of [['easy', 5], ['normal', 9], ['hard', 12]]) {
       const world = SCENES.lunar({ ...ST, seed, difficulty }).world;
       validGroups &&= world.mission.asteroidCount === count
         && world.mission.asteroidChance === 1
@@ -682,6 +682,16 @@ H('Lunar difficulty and trajectory prediction');
     }
   }
   ok(validGroups, 'smaller asteroid groups are seeded, non-overlapping, and sized by difficulty');
+  for (const [difficulty, count] of [['easy', 5], ['normal', 9]]) {
+    const world = SCENES.lunar({ ...ST, seed: 2468, difficulty }).world;
+    world.lander.pos.set(0, 19);
+    world.lander.vel.set(0, 0);
+    world.lander.fixed = true;
+    world.lander.invMass = 0;
+    for (let i = 0; i < 1440; i++) world.step(world.DT);
+    ok(world.mission.asteroidLaunched === count && world.mission.status === 'flying',
+       `${difficulty} launches its full asteroid wave while the mission is flying`);
+  }
 
   const projectAndFly = (thrusting, fuel, angle) => {
     const world = SCENES.lunar({ ...ST, difficulty: 'easy' }).world;

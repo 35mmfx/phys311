@@ -82,7 +82,7 @@ function build() {
   if (world.mission) {
     const { asteroidCount, asteroidChance } = world.mission;
     const asteroids = asteroidCount === 0 ? 'none' :
-      `${asteroidCount} on ${asteroidChance === 1 ? 'every flight' : 'about one in three flights'}`;
+      `up to ${asteroidCount} on ${asteroidChance === 1 ? 'every flight' : 'about one in three flights'}`;
     missionSettings.textContent = `Starting fuel: ${world.landerDrive.fuel} kg; pad width: ${(2 * world.mission.padHalfWidth).toFixed(1)} m; asteroids: ${asteroids}.`;
   }
   cockpitSound.reset();
